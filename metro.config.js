@@ -5,6 +5,7 @@ const { mergeConfig } = require('@react-native/metro-config');
 process.env.EXPO_ROUTER_APP_ROOT = path.resolve(__dirname, 'app');
 
 const { getDefaultConfig } = require('expo/metro-config');
+const { withNativeWind } = require('nativewind/metro');
 const {
   createHarmonyMetroConfig,
 } = require('@react-native-oh/react-native-harmony/metro.config');
@@ -54,9 +55,13 @@ baseConfig.resolver.resolveRequest = (context, moduleName, platform) => {
   return context.resolveRequest(context, moduleName, platform);
 };
 
-module.exports = mergeConfig(baseConfig, {
+const finalConfig = mergeConfig(baseConfig, {
   transformer: {
     unstable_allowRequireContext: true,
     babelTransformerPath: require.resolve('react-native-svg-transformer'),
   },
 });
+
+// NativeWind wraps the fully composed Expo + Harmony config so the RNOH resolver,
+// platform aliases, SVG transformer, and Expo Router serializer remain intact.
+module.exports = withNativeWind(finalConfig, { input: './global.css' });

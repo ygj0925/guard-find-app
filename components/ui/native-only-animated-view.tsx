@@ -12,18 +12,25 @@ const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
  *   <Text>I am only animated on native</Text>
  * </NativeOnlyAnimatedView>
  */
-function NativeOnlyAnimatedView(
-  props: (React.ComponentProps<typeof Animated.View> & React.RefAttributes<typeof Animated.View> 
-    & { as?: "View" }) | (React.ComponentProps<typeof AnimatedPressable> & React.RefAttributes<typeof AnimatedPressable> & { as: "Pressable" })
-) {
+type AnimatedViewProps = React.ComponentProps<typeof Animated.View> & {
+  as?: 'View';
+};
+type AnimatedPressableProps = React.ComponentProps<typeof AnimatedPressable> & {
+  as: 'Pressable';
+};
+
+function NativeOnlyAnimatedView(props: AnimatedViewProps | AnimatedPressableProps) {
   if (Platform.OS === 'web') {
     return <>{props.children as React.ReactNode}</>;
-  } else {
-    if (props.as === "Pressable"){
-      return <AnimatedPressable {...props} />;
-    }
-    return <Animated.View {...props} />;
   }
+
+  if (props.as === 'Pressable') {
+    const { as: _as, key: _key, ...pressableProps } = props;
+    return <AnimatedPressable {...pressableProps} />;
+  }
+
+  const { as: _as, ...viewProps } = props;
+  return <Animated.View {...viewProps} />;
 }
 
 export { NativeOnlyAnimatedView };
