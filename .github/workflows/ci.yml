@@ -1,0 +1,39 @@
+name: CI
+
+on:
+  push:
+    branches: [main, master, develop]
+  pull_request:
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.34.5
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      # 原生依赖的鸿蒙适配由 expo-harmony-cli 维护,CI 只做静态检查与单测,
+      # 因此 postinstall 里的 patch-package / harmony 脚本必须能离线跑通(它们只改 node_modules)。
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Lint
+        run: pnpm lint:ci
+
+      - name: Unit tests
+        run: pnpm test:ci
+        env:
+          # 单测里 client 需要一个确定的基址,lib/env 缺失即抛错。
+          EXPO_PUBLIC_API_BASE_URL: http://localhost:8082
+          EXPO_PUBLIC_WS_BASE_URL: ws://localhost:8082

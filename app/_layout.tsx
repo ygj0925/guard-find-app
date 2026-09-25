@@ -1,33 +1,81 @@
-import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
-import { Stack } from 'expo-router';
-import { StatusBar } from 'expo-status-bar';
-import { useEffect } from 'react';
-import 'react-native-reanimated';
+/**
+ * 应用根布局。修掉模板遗留的空 useEffect,补齐四件事:
+ *   1. GestureHandlerRootView + SafeAreaProvider(RN 0.77 缺了直接白屏);
+ *   2. 全局 ErrorBoundary —— 鸿蒙侧 Metro 红框被 shim 关闭,没有它就是无声白屏;
+ *   3. 会话恢复(SessionProvider):恢复完成前不渲染业务页,避免闪回登录页;
+ *   4. 环境基址缺失时渲染可读配置错误,而不是向猜测地址发请求。
+ */
 import '../global.css';
 
-import { useColorScheme } from '@/hooks/useColorScheme';
+import React, { useMemo } from 'react';
+import { StatusBar } from 'expo-status-bar';
+import { Stack } from 'expo-router';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
 
-// Prevent the splash screen from auto-hiding before asset loading is complete.
+import { ErrorBoundary } from '@/providers/ErrorBoundary';
+import { SessionProvider } from '@/providers/SessionProvider';
+import { FiltersProvider } from '@/providers/FiltersProvider';
+import { ToastProvider } from '@/providers/ToastProvider';
+import { EnvNotice } from '@/components/business/env-notice';
+import { useColorScheme } from '@/hooks/useColorScheme';
+import { readEnvError } from '@/lib/env';
+
+export const unstable_settings = {
+  initialRouteName: '(tabs)',
+};
+
 export default function RootLayout() {
   const colorScheme = useColorScheme();
-  const [loaded] = [true];
-
-  useEffect(() => {
-    if (loaded) {
-      }
-  }, [loaded]);
-
-  if (!loaded) {
-    return null;
-  }
+  const envError = useMemo(() => readEnvError(), []);
 
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <Stack>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="+not-found" />
-      </Stack>
-      <StatusBar style="auto" />
-    </ThemeProvider>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <SafeAreaProvider>
+        <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+          <ErrorBoundary label="应用根布局">
+            {envError ? (
+              <EnvNotice message={envError} />
+            ) : (
+              <SessionProvider>
+                <FiltersProvider>
+                  <ToastProvider>
+                    <Stack screenOptions={{ headerBackButtonDisplayMode: 'minimal' }}>
+                      <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+                      <Stack.Screen
+                        name="auth/login"
+                        options={{ title: '登录', presentation: 'modal' }}
+                      />
+                      <Stack.Screen
+                        name="auth/profile-setup"
+                        options={{ title: '完善资料', presentation: 'modal' }}
+                      />
+                      <Stack.Screen name="case/[id]/index" options={{ title: '寻人档案' }} />
+                      <Stack.Screen name="case/[id]/lead" options={{ title: '提交线索' }} />
+                      <Stack.Screen name="case/[id]/leads" options={{ title: '线索处理' }} />
+                      <Stack.Screen name="publish/case" options={{ title: '发布寻人' }} />
+                      <Stack.Screen name="publish/drafts" options={{ title: '草稿箱' }} />
+                      <Stack.Screen name="search" options={{ title: '搜索' }} />
+                      <Stack.Screen name="me/profile-edit" options={{ title: '编辑资料' }} />
+                      <Stack.Screen name="me/security" options={{ title: '账号安全' }} />
+                      <Stack.Screen name="me/cases" options={{ title: '我发布的档案' }} />
+                      <Stack.Screen name="me/leads" options={{ title: '我的线索' }} />
+                      <Stack.Screen name="me/favorites" options={{ title: '我的收藏' }} />
+                      <Stack.Screen
+                        name="me/notification-pref"
+                        options={{ title: '通知偏好' }}
+                      />
+                      <Stack.Screen name="+not-found" options={{ title: '页面不存在' }} />
+                    </Stack>
+                    <StatusBar style="auto" />
+                  </ToastProvider>
+                </FiltersProvider>
+              </SessionProvider>
+            )}
+          </ErrorBoundary>
+        </ThemeProvider>
+      </SafeAreaProvider>
+    </GestureHandlerRootView>
   );
 }
