@@ -19,6 +19,7 @@ import { SessionProvider } from '@/providers/SessionProvider';
 import { FiltersProvider } from '@/providers/FiltersProvider';
 import { ToastProvider } from '@/providers/ToastProvider';
 import { EnvNotice } from '@/components/business/env-notice';
+import { Colors } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { readEnvError } from '@/lib/env';
 
@@ -29,11 +30,30 @@ export const unstable_settings = {
 export default function RootLayout() {
   const colorScheme = useColorScheme();
   const envError = useMemo(() => readEnvError(), []);
+  const isDark = colorScheme === 'dark';
+  const palette = Colors[isDark ? 'dark' : 'light'];
+
+  // 导航原生界面(header/背景)与业务页共用品牌 token,避免配色漂移。
+  const navTheme = useMemo(
+    () => ({
+      ...(isDark ? DarkTheme : DefaultTheme),
+      colors: {
+        ...(isDark ? DarkTheme : DefaultTheme).colors,
+        primary: palette.tint,
+        background: palette.background,
+        card: palette.background,
+        text: palette.text,
+        border: palette.border,
+        notification: palette.urgent,
+      },
+    }),
+    [isDark, palette],
+  );
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
-        <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+        <ThemeProvider value={navTheme}>
           <ErrorBoundary label="应用根布局">
             {envError ? (
               <EnvNotice message={envError} />
@@ -57,6 +77,12 @@ export default function RootLayout() {
                       <Stack.Screen name="publish/case" options={{ title: '发布寻人' }} />
                       <Stack.Screen name="publish/drafts" options={{ title: '草稿箱' }} />
                       <Stack.Screen name="search" options={{ title: '搜索' }} />
+                      <Stack.Screen name="tools/ledger" options={{ title: '记账' }} />
+                      <Stack.Screen
+                        name="tools/ledger/add"
+                        options={{ title: '记一笔', presentation: 'modal' }}
+                      />
+                      <Stack.Screen name="tools/ledger/report" options={{ title: '收支报表' }} />
                       <Stack.Screen name="me/profile-edit" options={{ title: '编辑资料' }} />
                       <Stack.Screen name="me/security" options={{ title: '账号安全' }} />
                       <Stack.Screen name="me/cases" options={{ title: '我发布的档案' }} />

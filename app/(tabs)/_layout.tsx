@@ -1,5 +1,5 @@
 /**
- * 五 Tab:广场 / 发布 / 社区(占位) / 消息 / 我的。
+ * 六 Tab:广场 / 发布 / 社区(占位) / 工具 / 消息 / 我的。
  *
  * 只用 RN 核心 + 已验证的 RNOH 伴生包(screens / gesture-handler / safe-area-context),
  * 不引 `@react-navigation/bottom-tabs` 之外的原生依赖;TabBar 不使用 blur(expo-blur 无鸿蒙适配)。
@@ -7,8 +7,9 @@
  */
 import React from 'react';
 import { Tabs } from 'expo-router';
-import { BookOpen, Megaphone, MessageSquare, Newspaper, User } from 'lucide-react-native';
+import { BookOpen, Megaphone, MessageSquare, Newspaper, User, Wrench } from 'lucide-react-native';
 
+import { FloatingTabBar } from '@/components/ui/floating-tab-bar';
 import { Icon } from '@/components/ui/icon';
 import { Colors } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
@@ -40,8 +41,8 @@ export default function TabLayout() {
         headerShown: false,
         tabBarActiveTintColor: palette.tint,
         tabBarInactiveTintColor: palette.icon,
-        tabBarStyle: { backgroundColor: palette.background },
       }}
+      tabBar={(props) => <FloatingTabBar {...props} />}
     >
       <Tabs.Screen
         name="plaza"
@@ -62,6 +63,13 @@ export default function TabLayout() {
         options={{
           title: '社区',
           tabBarIcon: ({ color }) => <TabIcon as={BookOpen} color={color} label="社区(待开放)" />,
+        }}
+      />
+      <Tabs.Screen
+        name="tools"
+        options={{
+          title: '工具',
+          tabBarIcon: ({ color }) => <TabIcon as={Wrench} color={color} label="工具箱" />,
         }}
       />
       <Tabs.Screen

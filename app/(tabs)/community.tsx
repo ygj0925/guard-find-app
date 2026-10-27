@@ -20,7 +20,7 @@ export default function CommunityTabScreen() {
 
   return (
     <SafeAreaView edges={['top']} className="flex-1 bg-background">
-      <ScrollView className="flex-1 px-4" contentContainerStyle={{ paddingBottom: 40 }}>
+      <ScrollView className="flex-1 px-4" contentContainerStyle={{ paddingBottom: 104 }}>
         <View className="flex-row items-center gap-2 pb-3 pt-2">
           <Icon as={BookOpen} size={20} className="text-muted-foreground" />
           <Text className="text-xl font-bold">社区</Text>

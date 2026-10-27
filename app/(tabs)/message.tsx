@@ -284,7 +284,7 @@ export default function MessageTabScreen() {
 
       <SectionList
         className="flex-1 px-4"
-        contentContainerStyle={{ paddingBottom: 32 }}
+        contentContainerStyle={{ paddingBottom: 104 }}
         sections={sections}
         keyExtractor={(item) => item.id}
         stickySectionHeadersEnabled={false}

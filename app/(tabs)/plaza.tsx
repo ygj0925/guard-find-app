@@ -272,7 +272,7 @@ export default function PlazaScreen() {
 
       <FlatList
         className="flex-1 px-4"
-        contentContainerStyle={{ paddingBottom: 28 }}
+        contentContainerStyle={{ paddingBottom: 104 }}
         data={feed.items}
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => (

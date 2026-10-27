@@ -75,7 +75,7 @@ export default function MeTabScreen() {
 
   return (
     <SafeAreaView edges={['top']} className="flex-1 bg-background">
-      <ScrollView className="flex-1 px-4" contentContainerStyle={{ paddingBottom: 40 }}>
+      <ScrollView className="flex-1 px-4" contentContainerStyle={{ paddingBottom: 104 }}>
         <View className="bg-card border-border mb-3 flex-row items-center gap-3 rounded-xl border p-4">
           <Avatar alt="头像" className="size-14">
             {user?.avatar ? <AvatarImage source={{ uri: user.avatar }} /> : null}

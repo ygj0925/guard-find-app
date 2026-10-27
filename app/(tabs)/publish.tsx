@@ -51,7 +51,7 @@ export default function PublishTabScreen() {
     <SafeAreaView edges={['top']} className="flex-1 bg-background">
       <ScrollView
         className="flex-1 px-4"
-        contentContainerStyle={{ paddingBottom: 40 }}
+        contentContainerStyle={{ paddingBottom: 104 }}
         keyboardShouldPersistTaps="handled"
       >
         <View className="flex-row items-center gap-2 pb-3 pt-2">
