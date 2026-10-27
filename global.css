@@ -6,67 +6,68 @@
  * 品牌 token 事实源:constants/Colors.ts 的 TOKENS 与本文件必须逐字一致,
  * 由 __tests__/token-sync.test.ts 在 CI 里校验,漂移即测试失败。
  * 语义约定:
- *   primary  = 守护蓝(主操作、选中态)
+ *   primary  = 电光蓝(主操作、选中态;浅色 hsl(199 85% 34%),深色霓虹青 hsl(191 91% 55%))
  *   urgent   = 紧急红(超时未找回、驳回)
  *   found    = 找回绿(喜报、成功)
  *   pending  = 待核实琥珀(草稿、待审核、高风险线索)
  * 三色系必须同时配文字标签使用,不允许只靠颜色区分状态(色觉无障碍要求)。
+ * 科技感基调:浅色 = 冷调冰白底 + 电光蓝;深色 = 深空藏蓝底 + 霓虹青。
  */
 @layer base {
   :root {
-    --background: 210 40% 98%;
-    --foreground: 222 47% 12%;
+    --background: 210 45% 97%;
+    --foreground: 222 47% 10%;
     --card: 0 0% 100%;
-    --card-foreground: 222 47% 12%;
+    --card-foreground: 222 47% 10%;
     --popover: 0 0% 100%;
-    --popover-foreground: 222 47% 12%;
-    --primary: 201 72% 30%;
+    --popover-foreground: 222 47% 10%;
+    --primary: 199 85% 34%;
     --primary-foreground: 210 40% 98%;
-    --secondary: 201 34% 93%;
-    --secondary-foreground: 201 72% 22%;
-    --muted: 210 27% 94%;
-    --muted-foreground: 215 16% 44%;
-    --accent: 201 42% 92%;
-    --accent-foreground: 201 72% 22%;
-    --destructive: 355 70% 48%;
+    --secondary: 200 40% 93%;
+    --secondary-foreground: 200 80% 26%;
+    --muted: 210 30% 93%;
+    --muted-foreground: 215 18% 42%;
+    --accent: 195 80% 92%;
+    --accent-foreground: 198 90% 26%;
+    --destructive: 355 75% 48%;
     --destructive-foreground: 210 40% 98%;
-    --border: 214 26% 87%;
-    --input: 214 26% 87%;
-    --ring: 201 72% 30%;
-    --radius: 0.625rem;
-    --urgent: 355 70% 48%;
+    --border: 212 30% 86%;
+    --input: 212 30% 86%;
+    --ring: 199 85% 34%;
+    --radius: 0.75rem;
+    --urgent: 355 75% 48%;
     --urgent-foreground: 210 40% 98%;
-    --found: 152 55% 30%;
-    --found-foreground: 150 40% 97%;
-    --pending: 32 92% 40%;
+    --found: 160 65% 32%;
+    --found-foreground: 160 45% 97%;
+    --pending: 38 95% 42%;
     --pending-foreground: 40 90% 97%;
   }
 
   .dark:root {
-    --background: 222 47% 8%;
+    --background: 224 44% 6%;
     --foreground: 210 40% 96%;
-    --card: 222 44% 11%;
+    --card: 223 36% 10%;
     --card-foreground: 210 40% 96%;
-    --popover: 222 44% 11%;
+    --popover: 223 36% 10%;
     --popover-foreground: 210 40% 96%;
-    --primary: 200 78% 55%;
-    --primary-foreground: 202 80% 12%;
-    --secondary: 217 25% 18%;
-    --secondary-foreground: 210 40% 96%;
-    --muted: 217 25% 18%;
-    --muted-foreground: 215 20% 65%;
-    --accent: 217 28% 20%;
-    --accent-foreground: 210 40% 96%;
+    --primary: 191 91% 55%;
+    --primary-foreground: 200 80% 10%;
+    --secondary: 220 30% 16%;
+    --secondary-foreground: 195 60% 85%;
+    --muted: 220 28% 15%;
+    --muted-foreground: 215 20% 64%;
+    --accent: 200 45% 18%;
+    --accent-foreground: 191 80% 78%;
     --destructive: 355 65% 55%;
     --destructive-foreground: 210 40% 98%;
-    --border: 217 25% 20%;
-    --input: 217 25% 20%;
-    --ring: 200 78% 55%;
-    --urgent: 355 68% 58%;
+    --border: 221 26% 18%;
+    --input: 221 26% 18%;
+    --ring: 191 91% 55%;
+    --urgent: 352 80% 60%;
     --urgent-foreground: 350 60% 10%;
-    --found: 152 52% 45%;
-    --found-foreground: 150 45% 10%;
-    --pending: 33 90% 55%;
-    --pending-foreground: 30 60% 10%;
+    --found: 160 70% 48%;
+    --found-foreground: 160 60% 8%;
+    --pending: 40 95% 58%;
+    --pending-foreground: 35 80% 10%;
   }
 }
