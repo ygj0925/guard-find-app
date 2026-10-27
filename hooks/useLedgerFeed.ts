@@ -27,6 +27,8 @@ export function useLedgerFeed(month: string, enabled: boolean) {
   const [total, setTotal] = useState(0);
   const [phase, setPhase] = useState<LedgerFeedPhase>('idle');
   const [error, setError] = useState<ApiError | null>(null);
+  /** 已成功加载的月份;页面用它判断"返回页面时是否需要刷新"。 */
+  const [loadedMonth, setLoadedMonth] = useState<string | null>(null);
   const pageRef = useRef(1);
   const loadedMonthsRef = useRef<Set<string>>(new Set());
   const generationRef = useRef(0);
@@ -48,6 +50,7 @@ export function useLedgerFeed(month: string, enabled: boolean) {
         setTotal(resp.total);
         pageRef.current = targetPage;
         loadedMonthsRef.current.add(targetMonth);
+        setLoadedMonth(targetMonth);
         setPhase('idle');
       } catch (caught) {
         if (generation !== generationRef.current) return;
@@ -88,6 +91,7 @@ export function useLedgerFeed(month: string, enabled: boolean) {
     total,
     phase,
     error,
+    loadedMonth,
     hasMore: recordCount < total,
     monthExpense,
     monthIncome,

@@ -5,7 +5,7 @@
 import React, { useCallback, useMemo, useState } from 'react';
 import { Alert, FlatList, Pressable, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
+import { useRouter, useFocusEffect } from 'expo-router';
 import { ChevronLeft, ChevronRight, Plus } from 'lucide-react-native';
 
 import { Text } from '@/components/ui/text';
@@ -45,6 +45,14 @@ export default function LedgerScreen() {
 
   const [month, setMonth] = useState(() => currentMonth());
   const feed = useLedgerFeed(month, signedIn);
+
+  // 从"记一笔/编辑"返回时自动刷新:首次挂载交给 hook 的初始加载,避免双请求。
+  const { loadedMonth, refresh } = feed;
+  useFocusEffect(
+    useCallback(() => {
+      if (loadedMonth === month) void refresh();
+    }, [loadedMonth, month, refresh]),
+  );
 
   const rows = useMemo<Row[]>(
     () =>

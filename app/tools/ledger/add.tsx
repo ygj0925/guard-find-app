@@ -69,9 +69,11 @@ export default function LedgerAddScreen() {
 
   const validate = (): boolean => {
     const next: Record<string, string> = {};
-    const value = Number(amount);
-    if (!amount.trim() || Number.isNaN(value) || value <= 0) next.amount = '请输入大于 0 的金额';
-    else if (Math.round(value * 100) !== value * 100) next.amount = '最多两位小数';
+    const trimmed = amount.trim();
+    const value = Number(trimmed);
+    // 两位小数校验用字符串正则:数值乘 100 取整在 19.99 这类数上有浮点误差,会误伤合法输入
+    if (!trimmed || Number.isNaN(value) || value <= 0) next.amount = '请输入大于 0 的金额';
+    else if (!/^\d+(\.\d{1,2})?$/.test(trimmed)) next.amount = '最多两位小数';
     else if (value >= 1e10) next.amount = '金额超出范围';
     if (!DAY_RE.test(recordDate) || Number.isNaN(new Date(recordDate).getTime())) {
       next.recordDate = '日期格式应为 yyyy-MM-dd';
