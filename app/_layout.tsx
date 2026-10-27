@@ -83,6 +83,8 @@ export default function RootLayout() {
                         options={{ title: '记一笔', presentation: 'modal' }}
                       />
                       <Stack.Screen name="tools/ledger/report" options={{ title: '收支报表' }} />
+                      <Stack.Screen name="ai/conversations" options={{ title: 'AI 对话' }} />
+                      <Stack.Screen name="ai/chat" options={{ title: '对话', headerBackButtonDisplayMode: 'default' }} />
                       <Stack.Screen name="me/profile-edit" options={{ title: '编辑资料' }} />
                       <Stack.Screen name="me/security" options={{ title: '账号安全' }} />
                       <Stack.Screen name="me/cases" options={{ title: '我发布的档案' }} />
