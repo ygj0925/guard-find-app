@@ -52,7 +52,12 @@ baseConfig.resolver.resolveRequest = (context, moduleName, platform) => {
     }
     return resolveWithHarmony(context, moduleName, platform);
   }
-  return context.resolveRequest(context, moduleName, platform);
+  // Radix Web dependencies expose subpaths through package.json exports.
+  // SDK 52 requires opting in; keep the native resolver behavior unchanged.
+  const resolveContext = platform === 'web'
+    ? { ...context, unstable_enablePackageExports: true }
+    : context;
+  return context.resolveRequest(resolveContext, moduleName, platform);
 };
 
 const finalConfig = mergeConfig(baseConfig, {
