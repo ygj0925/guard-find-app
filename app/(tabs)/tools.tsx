@@ -36,7 +36,7 @@ interface ToolEntry {
 
 const TOOLS: ToolEntry[] = [
   { key: 'ledger', title: '记账', description: '记一笔 · 日账单 · 周月年报', icon: Wallet, href: '/tools/ledger' },
-  { key: 'ai', title: 'AI 对话', description: '智能助手 · 翻译 · 写作', icon: Sparkles },
+  { key: 'ai', title: 'AI 对话', description: '智能助手 · 翻译 · 写作', icon: Sparkles, href: '/ai/conversations' },
   { key: 'forum', title: '圈子论坛', description: '发帖 · 交流 · 互助', icon: MessagesSquare },
   { key: 'todo', title: '待办清单', description: '每日计划 · 提醒', icon: ListTodo },
   { key: 'weather', title: '天气', description: '实时天气 · 未来趋势', icon: CloudSun },
