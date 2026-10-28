@@ -104,6 +104,7 @@ export default function RootLayout() {
                       <Stack.Screen name="tools/music" options={{ title: '音乐播放' }} />
                       <Stack.Screen name="community/publish" options={{ title: '发布动态', presentation: 'modal' }} />
                       <Stack.Screen name="community/detail" options={{ title: '动态详情' }} />
+                      <Stack.Screen name="community/user" options={{ title: '个人主页' }} />
                       <Stack.Screen name="me/profile-edit" options={{ title: '编辑资料' }} />
                       <Stack.Screen name="me/security" options={{ title: '账号安全' }} />
                       <Stack.Screen name="me/cases" options={{ title: '我发布的档案' }} />
