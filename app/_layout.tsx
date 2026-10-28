@@ -97,6 +97,8 @@ export default function RootLayout() {
                       <Stack.Screen name="tools/text-toolkit" options={{ title: '文本工具箱' }} />
                       <Stack.Screen name="tools/random" options={{ title: '随机决定器' }} />
                       <Stack.Screen name="tools/weekly-report" options={{ title: 'AI 周报' }} />
+                      <Stack.Screen name="tools/tasks" options={{ title: '任务分派' }} />
+                      <Stack.Screen name="tools/goals" options={{ title: '目标 OKR' }} />
                       <Stack.Screen name="me/profile-edit" options={{ title: '编辑资料' }} />
                       <Stack.Screen name="me/security" options={{ title: '账号安全' }} />
                       <Stack.Screen name="me/cases" options={{ title: '我发布的档案' }} />
