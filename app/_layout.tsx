@@ -88,6 +88,9 @@ export default function RootLayout() {
                       <Stack.Screen name="tools/countdown" options={{ title: '倒数日' }} />
                       <Stack.Screen name="tools/todo" options={{ title: '待办清单' }} />
                       <Stack.Screen name="tools/unit-convert" options={{ title: '单位换算' }} />
+                      <Stack.Screen name="tools/habits" options={{ title: '习惯打卡' }} />
+                      <Stack.Screen name="tools/habit-detail" options={{ title: '打卡日历' }} />
+                      <Stack.Screen name="tools/split" options={{ title: 'AA 分账' }} />
                       <Stack.Screen name="me/profile-edit" options={{ title: '编辑资料' }} />
                       <Stack.Screen name="me/security" options={{ title: '账号安全' }} />
                       <Stack.Screen name="me/cases" options={{ title: '我发布的档案' }} />
