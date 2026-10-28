@@ -16,6 +16,7 @@ export {
 } from './image-compress';
 export { shareApi, type ShareApi, type SharePayload } from './share';
 export { clipboard, type ClipboardApi } from './clipboard';
+export { musicPlayer, formatTrackTime, nextIndex, prevIndex, ratioToSeconds, trackDisplayName, type MusicPlayerApi, type MusicTrack, type PlaybackState } from './music';
 export {
   type CapabilityResult,
   type CapabilityFailureReason,
