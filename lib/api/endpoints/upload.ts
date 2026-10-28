@@ -22,7 +22,7 @@ export interface UploadResp {
 /**
  * `path` 是后端存储前缀。一期按业务域分目录,便于审计。
  */
-export type UploadPath = 'case' | 'lead' | 'avatar' | 'report';
+export type UploadPath = 'case' | 'lead' | 'avatar' | 'report' | 'post';
 
 export interface ClientLogReq {
   level: MonitorLevel;

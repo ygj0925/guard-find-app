@@ -99,6 +99,8 @@ export default function RootLayout() {
                       <Stack.Screen name="tools/weekly-report" options={{ title: 'AI 周报' }} />
                       <Stack.Screen name="tools/tasks" options={{ title: '任务分派' }} />
                       <Stack.Screen name="tools/goals" options={{ title: '目标 OKR' }} />
+                      <Stack.Screen name="community/publish" options={{ title: '发布动态', presentation: 'modal' }} />
+                      <Stack.Screen name="community/detail" options={{ title: '动态详情' }} />
                       <Stack.Screen name="me/profile-edit" options={{ title: '编辑资料' }} />
                       <Stack.Screen name="me/security" options={{ title: '账号安全' }} />
                       <Stack.Screen name="me/cases" options={{ title: '我发布的档案' }} />
