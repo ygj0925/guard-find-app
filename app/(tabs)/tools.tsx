@@ -7,28 +7,6 @@ import React, { useCallback } from 'react';
 import { Alert, Pressable, ScrollView, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import {
-  Calculator,
-  CalendarRange,
-  ClipboardList,
-  UserCheck,
-  Clock,
-  Music,
-  CalendarClock,
-  Flame,
-  ListTodo,
-  MessagesSquare,
-  Newspaper,
-  Ruler,
-  Divide,
-  HeartPulse,
-  Sparkles,
-  Target,
-  SquareDashed,
-  Users,
-  Wallet,
-} from 'lucide-react-native';
-
 import { Text } from '@/components/ui/text';
 import { Icon } from '@/components/ui/icon';
 import { Card } from '@/components/ui/card';
@@ -39,37 +17,11 @@ import { useToolsOrder, pinTools } from '@/store/tools-order';
 import { fetchLedgerSummary, type LedgerSummary } from '@/lib/api/endpoints/ledger';
 import { formatAmount } from '@/lib/ledger/stats';
 import { useToast } from '@/providers/ToastProvider';
+import { Newspaper } from 'lucide-react-native';
+import { TOOL_REGISTRY as TOOLS, type ToolEntry } from '@/lib/tools/registry';
 
-interface ToolEntry {
-  key: string;
-  title: string;
-  description: string;
-  icon: React.ComponentProps<typeof Icon>['as'];
-  /** 已上线工具的跳转路由;未上线不配置。 */
-  href?: string;
-}
 
-const TOOLS: ToolEntry[] = [
-  { key: 'ledger', title: '记账', description: '记一笔 · 日账单 · 周月年报', icon: Wallet, href: '/tools/ledger' },
-  { key: 'ai', title: 'AI 对话', description: '智能助手 · 翻译 · 写作', icon: Sparkles, href: '/ai/conversations' },
-  { key: 'habits', title: '习惯打卡', description: '连续天数 · 打卡月历', icon: Flame, href: '/tools/habits' },
-  { key: 'countdown', title: '倒数日', description: '考试 · 纪念日 · 还款日', icon: CalendarClock, href: '/tools/countdown' },
-  { key: 'todo', title: '待办清单', description: '每日计划 · AI 拆解', icon: ListTodo, href: '/tools/todo' },
-  { key: 'split', title: 'AA 分账', description: '聚餐分账 · 一键记入账本', icon: Users, href: '/tools/split' },
-  { key: 'mortgage', title: '房贷计算', description: '等额本息 · 等额本金', icon: Calculator, href: '/tools/mortgage' },
-  { key: 'text', title: '文本工具', description: '字数 · 时间戳 · 进制 · JSON', icon: SquareDashed, href: '/tools/text-toolkit' },
-  { key: 'music', title: '音乐播放', description: '本地音频 · 播放列表', icon: Music, href: '/tools/music' },
-  { key: 'calc', title: '计算器', description: '基础四则 · 离线可用', icon: Divide, href: '/tools/calculator' },
-  { key: 'datecalc', title: '日期计算', description: '间隔天数 · 当年进度', icon: CalendarRange, href: '/tools/date-calc' },
-  { key: 'random', title: '随机决定', description: '转盘 · 骰子 · 硬币', icon: Ruler, href: '/tools/random' },
-  { key: 'tasks', title: '任务分派', description: '家人互派 · 状态流转', icon: ClipboardList, href: '/tools/tasks' },
-  { key: 'goals', title: '目标 OKR', description: '定目标 · 拆 KR · 量化进度', icon: Target, href: '/tools/goals' },
-  { key: 'checkin', title: '在线签到', description: '发起签到 · 动态码防代签', icon: UserCheck, href: '/tools/checkin' },
-  { key: 'clock', title: '时钟秒表', description: '时钟 · 秒表 · 计时器', icon: Clock, href: '/tools/clock' },
-  { key: 'health', title: '健康计算', description: 'BMI · 基础代谢 · 饮水', icon: HeartPulse, href: '/tools/health' },
-  { key: 'unit', title: '单位换算', description: '长度 · 重量 · 温度 · 离线可用', icon: Ruler, href: '/tools/unit-convert' },
-  { key: 'forum', title: '圈子论坛', description: '发帖 · 交流 · 互助', icon: MessagesSquare },
-];
+
 
 export default function ToolsScreen() {
   const router = useRouter();

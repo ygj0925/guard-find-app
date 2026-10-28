@@ -5,7 +5,7 @@
  * "就近"用常驻地或城市选择器结果,一期不申请定位权限。
  */
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { FlatList, Pressable, RefreshControl, ScrollView, View } from 'react-native';
+import { Alert, FlatList, Pressable, RefreshControl, ScrollView, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Search } from 'lucide-react-native';
@@ -35,6 +35,8 @@ import {
 import { buildSlotKey, resolveCity, usePlazaView } from '@/store/plaza-view';
 import { useFavorites } from '@/store/favorites';
 import { useSession } from '@/store/session';
+import { useToolsOrder, pinTools } from '@/store/tools-order';
+import { DEFAULT_QUICK_KEYS, getTool } from '@/lib/tools/registry';
 import { useFilters } from '@/providers/FiltersProvider';
 import { favoriteRunId, useSessionGuard } from '@/providers/SessionProvider';
 import { useToast } from '@/providers/ToastProvider';
@@ -108,6 +110,16 @@ export default function PlazaScreen() {
   }, [feed]);
 
   const { guard, signedIn } = useSessionGuard();
+  // 首页快捷入口:与工具箱置顶共用一份偏好;长按可移除/排序
+  const pinnedKeys = useToolsOrder((state) => state.pinned);
+  const loadOrder = useToolsOrder((state) => state.load);
+  React.useEffect(() => {
+    void loadOrder();
+  }, [loadOrder]);
+  const quickTools = useMemo(() => {
+    const keys = pinnedKeys.length > 0 ? pinnedKeys.slice(0, 8) : DEFAULT_QUICK_KEYS;
+    return keys.map(getTool).filter((tool): tool is NonNullable<typeof tool> => tool !== null && !!tool.href);
+  }, [pinnedKeys]);
   const { toast } = useToast();
   const loadFavorites = useFavorites((state) => state.load);
   const favoriteIds = useFavorites((state) => state.byId);
@@ -228,6 +240,66 @@ export default function PlazaScreen() {
         >
           <Text className="text-sm">{filterCount ? `筛选 ${filterCount}` : '筛选'}</Text>
         </Pressable>
+      </View>
+
+      {/* 我的快捷入口:与工具箱置顶共用偏好;长按可上移/下移/移除 */}
+      <View className="pb-1 pt-1">
+        <View className="flex-row items-center justify-between px-4 pb-1">
+          <Text className="text-muted-foreground text-xs font-semibold">我的快捷入口</Text>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="去工具箱管理"
+            onPress={() => router.push('/(tabs)/tools')}
+          >
+            <Text className="text-primary text-xs">管理</Text>
+          </Pressable>
+        </View>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 12 }}>
+          {quickTools.map((tool) => (
+            <Pressable
+              key={tool.key}
+              accessibilityRole="button"
+              accessibilityLabel={`快捷打开${tool.title}`}
+              onPress={() => router.push(tool.href as never)}
+              onLongPress={() => {
+                const list = quickTools.map((item) => item.key);
+                const pos = list.indexOf(tool.key);
+                Alert.alert(tool.title, undefined, [
+                  {
+                    text: '上移',
+                    onPress: () => {
+                      if (pos > 0) {
+                        const next = [...list];
+                        [next[pos - 1], next[pos]] = [next[pos], next[pos - 1]];
+                        void pinTools(next);
+                      }
+                    },
+                  },
+                  {
+                    text: '下移',
+                    onPress: () => {
+                      if (pos < list.length - 1) {
+                        const next = [...list];
+                        [next[pos + 1], next[pos]] = [next[pos], next[pos + 1]];
+                        void pinTools(next);
+                      }
+                    },
+                  },
+                  { text: '移除', style: 'destructive', onPress: () => void pinTools(list.filter((key) => key !== tool.key)) },
+                  { text: '取消', style: 'cancel' },
+                ]);
+              }}
+              className="mx-1 w-16 items-center rounded-xl py-2"
+            >
+              <View className="bg-accent h-11 w-11 items-center justify-center rounded-xl">
+                <Icon as={tool.icon} size={20} className="text-primary" />
+              </View>
+              <Text className="text-muted-foreground mt-1 text-xs" numberOfLines={1}>
+                {tool.title}
+              </Text>
+            </Pressable>
+          ))}
+        </ScrollView>
       </View>
 
       <ScrollView
