@@ -40,6 +40,9 @@ import { DEFAULT_QUICK_KEYS, getTool } from '@/lib/tools/registry';
 import { useFilters } from '@/providers/FiltersProvider';
 import { favoriteRunId, useSessionGuard } from '@/providers/SessionProvider';
 import { useToast } from '@/providers/ToastProvider';
+import { useCircularReveal } from '@/components/ui/circular-reveal';
+import { token } from '@/constants/Colors';
+import { useColorScheme } from '@/hooks/useColorScheme';
 import { requireLogin } from '@/lib/nav';
 import { trackCaseClick } from '@/lib/track';
 import type { CasePublic } from '@/lib/api/endpoints/case';
@@ -60,6 +63,8 @@ export default function PlazaScreen() {
   const filters = usePlazaView((state) => state.filters);
   const hydrate = usePlazaView((state) => state.hydrate);
   const user = useSession((state) => state.user);
+  const scheme = useColorScheme() ?? 'light';
+  const { revealPush, overlay } = useCircularReveal(router);
   const { regionLabel } = useFilters();
 
   const [cityOpen, setCityOpen] = useState(false);
@@ -260,7 +265,10 @@ export default function PlazaScreen() {
               key={tool.key}
               accessibilityRole="button"
               accessibilityLabel={`快捷打开${tool.title}`}
-              onPress={() => router.push(tool.href as never)}
+              onPress={(event) => {
+                const { pageX, pageY } = event.nativeEvent;
+                revealPush(tool.href as string, pageX, pageY, token('primary', scheme));
+              }}
               onLongPress={() => {
                 const list = quickTools.map((item) => item.key);
                 const pos = list.indexOf(tool.key);
@@ -299,6 +307,7 @@ export default function PlazaScreen() {
               </Text>
             </Pressable>
           ))}
+          {overlay}
         </ScrollView>
       </View>
 

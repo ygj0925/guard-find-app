@@ -9,6 +9,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Text } from '@/components/ui/text';
 import { Card } from '@/components/ui/card';
+import { WheelPicker } from '@/components/ui/wheel-picker';
 import { buildLaps, clockHands, formatCountdown, formatStopwatch } from '@/lib/clock/format';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { token } from '@/constants/Colors';
@@ -240,8 +241,7 @@ function TimerPanel({
   primary: string;
   muted: string;
 }) {
-  const [presetMinutes, setPresetMinutes] = useState(5);
-  const [customMinutes, setCustomMinutes] = useState('');
+  const [selectedMinutes, setSelectedMinutes] = useState(5);
   const [remaining, setRemaining] = useState<number | null>(null);
   const [running, setRunning] = useState(false);
 
@@ -260,14 +260,10 @@ function TimerPanel({
   }, [running, remaining]);
 
   const start = useCallback(() => {
-    const minutes = customMinutes.trim() ? Number(customMinutes) : presetMinutes;
-    if (!Number.isFinite(minutes) || minutes <= 0 || minutes > 24 * 60) {
-      Alert.alert('请输入 1-1440 分钟之间的数字');
-      return;
-    }
-    setRemaining(Math.round(minutes * 60));
+    if (selectedMinutes < 1) return;
+    setRemaining(selectedMinutes * 60);
     setRunning(true);
-  }, [customMinutes, presetMinutes]);
+  }, [selectedMinutes]);
 
   const cancel = useCallback(() => {
     setRunning(false);
@@ -282,7 +278,7 @@ function TimerPanel({
   return (
     <Card className="items-center p-6">
       <Text className="text-foreground text-5xl font-bold" accessibilityLabel="倒计时读数">
-        {formatCountdown(remaining ?? Math.round((customMinutes.trim() ? Number(customMinutes) || 0 : presetMinutes) * 60))}
+        {formatCountdown(remaining ?? selectedMinutes * 60)}
       </Text>
       {!running ? (
         <View className="mt-4 flex-row flex-wrap justify-center" style={{ gap: 6 }}>
@@ -291,15 +287,12 @@ function TimerPanel({
               key={minutes}
               accessibilityRole="button"
               accessibilityLabel={`${minutes} 分钟`}
-              onPress={() => {
-                setPresetMinutes(minutes);
-                setCustomMinutes('');
-              }}
+              onPress={() => setSelectedMinutes(minutes)}
               className="rounded-full border px-4 py-1.5"
-              style={chipStyle(!customMinutes.trim() && presetMinutes === minutes)}
+              style={chipStyle(selectedMinutes === minutes)}
             >
               <Text
-                className={`text-xs font-semibold ${!customMinutes.trim() && presetMinutes === minutes ? 'text-primary-foreground' : 'text-muted-foreground'}`}
+                className={`text-xs font-semibold ${selectedMinutes === minutes ? 'text-primary-foreground' : 'text-muted-foreground'}`}
               >
                 {minutes} 分钟
               </Text>
@@ -308,14 +301,11 @@ function TimerPanel({
         </View>
       ) : null}
       {!running ? (
-        <TextInput
-          className="border-border mt-3 rounded-lg border px-3 py-2 text-center text-sm"
-          style={{ color: token('foreground', scheme), width: 160 }}
-          value={customMinutes}
-          onChangeText={setCustomMinutes}
-          placeholder="或自定义分钟数"
-          keyboardType="number-pad"
-          accessibilityLabel="自定义分钟数"
+        <WheelPicker
+          items={Array.from({ length: 120 }, (_, i) => ({ value: i + 1, label: `${i + 1} 分钟` }))}
+          value={selectedMinutes}
+          onChange={setSelectedMinutes}
+          width={200}
         />
       ) : null}
       <View className="mt-4 flex-row" style={{ gap: 12 }}>
