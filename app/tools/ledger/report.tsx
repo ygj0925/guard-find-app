@@ -6,8 +6,10 @@
 import React, { useCallback, useMemo, useState } from 'react';
 import { Pressable, ScrollView, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { Sparkles } from 'lucide-react-native';
 
 import { Text } from '@/components/ui/text';
+import { Icon } from '@/components/ui/icon';
 import { Card } from '@/components/ui/card';
 import { EmptyState, ErrorState, SectionCard } from '@/components/business/feedback';
 import {
@@ -15,6 +17,7 @@ import {
   type LedgerPeriod,
   type LedgerSummary,
 } from '@/lib/api/endpoints/ledger';
+import { fetchAiLedgerInsight, type AiTextResp } from '@/lib/api/endpoints/ai';
 import { categoryLabel } from '@/lib/ledger/categories';
 import { formatAmount, toDayKey } from '@/lib/ledger/stats';
 import { useRequest } from '@/hooks/useRequest';
@@ -31,11 +34,26 @@ export default function LedgerReportScreen() {
   const scheme = useColorScheme() ?? 'light';
   const [period, setPeriod] = useState<LedgerPeriod>('month');
   const anchor = useMemo(() => toDayKey(new Date()), []);
+  const [insight, setInsight] = useState<AiTextResp | null>(null);
+  const [insightLoading, setInsightLoading] = useState(false);
 
   const summary = useRequest<LedgerSummary>(() => fetchLedgerSummary({ period, date: anchor }), [
     period,
     anchor,
   ]);
+
+  // 年报没有对应服务端口径,点评只对周/月开放
+  const loadInsight = useCallback(async () => {
+    if (insightLoading || period === 'year') return;
+    setInsightLoading(true);
+    try {
+      setInsight(await fetchAiLedgerInsight(period, anchor));
+    } catch {
+      setInsight(null);
+    } finally {
+      setInsightLoading(false);
+    }
+  }, [anchor, insightLoading, period]);
 
   const maxTrend = useCallback((data: LedgerSummary) => {
     return Math.max(1, ...data.trend.map((point) => Math.max(point.expense, point.income)));
@@ -59,7 +77,10 @@ export default function LedgerReportScreen() {
               accessibilityRole="button"
               accessibilityLabel={item.label}
               accessibilityState={period === item.key ? { selected: true } : {}}
-              onPress={() => setPeriod(item.key)}
+              onPress={() => {
+                setPeriod(item.key);
+                setInsight(null);
+              }}
               className={`flex-1 items-center rounded-full py-2 ${period === item.key ? 'bg-primary' : ''}`}
             >
               <Text
@@ -135,6 +156,33 @@ export default function LedgerReportScreen() {
             >
               <TrendBars data={summary.data} max={maxTrend(summary.data)} scheme={scheme} />
             </SectionCard>
+
+            {period !== 'year' ? (
+              <SectionCard
+                title="AI 点评"
+                description={insight?.mockMode ? '测试模式 · 服务端未配置 Key' : undefined}
+              >
+                {insight ? (
+                  <Text className="text-foreground text-sm leading-5" selectable>
+                    {insight.text}
+                  </Text>
+                ) : (
+                  <Pressable
+                    accessibilityRole="button"
+                    accessibilityLabel="生成 AI 点评"
+                    onPress={() => void loadInsight()}
+                    disabled={insightLoading}
+                    className="bg-accent flex-row items-center self-start rounded-full px-4 py-2"
+                    style={{ gap: 6 }}
+                  >
+                    <Icon as={Sparkles} size={14} className="text-accent-foreground" />
+                    <Text className="text-accent-foreground text-xs font-semibold">
+                      {insightLoading ? '分析中…' : '让 AI 点评这个周期'}
+                    </Text>
+                  </Pressable>
+                )}
+              </SectionCard>
+            ) : null}
           </>
         ) : summary.isInitialLoading ? (
           <SectionCard title="正在生成报表…">{null}</SectionCard>

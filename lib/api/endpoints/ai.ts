@@ -56,5 +56,32 @@ export function sendAiMessage(conversationId: string, content: string): Promise<
 
 /** `DELETE /app/ai/conversation/{id}`。 */
 export function deleteAiConversation(conversationId: string): Promise<void> {
-  return api.delete(`/app/ai/conversation/${conversationId}`);
+  return api.delete<void>(`/app/ai/conversation/${conversationId}`);
+}
+
+// ==================== AI 洞察(周报/拆解/点评) ====================
+
+export interface AiTextResp {
+  text: string;
+  /** 服务端未配置 LLM Key 时为 true。 */
+  mockMode: boolean;
+}
+
+/** `POST /app/ai/weekly-report`,date 为周内锚点日。 */
+export function fetchAiWeeklyReport(date?: string): Promise<AiTextResp> {
+  return api.post<AiTextResp>('/app/ai/weekly-report', undefined, {
+    params: date ? { date } : undefined,
+  });
+}
+
+/** `POST /app/ai/decompose`,返回 3-5 条子步骤(每行一条)。 */
+export function requestAiDecompose(content: string): Promise<AiTextResp> {
+  return api.post<AiTextResp>('/app/ai/decompose', { content });
+}
+
+/** `POST /app/ai/ledger-insight`,period=week|month。 */
+export function fetchAiLedgerInsight(period: 'week' | 'month', date?: string): Promise<AiTextResp> {
+  return api.post<AiTextResp>('/app/ai/ledger-insight', undefined, {
+    params: date ? { period, date } : { period },
+  });
 }

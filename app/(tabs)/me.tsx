@@ -19,6 +19,7 @@ import {
   LogOut,
   MessageSquare,
   Star,
+  SunMoon,
   User,
 } from 'lucide-react-native';
 
@@ -41,12 +42,15 @@ import { NoticeBar, SectionCard } from '@/components/business/feedback';
 import { GENDER_LABEL, IDENTITY_LABEL } from '@/lib/format';
 import { env } from '@/lib/env';
 import { useSession } from '@/store/session';
+import { useAppearance } from '@/store/appearance';
 import { useSessionGuard } from '@/providers/SessionProvider';
 import { useToast } from '@/providers/ToastProvider';
 
 export default function MeTabScreen() {
   const router = useRouter();
   const { toast } = useToast();
+  const mode = useAppearance((state) => state.mode);
+  const setMode = useAppearance((state) => state.setMode);
   const { guard, signedIn } = useSessionGuard();
 
   const user = useSession((state) => state.user);
@@ -198,6 +202,18 @@ export default function MeTabScreen() {
             label="通知偏好"
             description="站内信与短信提醒;审核结果类不可关闭"
             onPress={() => openProtected('/me/notification-pref', 'notification-pref')}
+          />
+          <EntryRow
+            icon={SunMoon}
+            label="外观"
+            description={
+              mode === 'system' ? '跟随系统' : mode === 'light' ? '浅色' : '深色'
+            }
+            onPress={() => {
+              const next = mode === 'system' ? 'light' : mode === 'light' ? 'dark' : 'system';
+              void setMode(next);
+              toast(next === 'system' ? '外观:跟随系统' : next === 'light' ? '外观:浅色' : '外观:深色', 'success');
+            }}
           />
         </SectionCard>
 

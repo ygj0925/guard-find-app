@@ -91,6 +91,10 @@ export default function RootLayout() {
                       <Stack.Screen name="tools/habits" options={{ title: '习惯打卡' }} />
                       <Stack.Screen name="tools/habit-detail" options={{ title: '打卡日历' }} />
                       <Stack.Screen name="tools/split" options={{ title: 'AA 分账' }} />
+                      <Stack.Screen name="tools/mortgage" options={{ title: '房贷计算' }} />
+                      <Stack.Screen name="tools/text-toolkit" options={{ title: '文本工具箱' }} />
+                      <Stack.Screen name="tools/random" options={{ title: '随机决定器' }} />
+                      <Stack.Screen name="tools/weekly-report" options={{ title: 'AI 周报' }} />
                       <Stack.Screen name="me/profile-edit" options={{ title: '编辑资料' }} />
                       <Stack.Screen name="me/security" options={{ title: '账号安全' }} />
                       <Stack.Screen name="me/cases" options={{ title: '我发布的档案' }} />
