@@ -6,7 +6,7 @@ import React, { useCallback, useMemo, useState } from 'react';
 import { Alert, FlatList, Pressable, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useFocusEffect } from 'expo-router';
-import { ChevronLeft, ChevronRight, Plus, Share2 } from 'lucide-react-native';
+import { ChevronDown, ChevronLeft, ChevronRight, Plus, Share2, Users } from 'lucide-react-native';
 
 import { Text } from '@/components/ui/text';
 import { Icon } from '@/components/ui/icon';
@@ -29,6 +29,7 @@ import {
 import { categoryIcon, categoryLabel } from '@/lib/ledger/categories';
 import { useLedgerFeed } from '@/hooks/useLedgerFeed';
 import { useSession } from '@/store/session';
+import { useLedgerScope } from '@/store/ledger-scope';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { token } from '@/constants/Colors';
 import { useToast } from '@/providers/ToastProvider';
@@ -46,7 +47,14 @@ export default function LedgerScreen() {
   const signedIn = useSession((state) => state.phase === 'authenticated');
 
   const [month, setMonth] = useState(() => currentMonth());
-  const feed = useLedgerFeed(month, signedIn);
+  const scopeGroupId = useLedgerScope((state) => state.groupId);
+  const scopeName = useLedgerScope((state) => state.scopeName);
+  const loadScope = useLedgerScope((state) => state.load);
+  const feed = useLedgerFeed(month, signedIn, scopeGroupId);
+
+  React.useEffect(() => {
+    void loadScope();
+  }, [loadScope]);
 
   // 从"记一笔/编辑"返回时自动刷新:首次挂载交给 hook 的初始加载,避免双请求。
   const { loadedMonth, refresh } = feed;
@@ -173,24 +181,37 @@ export default function LedgerScreen() {
             <View className="flex-row items-center justify-between">
               <Pressable
                 accessibilityRole="button"
-                accessibilityLabel="上一月"
-                onPress={() => setMonth(adjacentMonths(month).prev)}
-                className="p-2"
+                accessibilityLabel="切换账本"
+                onPress={() => router.push('/tools/ledger/groups')}
+                className="flex-row items-center"
+                style={{ gap: 6 }}
               >
-                <Icon as={ChevronLeft} size={18} className="text-muted-foreground" />
+                <Icon as={Users} size={16} className="text-primary" />
+                <Text className="text-base font-semibold">{scopeName ?? '个人账本'}</Text>
+                <Icon as={ChevronDown} size={14} className="text-muted-foreground" />
               </Pressable>
-              <Text className="text-base font-semibold">{monthLabel(month)}</Text>
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel="下一月"
-                onPress={() => {
-                  const next = adjacentMonths(month).next;
-                  if (next <= currentMonth()) setMonth(next);
-                }}
-                className="p-2"
-              >
-                <Icon as={ChevronRight} size={18} className="text-muted-foreground" />
-              </Pressable>
+              <View className="flex-row items-center">
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel="上一月"
+                  onPress={() => setMonth(adjacentMonths(month).prev)}
+                  className="p-2"
+                >
+                  <Icon as={ChevronLeft} size={18} className="text-muted-foreground" />
+                </Pressable>
+                <Text className="text-base font-semibold">{monthLabel(month)}</Text>
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel="下一月"
+                  onPress={() => {
+                    const next = adjacentMonths(month).next;
+                    if (next <= currentMonth()) setMonth(next);
+                  }}
+                  className="p-2"
+                >
+                  <Icon as={ChevronRight} size={18} className="text-muted-foreground" />
+                </Pressable>
+              </View>
             </View>
             <View className="mt-3 flex-row">
               <View className="flex-1">

@@ -83,6 +83,8 @@ export default function RootLayout() {
                         options={{ title: '记一笔', presentation: 'modal' }}
                       />
                       <Stack.Screen name="tools/ledger/report" options={{ title: '收支报表' }} />
+                      <Stack.Screen name="tools/ledger/groups" options={{ title: '账本管理' }} />
+                      <Stack.Screen name="tools/ledger/group-detail" options={{ title: '家庭组' }} />
                       <Stack.Screen name="ai/conversations" options={{ title: 'AI 对话' }} />
                       <Stack.Screen name="ai/chat" options={{ title: '对话', headerBackButtonDisplayMode: 'default' }} />
                       <Stack.Screen name="tools/countdown" options={{ title: '倒数日' }} />

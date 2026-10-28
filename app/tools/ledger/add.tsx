@@ -23,6 +23,7 @@ import {
 import { categoriesOf } from '@/lib/ledger/categories';
 import { toDayKey } from '@/lib/ledger/stats';
 import { useToast } from '@/providers/ToastProvider';
+import { useLedgerScope } from '@/store/ledger-scope';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { token } from '@/constants/Colors';
 
@@ -46,6 +47,7 @@ export default function LedgerAddScreen() {
   const editing = useMemo(() => parseParamsRecord(params.record), [params.record]);
 
   const { toast } = useToast();
+  const scopeGroupId = useLedgerScope((state) => state.groupId);
   const scheme = useColorScheme() ?? 'light';
 
   const [type, setType] = useState<LedgerType>(editing?.type ?? 1);
@@ -93,6 +95,7 @@ export default function LedgerAddScreen() {
         category,
         recordDate,
         remark: remark.trim() || undefined,
+        groupId: scopeGroupId ?? undefined,
       };
       if (editing) {
         await updateLedgerRecord(editing.id, payload);

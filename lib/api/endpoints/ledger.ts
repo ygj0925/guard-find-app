@@ -78,16 +78,71 @@ export function deleteLedgerRecord(id: string): Promise<void> {
 /** `GET /app/ledger/record/page`,month 传 `yyyy-MM` 时只查该月。 */
 export function fetchLedgerRecords(params: {
   month?: string;
+  groupId?: string;
   page: number;
   size: number;
 }): Promise<LedgerPageResp> {
   return api.get<LedgerPageResp>('/app/ledger/record/page', params);
 }
 
-/** `GET /app/ledger/summary`,date 为区间内锚点日。 */
+/** `GET /app/ledger/summary`,date 为区间内锚点日;groupId 为家庭组口径。 */
 export function fetchLedgerSummary(params: {
   period: LedgerPeriod;
   date?: string;
+  groupId?: string;
 }): Promise<LedgerSummary> {
   return api.get<LedgerSummary>('/app/ledger/summary', params);
+}
+
+// ==================== 家庭组记账 ====================
+
+export interface LedgerGroup {
+  id: string;
+  name: string;
+  ownerUserId: string;
+  /** 1=组长, 2=成员 */
+  myRole: 1 | 2;
+  memberCount: number;
+  /** 邀请码,仅组长可见。 */
+  inviteCode?: string;
+}
+
+export interface LedgerGroupMember {
+  userId: string;
+  nickname: string | null;
+  avatar: string | null;
+  role: 1 | 2;
+  createTime?: string;
+}
+
+export function createLedgerGroup(name: string): Promise<LedgerGroup> {
+  return api.post<LedgerGroup>('/app/ledger/group', { name });
+}
+
+export function fetchLedgerGroups(): Promise<LedgerGroup[]> {
+  return api.get<LedgerGroup[]>('/app/ledger/group/list');
+}
+
+export function joinLedgerGroup(inviteCode: string): Promise<LedgerGroup> {
+  return api.post<LedgerGroup>('/app/ledger/group/join', { inviteCode });
+}
+
+export function regenerateInviteCode(groupId: string): Promise<LedgerGroup> {
+  return api.post<LedgerGroup>(`/app/ledger/group/${groupId}/invite-code`);
+}
+
+export function fetchLedgerGroupMembers(groupId: string): Promise<LedgerGroupMember[]> {
+  return api.get<LedgerGroupMember[]>(`/app/ledger/group/${groupId}/members`);
+}
+
+export function removeGroupMember(groupId: string, memberUserId: string): Promise<void> {
+  return api.delete<void>(`/app/ledger/group/${groupId}/member/${memberUserId}`);
+}
+
+export function quitLedgerGroup(groupId: string): Promise<void> {
+  return api.delete<void>(`/app/ledger/group/${groupId}/quit`);
+}
+
+export function dissolveLedgerGroup(groupId: string): Promise<void> {
+  return api.delete<void>(`/app/ledger/group/${groupId}`);
 }
