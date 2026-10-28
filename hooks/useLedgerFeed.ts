@@ -22,7 +22,12 @@ export interface LedgerDayGroup {
 
 const PAGE_SIZE = 20;
 
-export function useLedgerFeed(month: string, enabled: boolean) {
+/** 月份+作用域的组合缓存键(模块级,避免 hook 内声明顺序问题)。 */
+function scopeKey(month: string, groupId: string | null): string {
+  return groupId ? `${groupId}:${month}` : month;
+}
+
+export function useLedgerFeed(month: string, enabled: boolean, groupId: string | null = null) {
   const [groups, setGroups] = useState<LedgerDayGroup[]>([]);
   const [total, setTotal] = useState(0);
   const [phase, setPhase] = useState<LedgerFeedPhase>('idle');
@@ -30,7 +35,7 @@ export function useLedgerFeed(month: string, enabled: boolean) {
   /** 已成功加载的月份;页面用它判断"返回页面时是否需要刷新"。 */
   const [loadedMonth, setLoadedMonth] = useState<string | null>(null);
   const pageRef = useRef(1);
-  const loadedMonthsRef = useRef<Set<string>>(new Set());
+  const loadedRef = useRef<Set<string>>(new Set());
   const generationRef = useRef(0);
 
   const load = useCallback(
@@ -41,6 +46,7 @@ export function useLedgerFeed(month: string, enabled: boolean) {
       try {
         const resp = await fetchLedgerRecords({
           month: targetMonth,
+          groupId: groupId ?? undefined,
           page: targetPage,
           size: PAGE_SIZE,
         });
@@ -49,7 +55,7 @@ export function useLedgerFeed(month: string, enabled: boolean) {
         setGroups((prev) => (mode === 'more' ? mergeDayGroups(prev, incoming) : incoming));
         setTotal(resp.total);
         pageRef.current = targetPage;
-        loadedMonthsRef.current.add(targetMonth);
+        loadedRef.current.add(scopeKey(targetMonth, groupId));
         setLoadedMonth(targetMonth);
         setPhase('idle');
       } catch (caught) {
@@ -58,15 +64,15 @@ export function useLedgerFeed(month: string, enabled: boolean) {
         setPhase('error');
       }
     },
-    [],
+    [groupId],
   );
 
   useEffect(() => {
     if (!enabled) return;
-    if (!loadedMonthsRef.current.has(month)) void load(month, 1, 'initial');
-    // month 切换即重查:记账页的月份是显式导航,不做 slot 缓存(与广场四流不同)。
+    if (!loadedRef.current.has(scopeKey(month, groupId))) void load(month, 1, 'initial');
+    // month/scope 切换即重查:账本作用域是显式导航,不做 slot 缓存。
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [month, enabled]);
+  }, [month, enabled, groupId]);
 
   const refresh = useCallback(
     () => (enabled ? load(month, 1, 'initial') : Promise.resolve(null)),

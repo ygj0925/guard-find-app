@@ -22,6 +22,7 @@ import { categoryLabel } from '@/lib/ledger/categories';
 import { formatAmount, toDayKey } from '@/lib/ledger/stats';
 import { useRequest } from '@/hooks/useRequest';
 import { useColorScheme } from '@/hooks/useColorScheme';
+import { useLedgerScope } from '@/store/ledger-scope';
 import { token } from '@/constants/Colors';
 
 const PERIODS: { key: LedgerPeriod; label: string }[] = [
@@ -34,10 +35,16 @@ export default function LedgerReportScreen() {
   const scheme = useColorScheme() ?? 'light';
   const [period, setPeriod] = useState<LedgerPeriod>('month');
   const anchor = useMemo(() => toDayKey(new Date()), []);
+  const scopeGroupId = useLedgerScope((state) => state.groupId);
+  const scopeName = useLedgerScope((state) => state.scopeName);
+  const loadScope = useLedgerScope((state) => state.load);
+  React.useEffect(() => {
+    void loadScope();
+  }, [loadScope]);
   const [insight, setInsight] = useState<AiTextResp | null>(null);
   const [insightLoading, setInsightLoading] = useState(false);
 
-  const summary = useRequest<LedgerSummary>(() => fetchLedgerSummary({ period, date: anchor }), [
+  const summary = useRequest<LedgerSummary>(() => fetchLedgerSummary({ period, date: anchor, groupId: scopeGroupId ?? undefined }), [
     period,
     anchor,
   ]);
@@ -68,6 +75,7 @@ export default function LedgerReportScreen() {
       <ScrollView className="flex-1 px-4" contentContainerStyle={{ paddingBottom: 104 }}>
         <View className="mb-4 mt-2">
           <Text className="text-xl font-bold">收支报表</Text>
+          <Text className="text-muted-foreground mt-1 text-sm">当前账本:{scopeName ?? '个人账本'}</Text>
         </View>
 
         <View className="mb-3 flex-row rounded-full bg-muted p-1">
