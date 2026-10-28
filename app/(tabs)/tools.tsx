@@ -9,6 +9,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import {
   Calculator,
+  CalendarRange,
   ClipboardList,
   UserCheck,
   Clock,
@@ -20,6 +21,7 @@ import {
   Newspaper,
   Ruler,
   Divide,
+  HeartPulse,
   Sparkles,
   Target,
   SquareDashed,
@@ -58,11 +60,13 @@ const TOOLS: ToolEntry[] = [
   { key: 'text', title: '文本工具', description: '字数 · 时间戳 · 进制 · JSON', icon: SquareDashed, href: '/tools/text-toolkit' },
   { key: 'music', title: '音乐播放', description: '本地音频 · 播放列表', icon: Music, href: '/tools/music' },
   { key: 'calc', title: '计算器', description: '基础四则 · 离线可用', icon: Divide, href: '/tools/calculator' },
+  { key: 'datecalc', title: '日期计算', description: '间隔天数 · 当年进度', icon: CalendarRange, href: '/tools/date-calc' },
   { key: 'random', title: '随机决定', description: '转盘 · 骰子 · 硬币', icon: Ruler, href: '/tools/random' },
   { key: 'tasks', title: '任务分派', description: '家人互派 · 状态流转', icon: ClipboardList, href: '/tools/tasks' },
   { key: 'goals', title: '目标 OKR', description: '定目标 · 拆 KR · 量化进度', icon: Target, href: '/tools/goals' },
   { key: 'checkin', title: '在线签到', description: '发起签到 · 动态码防代签', icon: UserCheck, href: '/tools/checkin' },
   { key: 'clock', title: '时钟秒表', description: '时钟 · 秒表 · 计时器', icon: Clock, href: '/tools/clock' },
+  { key: 'health', title: '健康计算', description: 'BMI · 基础代谢 · 饮水', icon: HeartPulse, href: '/tools/health' },
   { key: 'unit', title: '单位换算', description: '长度 · 重量 · 温度 · 离线可用', icon: Ruler, href: '/tools/unit-convert' },
   { key: 'forum', title: '圈子论坛', description: '发帖 · 交流 · 互助', icon: MessagesSquare },
 ];
