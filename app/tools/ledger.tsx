@@ -2,7 +2,7 @@
  * 记账 · 日账单:月度合计 + 按天分组流水 + "记一笔"悬浮按钮 + 报表入口。
  * 分页/分组逻辑在 hooks/useLedgerFeed,本页只管渲染与交互。
  */
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Alert, FlatList, Pressable, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useFocusEffect } from 'expo-router';
@@ -57,12 +57,21 @@ export default function LedgerScreen() {
   }, [loadScope]);
 
   // 从"记一笔/编辑"返回时自动刷新:首次挂载交给 hook 的初始加载,避免双请求。
-  const { loadedMonth, refresh } = feed;
+  const { loadedMonth, refresh, error: feedError } = feed;
   useFocusEffect(
     useCallback(() => {
       if (loadedMonth === month) void refresh();
     }, [loadedMonth, month, refresh]),
   );
+
+  // 当前账本已被组长解散(服务端 4004):自动回落个人账本,避免每次进页都报错
+  const setScope = useLedgerScope((state) => state.setScope);
+  useEffect(() => {
+    if (scopeGroupId && feedError && String(feedError.bizCode) === '4004') {
+      void setScope(null, null);
+      toast('该家庭组已不存在,已切回个人账本', 'warn');
+    }
+  }, [feedError, scopeGroupId, setScope, toast]);
 
   const rows = useMemo<Row[]>(
     () =>

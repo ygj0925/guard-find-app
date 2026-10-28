@@ -69,7 +69,10 @@ export default function CommunityScreen() {
     [scope, sort],
   );
 
-  const query = useRequest(() => load(1, 'initial'), [signedIn, scope, sort]);
+  // 「我的动态」需登录:未登录不发请求(避免全局 401 处理器清会话回跳),由空态引导登录
+  const query = useRequest(() => load(1, 'initial'), [signedIn, scope, sort], {
+    enabled: scope === 'plaza' || signedIn,
+  });
 
   const loadMore = useCallback(async () => {
     if (items.length >= total) return;
@@ -189,6 +192,13 @@ export default function CommunityScreen() {
             <SectionCard title="加载中…">{null}</SectionCard>
           ) : query.error ? (
             <ErrorState error={query.error} onRetry={() => void query.reload()} />
+          ) : scope === 'mine' && !signedIn ? (
+            <EmptyState
+              title="登录后查看我的动态"
+              description="登录后即可管理你发布的所有内容"
+              actionLabel="去登录"
+              onAction={() => router.push(loginHref({ href: '/community/detail?scope=mine', from: 'community' }))}
+            />
           ) : scope === 'mine' ? (
             <EmptyState
               title="你还没有发过动态"

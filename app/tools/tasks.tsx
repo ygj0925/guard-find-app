@@ -50,9 +50,11 @@ export default function TasksScreen() {
   const groups = groupsQuery.data ?? [];
   const activeGroup = selectedGroupId ? groups.find((g) => g.id === selectedGroupId) : null;
 
+  // 组内全部视图必须先选中组,否则不发请求(服务端会拒绝缺 groupId 的查询)
   const tasksQuery = useRequest(
     () => fetchTasks(scope, activeGroup?.id),
     [signedIn, scope, activeGroup?.id],
+    { enabled: scope === 'mine' || !!activeGroup },
   );
   const tasks = tasksQuery.data ?? [];
 

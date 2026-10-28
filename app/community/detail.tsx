@@ -74,13 +74,14 @@ export default function PostDetailScreen() {
       setDraft('');
       setReplyTo(null);
       toast('评论已发表', 'success');
-      await commentsQuery.reload();
+      // 计数在动态详情里,评论列表和详情都要刷新
+      await Promise.all([commentsQuery.reload(), detail.reload()]);
     } catch (cause) {
       toast(cause instanceof Error && cause.message ? cause.message : '评论失败,请稍后再试', 'error');
     } finally {
       setSending(false);
     }
-  }, [commentsQuery, draft, postId, replyTo, router, sending, signedIn, toast]);
+  }, [commentsQuery, detail, draft, postId, replyTo, router, sending, signedIn, toast]);
 
   const renderComment = useCallback(
     ({ item }: { item: CommunityComment }) => (

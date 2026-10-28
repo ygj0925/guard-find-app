@@ -4,7 +4,7 @@
  * 无障碍硬约束(spec 卡片要求):紧急程度 MUST NOT 只靠颜色区分,
  * 每个色块都必须同时给出文字,并且倒计时要用分钟粒度自己推进,不能只渲染服务端快照。
  */
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { View } from 'react-native';
 import { Badge } from '@/components/ui/badge';
 import { Text } from '@/components/ui/text';
@@ -57,19 +57,17 @@ export function UrgencyBadge({ level }: { level: UrgencyLevel }) {
 }
 
 /**
- * 已失踪时长。服务端给的是"取数时刻的整数小时",这里按分钟推进,
+ * 已失踪时长。服务端给的是"取数时刻的整数小时",这里挂载后按 30 秒一跳推进,
  * 保证用户停在页面上时数字会自己走,而不是永远停在 18720。
  */
 export function MissingDuration({
   hours,
-  fetchedAt = Date.now(),
   urgent,
 }: {
   hours: number | null | undefined;
-  fetchedAt?: number;
   urgent?: boolean;
 }) {
-  const elapsed = useElapsedHours(hours, fetchedAt);
+  const elapsed = useElapsedHours(hours);
   return (
     <View className="flex-row items-center gap-1">
       <Text className={`text-xs font-medium ${urgent ? 'text-urgent' : 'text-muted-foreground'}`}>
@@ -79,20 +77,23 @@ export function MissingDuration({
   );
 }
 
-/** 每 30 秒重算一次经过的小时数;分钟级足够,再快只是白烧渲染。 */
-export function useElapsedHours(baseHours: number | null | undefined, fetchedAt: number): number {
-  const [, forceTick] = useState(0);
+/**
+ * 每 30 秒重算一次经过的小时数;分钟级足够,再快只是白烧渲染。
+ * 基准 = 挂载时刻(原实现的默认 fetchedAt=Date.now() 与此等价,两处调用方均未显式传值)。
+ * 计时起点用 interval 回包写入 state,避免渲染期调用 Date.now()(react-hooks/purity)。
+ */
+export function useElapsedHours(baseHours: number | null | undefined): number {
+  const [elapsedExtraHours, setElapsedExtraHours] = useState(0);
   useEffect(() => {
     if (baseHours === null || baseHours === undefined) return undefined;
-    const timer = setInterval(() => forceTick((n) => n + 1), 30_000);
+    const timer = setInterval(() => {
+      setElapsedExtraHours((prev) => prev + 30_000 / 3_600_000);
+    }, 30_000);
     return () => clearInterval(timer);
-  }, [baseHours, fetchedAt]);
+  }, [baseHours]);
 
-  return useMemo(() => {
-    if (baseHours === null || baseHours === undefined) return 0;
-    const extra = Math.max(0, Date.now() - fetchedAt) / 3_600_000;
-    return Math.floor(baseHours + extra);
-  }, [baseHours, fetchedAt]);
+  if (baseHours === null || baseHours === undefined) return 0;
+  return Math.floor(baseHours + elapsedExtraHours);
 }
 
 export function LeadStatusBadge({ status }: { status: LeadStatus }) {

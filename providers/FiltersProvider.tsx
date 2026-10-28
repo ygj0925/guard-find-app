@@ -89,7 +89,9 @@ export function FiltersProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   useEffect(() => {
-    void load(false);
+    // 延后一拍:effect 体内禁同步 setState(load 首行置 loading)
+    const timer = setTimeout(() => void load(false), 0);
+    return () => clearTimeout(timer);
   }, [load]);
 
   const regionIndex = useMemo(() => {
