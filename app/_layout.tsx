@@ -85,6 +85,9 @@ export default function RootLayout() {
                       <Stack.Screen name="tools/ledger/report" options={{ title: '收支报表' }} />
                       <Stack.Screen name="ai/conversations" options={{ title: 'AI 对话' }} />
                       <Stack.Screen name="ai/chat" options={{ title: '对话', headerBackButtonDisplayMode: 'default' }} />
+                      <Stack.Screen name="tools/countdown" options={{ title: '倒数日' }} />
+                      <Stack.Screen name="tools/todo" options={{ title: '待办清单' }} />
+                      <Stack.Screen name="tools/unit-convert" options={{ title: '单位换算' }} />
                       <Stack.Screen name="me/profile-edit" options={{ title: '编辑资料' }} />
                       <Stack.Screen name="me/security" options={{ title: '账号安全' }} />
                       <Stack.Screen name="me/cases" options={{ title: '我发布的档案' }} />
