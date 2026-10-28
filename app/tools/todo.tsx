@@ -2,7 +2,7 @@
  * 待办清单:未完成在前(截止日升序)、已完成在后,勾选即翻转。
  * 新增走底部输入条(服务端字段少,不值得独立表单页);长按删除。
  */
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Alert, FlatList, Modal, Pressable, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -32,6 +32,7 @@ import { token } from '@/constants/Colors';
 import { useToast } from '@/providers/ToastProvider';
 import { loginHref } from '@/lib/nav';
 import { requestAiDecompose } from '@/lib/api/endpoints/ai';
+import Animated, { useAnimatedStyle, useSharedValue, withSequence, withSpring, withTiming } from 'react-native-reanimated';
 
 export default function TodoScreen() {
   const router = useRouter();
@@ -47,6 +48,8 @@ export default function TodoScreen() {
   const [decomposeSteps, setDecomposeSteps] = useState<string[]>([]);
   const [pickedSteps, setPickedSteps] = useState<Set<number>>(new Set());
   const [decomposing, setDecomposing] = useState(false);
+  // 已完成叠卡:默认折叠,点击展开(叠卡展开效果)
+  const [doneExpanded, setDoneExpanded] = useState(false);
   const [addingSteps, setAddingSteps] = useState(false);
 
   const openDecompose = useCallback(
@@ -157,11 +160,8 @@ export default function TodoScreen() {
         onPress={() => void flip(record)}
         className="p-1"
       >
-        <Icon
-          as={record.done ? CheckCircle2 : Circle}
-          size={22}
-          className={record.done ? 'text-found' : 'text-muted-foreground'}
-        />
+        {/* 勾选联动:完成时弹跳 + 完成后画线延伸 */}
+        <BouncingCheck done={record.done} />
       </Pressable>
       <Pressable
         accessibilityRole="button"
@@ -171,11 +171,7 @@ export default function TodoScreen() {
       >
         <Card className="flex-1 flex-row items-center justify-between p-3">
           <View className="flex-1">
-            <Text
-              className={`text-sm ${record.done ? 'text-muted-foreground line-through' : 'text-foreground'}`}
-            >
-              {record.title}
-            </Text>
+            <StrikethroughText done={record.done} title={record.title} />
             {record.dueDate ? (
               <Text
                 className={`mt-0.5 text-xs ${
@@ -350,5 +346,41 @@ export default function TodoScreen() {
         </Pressable>
       </View>
     </SafeAreaView>
+  );
+}
+
+/** 勾选弹跳:完成瞬间弹簧缩放(勾选联动效果)。 */
+function BouncingCheck({ done }: { done: boolean }) {
+  const scale = useSharedValue(1);
+  useEffect(() => {
+    if (done) {
+      scale.value = withSequence(withTiming(1.45, { duration: 120 }), withSpring(1));
+    }
+  }, [done, scale]);
+  const style = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
+  return (
+    <Animated.View style={style}>
+      <Icon as={done ? CheckCircle2 : Circle} size={22} className={done ? 'text-found' : 'text-muted-foreground'} />
+    </Animated.View>
+  );
+}
+
+/** 画线:完成后删除线从左向右延伸 + 文字淡出(勾选联动效果)。 */
+function StrikethroughText({ done, title }: { done: boolean; title: string }) {
+  const line = useSharedValue(0);
+  const textOpacity = useSharedValue(1);
+  useEffect(() => {
+    line.value = withTiming(done ? 1 : 0, { duration: 260 });
+    textOpacity.value = withTiming(done ? 0.55 : 1, { duration: 260 });
+  }, [done, line, textOpacity]);
+  const lineStyle = useAnimatedStyle(() => ({ width: `${Math.round(line.value * 100)}%` }));
+  const textStyle = useAnimatedStyle(() => ({ opacity: textOpacity.value }));
+  return (
+    <View>
+      <Animated.Text style={textStyle} className={done ? 'text-foreground text-sm' : 'text-foreground text-sm'}>
+        {title}
+      </Animated.Text>
+      <Animated.View style={[lineStyle, { height: 1.5, backgroundColor: 'rgba(128,128,128,0.8)', marginTop: -9 }]} />
+    </View>
   );
 }

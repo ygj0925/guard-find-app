@@ -13,6 +13,7 @@ import { Icon } from '@/components/ui/icon';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { EmptyState, SectionCard } from '@/components/business/feedback';
+import { DraggableProgress } from '@/components/ui/draggable-progress';
 import {
   formatTrackTime,
   musicPlayer,
@@ -138,25 +139,14 @@ export default function MusicScreen() {
         <Text className="text-muted-foreground mt-1 text-xs">
           第 {(state.index + 1).toString()} 首 / 共 {tracks.length} 首 · {musicPlayer.kind.includes('web') ? 'Web Audio' : '原生'}
         </Text>
-        {/* 进度条:可点按跳转 */}
-        <Pressable
-          accessibilityRole="adjustable"
-          accessibilityLabel="播放进度"
-          accessibilityValue={{ text: formatTrackTime(state.position) }}
-          onPress={(event) => {
-            if (barWidth <= 0) return;
-            void seekRatio(Math.min(1, Math.max(0, event.nativeEvent.locationX / barWidth)));
-          }}
-          onLayout={(event) => setBarWidth(event.nativeEvent.layout.width)}
-          className="mt-3 h-2 w-full overflow-hidden rounded-full"
-          style={{ backgroundColor: token('muted', scheme) }}
-          hitSlop={{ top: 8, bottom: 8 }}
-        >
-          <View
-            className="h-2 rounded-full"
-            style={{ width: `${Math.max(1, Math.round(progress * 100))}%`, backgroundColor: token('primary', scheme) }}
-          />
-        </Pressable>
+        {/* 吸附卡+画线:拖动画线跟随,松手吸附 seek */}
+        <DraggableProgress
+          progress={state.duration > 0 ? state.position / state.duration : 0}
+          onDrag={(ratio) => setState((prev) => ({ ...prev, position: ratio * prev.duration }))}
+          onSeek={(ratio) => musicPlayer.seek(ratioToSeconds(ratio, state.duration))}
+          activeColor={token('primary', scheme)}
+          trackColor={token('muted', scheme)}
+        />
         <View className="mt-1 flex-row justify-between">
           <Text className="text-muted-foreground text-xs">{formatTrackTime(state.position)}</Text>
           <Text className="text-muted-foreground text-xs">{formatTrackTime(state.duration)}</Text>

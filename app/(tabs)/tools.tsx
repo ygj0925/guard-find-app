@@ -17,7 +17,10 @@ import { useToolsOrder, pinTools } from '@/store/tools-order';
 import { fetchLedgerSummary, type LedgerSummary } from '@/lib/api/endpoints/ledger';
 import { formatAmount } from '@/lib/ledger/stats';
 import { useToast } from '@/providers/ToastProvider';
+import { token } from '@/constants/Colors';
+import { useColorScheme } from '@/hooks/useColorScheme';
 import { Newspaper } from 'lucide-react-native';
+import { useCircularReveal } from '@/components/ui/circular-reveal';
 import { TOOL_REGISTRY as TOOLS, type ToolEntry } from '@/lib/tools/registry';
 
 
@@ -44,12 +47,14 @@ export default function ToolsScreen() {
     return [...pinned, ...rest];
   }, [pinnedKeys]);
 
-  const openTool = (tool: ToolEntry) => {
+  const { revealPush, overlay } = useCircularReveal(router);
+  const scheme = useColorScheme() ?? 'light';
+  const openTool = (tool: ToolEntry, eventPageX = 200, eventPageY = 400) => {
     if (!tool.href) {
       toast(`${tool.title}即将上线,敬请期待`);
       return;
     }
-    router.push(tool.href);
+    revealPush(tool.href, eventPageX, eventPageY, token('primary', scheme));
   };
 
   const longPressTool = useCallback(
@@ -133,7 +138,7 @@ export default function ToolsScreen() {
               key={tool.key}
               accessibilityRole="button"
               accessibilityLabel={tool.title}
-              onPress={() => openTool(tool)}
+              onPress={(event) => openTool(tool, event.nativeEvent.pageX, event.nativeEvent.pageY)}
               onLongPress={() => longPressTool(tool)}
               className="mb-3 w-[48%]"
             >
@@ -155,6 +160,7 @@ export default function ToolsScreen() {
           ))}
         </View>
 
+        {overlay}
         <Text className="text-muted-foreground mt-2 text-center text-xs">
           长按工具可置顶 · 更多工具持续上线
         </Text>
