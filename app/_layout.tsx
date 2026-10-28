@@ -102,6 +102,8 @@ export default function RootLayout() {
                       <Stack.Screen name="tools/clock" options={{ title: '时钟' }} />
                       <Stack.Screen name="tools/calculator" options={{ title: '计算器' }} />
                       <Stack.Screen name="tools/music" options={{ title: '音乐播放' }} />
+                      <Stack.Screen name="tools/checkin" options={{ title: '在线签到' }} />
+                      <Stack.Screen name="tools/checkin-detail" options={{ title: '签到详情' }} />
                       <Stack.Screen name="community/publish" options={{ title: '发布动态', presentation: 'modal' }} />
                       <Stack.Screen name="community/detail" options={{ title: '动态详情' }} />
                       <Stack.Screen name="community/user" options={{ title: '个人主页' }} />
