@@ -42,6 +42,8 @@ export default function PostDetailScreen() {
 
   const [draft, setDraft] = useState('');
   const [sending, setSending] = useState(false);
+  // 楼中楼:正在回复的评论(评论 ID + 目标昵称)
+  const [replyTo, setReplyTo] = useState<{ commentId: string; nickname: string } | null>(null);
 
   const post = detail.data;
 
@@ -68,8 +70,9 @@ export default function PostDetailScreen() {
     }
     setSending(true);
     try {
-      await createPostComment(postId, content);
+      await createPostComment(postId, content, replyTo?.commentId);
       setDraft('');
+      setReplyTo(null);
       toast('评论已发表', 'success');
       await commentsQuery.reload();
     } catch (cause) {
@@ -77,11 +80,16 @@ export default function PostDetailScreen() {
     } finally {
       setSending(false);
     }
-  }, [commentsQuery, draft, postId, router, sending, signedIn, toast]);
+  }, [commentsQuery, draft, postId, replyTo, router, sending, signedIn, toast]);
 
   const renderComment = useCallback(
     ({ item }: { item: CommunityComment }) => (
-      <View className="mb-3 flex-row px-4">
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={`回复 ${item.nickname ?? '用户'} 的评论`}
+        onLongPress={() => setReplyTo({ commentId: item.id, nickname: item.nickname ?? '用户' })}
+        className="mb-3 flex-row px-4"
+      >
         <Avatar alt={item.nickname ?? '用户'} className="size-8">
           {item.avatar ? <AvatarImage source={{ uri: item.avatar }} /> : null}
           <AvatarFallback>
@@ -90,11 +98,12 @@ export default function PostDetailScreen() {
         </Avatar>
         <View className="ml-2 flex-1">
           <Text className="text-muted-foreground text-xs">
-            {item.nickname ?? '用户'} · {relativeTime(item.createTime)}
+            {item.nickname ?? '用户'}
+            {item.replyToUserId ? ' · 回复了评论' : ''} · {relativeTime(item.createTime)}
           </Text>
           <Text className="text-foreground mt-0.5 text-sm leading-5">{item.content}</Text>
         </View>
-      </View>
+      </Pressable>
     ),
     [],
   );

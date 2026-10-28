@@ -25,6 +25,10 @@ export interface CommunityComment {
   nickname: string | null;
   avatar: string | null;
   content: string;
+  /** 楼中楼:回复的评论 ID(可空)。 */
+  replyToCommentId?: string | null;
+  /** 楼中楼:回复目标用户 ID(可空)。 */
+  replyToUserId?: string | null;
   createTime?: string;
 }
 
@@ -40,8 +44,21 @@ export function createPost(req: PostCreateReq): Promise<number> {
   return api.post<number>('/app/post', req);
 }
 
-export function fetchPosts(page: number, size: number): Promise<{ records: CommunityPost[]; total: number }> {
-  return api.get<{ records: CommunityPost[]; total: number }>('/app/post/page', { page, size });
+export function fetchPosts(
+  page: number,
+  size: number,
+  sort?: 'latest' | 'hot',
+): Promise<{ records: CommunityPost[]; total: number }> {
+  return api.get<{ records: CommunityPost[]; total: number }>('/app/post/page', { page, size, sort });
+}
+
+/** 用户主页的动态(仅已发布)。 */
+export function fetchUserPosts(
+  userId: string,
+  page: number,
+  size: number,
+): Promise<{ records: CommunityPost[]; total: number }> {
+  return api.get<{ records: CommunityPost[]; total: number }>(`/app/post/user/${userId}`, { page, size });
 }
 
 export function fetchMyPosts(page: number, size: number): Promise<{ records: CommunityPost[]; total: number }> {
@@ -56,8 +73,8 @@ export function fetchPostComments(id: string): Promise<CommunityComment[]> {
   return api.get<CommunityComment[]>(`/app/post/${id}/comment`);
 }
 
-export function createPostComment(id: string, content: string): Promise<number> {
-  return api.post<number>(`/app/post/${id}/comment`, { content });
+export function createPostComment(id: string, content: string, replyToCommentId?: string): Promise<number> {
+  return api.post<number>(`/app/post/${id}/comment`, { content, replyToCommentId });
 }
 
 export function togglePostLike(id: string): Promise<boolean> {

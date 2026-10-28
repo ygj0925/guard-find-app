@@ -51,6 +51,7 @@ export default function CommunityScreen() {
   const myUserId = useSession((state) => state.user?.id ?? null);
 
   const [scope, setScope] = useState<'plaza' | 'mine'>('plaza');
+  const [sort, setSort] = useState<'latest' | 'hot'>('latest');
   const [page, setPage] = useState(1);
   const [items, setItems] = useState<CommunityPost[]>([]);
   const [total, setTotal] = useState(0);
@@ -60,15 +61,15 @@ export default function CommunityScreen() {
       const resp =
         scope === 'mine'
           ? await fetchMyPosts(targetPage, PAGE_SIZE)
-          : await fetchPosts(targetPage, PAGE_SIZE);
+          : await fetchPosts(targetPage, PAGE_SIZE, sort);
       setItems((prev) => (mode === 'more' ? [...prev, ...resp.records] : resp.records));
       setTotal(resp.total);
       setPage(targetPage);
     },
-    [scope],
+    [scope, sort],
   );
 
-  const query = useRequest(() => load(1, 'initial'), [signedIn, scope]);
+  const query = useRequest(() => load(1, 'initial'), [signedIn, scope, sort]);
 
   const loadMore = useCallback(async () => {
     if (items.length >= total) return;
@@ -158,6 +159,29 @@ export default function CommunityScreen() {
                 </Pressable>
               ))}
             </View>
+            {scope === 'plaza' ? (
+              <View className="mt-2 flex-row items-center" style={{ gap: 12 }}>
+                {(['latest', 'hot'] as const).map((key) => (
+                  <Pressable
+                    key={key}
+                    accessibilityRole="button"
+                    accessibilityLabel={key === 'latest' ? '最新' : '热门'}
+                    onPress={() => setSort(key)}
+                    className="flex-row items-center"
+                    style={{ gap: 4 }}
+                  >
+                    <Text
+                      className={`text-sm font-semibold ${sort === key ? 'text-primary' : 'text-muted-foreground'}`}
+                    >
+                      {key === 'latest' ? '最新' : '热门'}
+                    </Text>
+                    {sort === key ? (
+                      <View className="h-0.5 w-4 rounded-full" style={{ backgroundColor: token('primary', scheme) }} />
+                    ) : null}
+                  </Pressable>
+                ))}
+              </View>
+            ) : null}
           </View>
         }
         ListEmptyComponent={
@@ -198,9 +222,15 @@ export default function CommunityScreen() {
                   </AvatarFallback>
                 </Avatar>
                 <View className="ml-3 flex-1">
-                  <Text className="text-sm font-semibold" numberOfLines={1}>
-                    {item.nickname ?? '用户'}
-                  </Text>
+                  <Pressable
+                    accessibilityRole="button"
+                    accessibilityLabel={`查看 ${item.nickname ?? '用户'} 的主页`}
+                    onPress={() => router.push(`/community/user?id=${item.userId}`)}
+                  >
+                    <Text className="text-sm font-semibold" numberOfLines={1}>
+                      {item.nickname ?? '用户'}
+                    </Text>
+                  </Pressable>
                   <Text className="text-muted-foreground text-xs">{relativeTime(item.createTime)}</Text>
                 </View>
               </View>
