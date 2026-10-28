@@ -8,10 +8,12 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import {
   CalendarClock,
+  Flame,
   ListTodo,
   MessagesSquare,
   Ruler,
   Sparkles,
+  Users,
   Wallet,
 } from 'lucide-react-native';
 
@@ -37,8 +39,10 @@ interface ToolEntry {
 const TOOLS: ToolEntry[] = [
   { key: 'ledger', title: '记账', description: '记一笔 · 日账单 · 周月年报', icon: Wallet, href: '/tools/ledger' },
   { key: 'ai', title: 'AI 对话', description: '智能助手 · 翻译 · 写作', icon: Sparkles, href: '/ai/conversations' },
+  { key: 'habits', title: '习惯打卡', description: '连续天数 · 打卡月历', icon: Flame, href: '/tools/habits' },
   { key: 'countdown', title: '倒数日', description: '考试 · 纪念日 · 还款日', icon: CalendarClock, href: '/tools/countdown' },
   { key: 'todo', title: '待办清单', description: '每日计划 · 截止提醒', icon: ListTodo, href: '/tools/todo' },
+  { key: 'split', title: 'AA 分账', description: '聚餐分账 · 一键记入账本', icon: Users, href: '/tools/split' },
   { key: 'unit', title: '单位换算', description: '长度 · 重量 · 温度 · 离线可用', icon: Ruler, href: '/tools/unit-convert' },
   { key: 'forum', title: '圈子论坛', description: '发帖 · 交流 · 互助', icon: MessagesSquare },
 ];
