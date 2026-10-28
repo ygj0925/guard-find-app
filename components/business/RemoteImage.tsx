@@ -2,7 +2,7 @@
  * 远程图片:必须用 `react-native` 的 `Image` + `uri`。
  * `expo-image` / `expo-asset` 在鸿蒙侧会被 shim 掉导致静默不显示(spec 硬约束,已进 lint 规则)。
  */
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { Image, Pressable, StyleSheet, View } from 'react-native';
 import { Text } from '@/components/ui/text';
 
@@ -28,11 +28,13 @@ export function RemoteImage({
   const [failed, setFailed] = useState(false);
   const [loaded, setLoaded] = useState(false);
 
-  // 换源(切卡片、重传)时重置状态,否则会一直停在上一次的失败占位。
-  useEffect(() => {
+  // 换源(切卡片、重传)时重置状态:渲染期调整模式(React 官方推荐,避免 effect 级联渲染)。
+  const [prevUri, setPrevUri] = useState(uri);
+  if (uri !== prevUri) {
+    setPrevUri(uri);
     setFailed(false);
     setLoaded(false);
-  }, [uri]);
+  }
 
   const showPlaceholder = !uri || failed;
 

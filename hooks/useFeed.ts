@@ -64,9 +64,14 @@ export function useFeed<T extends { id: string }>(
   /** 每次发起请求自增;回包时序号不是最新就丢弃(竞态保护)。 */
   const generationRef = useRef(0);
   const fetcherRef = useRef(fetcher);
-  fetcherRef.current = fetcher;
   const slotsRef = useRef(slots);
-  slotsRef.current = slots;
+  // 渲染期赋值 ref 被 react-hooks/refs 禁止;改为 effect 同步,声明顺序先于首拉 effect
+  useEffect(() => {
+    fetcherRef.current = fetcher;
+  });
+  useEffect(() => {
+    slotsRef.current = slots;
+  });
 
   const writeSlot = useCallback(
     (key: string, updater: (previous: FeedSlot<T>) => FeedSlot<T>) => {

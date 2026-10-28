@@ -53,7 +53,10 @@ export function useRequest<T>(
   const latestRef = useRef(0);
   const mountedRef = useRef(true);
   const fetcherRef = useRef(fetcher);
-  fetcherRef.current = fetcher;
+  // 渲染期赋值 ref 被 react-hooks/refs 禁止;effect 同步,先于自动跑 effect
+  useEffect(() => {
+    fetcherRef.current = fetcher;
+  });
   /** 数据落地回调:每次提交后刷新成最新闭包,回包时读到的 page 等依赖与本次请求一致。 */
   const onDataRef = useRef(onData);
   useEffect(() => {
@@ -101,11 +104,15 @@ export function useRequest<T>(
   }, [keepDataOnError]);
 
   useEffect(() => {
-    if (!enabled) {
-      setStatus('idle');
-      return;
-    }
-    void run();
+    // 整体延后一拍:effect 体内禁同步 setState(含 disabled 分支的 idle 复位)
+    const timer = setTimeout(() => {
+      if (!enabled) {
+        setStatus('idle');
+        return;
+      }
+      void run();
+    }, 0);
+    return () => clearTimeout(timer);
     // deps 由调用方声明;run 自身稳定,不该进依赖数组。
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [enabled, ...deps]);

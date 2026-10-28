@@ -35,7 +35,8 @@ const DURATION_MS = 2600;
 
 export function ToastProvider({ children }: { children: React.ReactNode }) {
   const [state, setState] = useState<ToastState | null>(null);
-  const opacity = useRef(new Animated.Value(0)).current;
+  // useState 惰性初始化(react-hooks/refs 禁止渲染期访问 ref.current)
+  const [opacity] = useState(() => new Animated.Value(0));
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const toast = useCallback(
