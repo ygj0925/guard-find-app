@@ -10,6 +10,7 @@ import { useRouter } from 'expo-router';
 import {
   Calculator,
   ClipboardList,
+  UserCheck,
   Clock,
   Music,
   CalendarClock,
@@ -60,6 +61,7 @@ const TOOLS: ToolEntry[] = [
   { key: 'random', title: '随机决定', description: '转盘 · 骰子 · 硬币', icon: Ruler, href: '/tools/random' },
   { key: 'tasks', title: '任务分派', description: '家人互派 · 状态流转', icon: ClipboardList, href: '/tools/tasks' },
   { key: 'goals', title: '目标 OKR', description: '定目标 · 拆 KR · 量化进度', icon: Target, href: '/tools/goals' },
+  { key: 'checkin', title: '在线签到', description: '发起签到 · 动态码防代签', icon: UserCheck, href: '/tools/checkin' },
   { key: 'clock', title: '时钟秒表', description: '时钟 · 秒表 · 计时器', icon: Clock, href: '/tools/clock' },
   { key: 'unit', title: '单位换算', description: '长度 · 重量 · 温度 · 离线可用', icon: Ruler, href: '/tools/unit-convert' },
   { key: 'forum', title: '圈子论坛', description: '发帖 · 交流 · 互助', icon: MessagesSquare },
