@@ -6,7 +6,7 @@ import React, { useCallback, useMemo, useState } from 'react';
 import { Alert, FlatList, Pressable, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useFocusEffect } from 'expo-router';
-import { ChevronLeft, ChevronRight, Plus } from 'lucide-react-native';
+import { ChevronLeft, ChevronRight, Plus, Share2 } from 'lucide-react-native';
 
 import { Text } from '@/components/ui/text';
 import { Icon } from '@/components/ui/icon';
@@ -18,7 +18,8 @@ import {
   RefreshingControl,
   SectionCard,
 } from '@/components/business/feedback';
-import { deleteLedgerRecord, type LedgerRecord } from '@/lib/api/endpoints/ledger';
+import { deleteLedgerRecord, fetchLedgerRecords, type LedgerRecord } from '@/lib/api/endpoints/ledger';
+import { buildLedgerCsv, csvFileName } from '@/lib/ledger/csv';
 import {
   adjacentMonths,
   currentMonth,
@@ -31,6 +32,7 @@ import { useSession } from '@/store/session';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { token } from '@/constants/Colors';
 import { useToast } from '@/providers/ToastProvider';
+import { shareApi } from '@/lib/capabilities';
 import { loginHref } from '@/lib/nav';
 
 type Row =
@@ -76,6 +78,36 @@ export default function LedgerScreen() {
     }
     router.push('/tools/ledger/add');
   }, [signedIn, router]);
+
+  const exportCsv = useCallback(async () => {
+    try {
+      const all: LedgerRecord[] = [];
+      let page = 1;
+      // 保险丝:50 页(5000 条)封顶,超出提示缩小范围
+      for (; page <= 50; page++) {
+        const resp = await fetchLedgerRecords({ month, page, size: 100 });
+        all.push(...resp.records);
+        if (all.length >= resp.total || resp.records.length === 0) break;
+      }
+      if (all.length === 0) {
+        toast('这个月还没有记录', 'warn');
+        return;
+      }
+      const csv = buildLedgerCsv(all, (record) => (record.type === 2 ? '收入' : '支出'));
+      const result = await shareApi.share({
+        title: csvFileName(month),
+        message: csv,
+        url: '',
+      });
+      if (!result.ok) {
+        if (result.reason !== 'cancelled') {
+          toast(result.message, 'error');
+        }
+      }
+    } catch {
+      toast('导出失败,请稍后再试', 'error');
+    }
+  }, [month, toast]);
 
   const confirmDelete = useCallback(
     (record: LedgerRecord) => {
@@ -181,9 +213,17 @@ export default function LedgerScreen() {
               </View>
               <Pressable
                 accessibilityRole="button"
+                accessibilityLabel="导出本月 CSV"
+                onPress={() => void exportCsv()}
+                className="justify-center pl-2"
+              >
+                <Icon as={Share2} size={16} className="text-muted-foreground" />
+              </Pressable>
+              <Pressable
+                accessibilityRole="button"
                 accessibilityLabel="查看报表"
                 onPress={() => router.push('/tools/ledger/report')}
-                className="justify-center pl-3"
+                className="justify-center pl-2"
               >
                 <Text className="text-primary text-sm font-semibold">报表</Text>
               </Pressable>

@@ -3,14 +3,15 @@
  * 新增走底部输入条(服务端字段少,不值得独立表单页);长按删除。
  */
 import React, { useCallback, useMemo, useState } from 'react';
-import { Alert, FlatList, Pressable, TextInput, View } from 'react-native';
+import { Alert, FlatList, Modal, Pressable, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { CheckCircle2, Circle, Plus, Trash2 } from 'lucide-react-native';
+import { CheckCircle2, Circle, Plus, Sparkles, Trash2 } from 'lucide-react-native';
 
 import { Text } from '@/components/ui/text';
 import { Icon } from '@/components/ui/icon';
 import { Card } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import {
   EmptyState,
   ErrorState,
@@ -30,6 +31,7 @@ import { useColorScheme } from '@/hooks/useColorScheme';
 import { token } from '@/constants/Colors';
 import { useToast } from '@/providers/ToastProvider';
 import { loginHref } from '@/lib/nav';
+import { requestAiDecompose } from '@/lib/api/endpoints/ai';
 
 export default function TodoScreen() {
   const router = useRouter();
@@ -40,6 +42,51 @@ export default function TodoScreen() {
   const query = useRequest(() => fetchTodos(), [signedIn]);
   const [draft, setDraft] = useState('');
   const [adding, setAdding] = useState(false);
+  // AI 拆解:目标待办 + 拆出的子步骤勾选集
+  const [decomposeTarget, setDecomposeTarget] = useState<ToolTodo | null>(null);
+  const [decomposeSteps, setDecomposeSteps] = useState<string[]>([]);
+  const [pickedSteps, setPickedSteps] = useState<Set<number>>(new Set());
+  const [decomposing, setDecomposing] = useState(false);
+  const [addingSteps, setAddingSteps] = useState(false);
+
+  const openDecompose = useCallback(
+    async (record: ToolTodo) => {
+      if (decomposing) return;
+      setDecomposeTarget(record);
+      setDecomposeSteps([]);
+      setPickedSteps(new Set());
+      setDecomposing(true);
+      try {
+        const resp = await requestAiDecompose(record.title);
+        setDecomposeSteps(resp.text.split('\n').map((line) => line.trim()).filter(Boolean));
+      } catch {
+        setDecomposeTarget(null);
+        toast('AI 拆解失败,请稍后再试', 'error');
+      } finally {
+        setDecomposing(false);
+      }
+    },
+    [decomposing, toast],
+  );
+
+  const addPickedSteps = useCallback(async () => {
+    if (!decomposeTarget || addingSteps) return;
+    const picked = decomposeSteps.filter((_, index) => pickedSteps.has(index));
+    if (picked.length === 0) return;
+    setAddingSteps(true);
+    try {
+      for (const step of picked) {
+        await createTodo({ title: step });
+      }
+      toast(`已添加 ${picked.length} 条子待办`, 'success');
+      setDecomposeTarget(null);
+      await query.reload();
+    } catch {
+      toast('添加失败,请稍后再试', 'error');
+    } finally {
+      setAddingSteps(false);
+    }
+  }, [addingSteps, decomposeSteps, decomposeTarget, pickedSteps, query, toast]);
 
   const records = useMemo(() => query.data ?? [], [query.data]);
   const pending = useMemo(() => records.filter((item) => !item.done), [records]);
@@ -143,6 +190,14 @@ export default function TodoScreen() {
           </View>
           <Pressable
             accessibilityRole="button"
+            accessibilityLabel={`AI 拆解:${record.title}`}
+            onPress={() => void openDecompose(record)}
+            className="p-1"
+          >
+            <Icon as={Sparkles} size={15} className={record.done ? 'text-muted-foreground/40' : 'text-primary'} />
+          </Pressable>
+          <Pressable
+            accessibilityRole="button"
             accessibilityLabel={`删除 ${record.title}`}
             onPress={() => confirmDelete(record)}
             className="p-1"
@@ -201,6 +256,61 @@ export default function TodoScreen() {
         }
         renderItem={({ item }) => renderItem(item)}
       />
+
+      {/* AI 拆解弹层:勾选子步骤批量添加 */}
+      <Modal visible={decomposeTarget !== null} transparent animationType="slide" onRequestClose={() => setDecomposeTarget(null)}>
+        <View className="flex-1 justify-end bg-black/40">
+          <View className="bg-background rounded-t-2xl px-4 pb-8 pt-4">
+            <Text className="mb-1 text-lg font-bold">AI 拆解</Text>
+            <Text className="text-muted-foreground mb-3 text-xs" numberOfLines={2}>
+              {decomposeTarget?.title}
+            </Text>
+            {decomposeSteps.length === 0 ? (
+              <Text className="text-muted-foreground py-6 text-center text-sm">正在拆解…</Text>
+            ) : (
+              <View className="mb-2" style={{ gap: 8 }}>
+                {decomposeSteps.map((step, index) => (
+                  <Pressable
+                    key={step}
+                    accessibilityRole="checkbox"
+                    accessibilityState={pickedSteps.has(index) ? { checked: true } : { checked: false }}
+                    accessibilityLabel={`选择步骤:${step}`}
+                    onPress={() =>
+                      setPickedSteps((prev) => {
+                        const next = new Set(prev);
+                        if (next.has(index)) next.delete(index);
+                        else next.add(index);
+                        return next;
+                      })
+                    }
+                    className="flex-row items-center"
+                    style={{ gap: 8 }}
+                  >
+                    <Icon
+                      as={pickedSteps.has(index) ? CheckCircle2 : Circle}
+                      size={20}
+                      className={pickedSteps.has(index) ? 'text-primary' : 'text-muted-foreground'}
+                    />
+                    <Text className="text-foreground flex-1 text-sm">{step}</Text>
+                  </Pressable>
+                ))}
+              </View>
+            )}
+            <View className="mt-2 flex-row" style={{ gap: 12 }}>
+              <Button variant="outline" className="flex-1" onPress={() => setDecomposeTarget(null)}>
+                <Text>取消</Text>
+              </Button>
+              <Button
+                className="flex-1"
+                onPress={() => void addPickedSteps()}
+                disabled={pickedSteps.size === 0 || addingSteps}
+              >
+                <Text>{addingSteps ? '添加中…' : `添加选中(${pickedSteps.size})`}</Text>
+              </Button>
+            </View>
+          </View>
+        </View>
+      </Modal>
 
       {/* 底部输入条:键盘上方固定 */}
       <View
