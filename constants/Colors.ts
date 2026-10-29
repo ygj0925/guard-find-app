@@ -27,6 +27,7 @@ export type TokenName =
   | 'input'
   | 'ring'
   | 'overlay'
+  | 'on-overlay'
   | 'urgent'
   | 'urgent-foreground'
   | 'found'
@@ -63,6 +64,7 @@ export const TOKENS = {
     input: '212 26% 86%',
     ring: '208 58% 33%',
     overlay: '222 45% 8%',
+    'on-overlay': '210 40% 98%',
     urgent: '354 72% 43%',
     'urgent-foreground': '210 40% 98%',
     found: '160 62% 27%',
@@ -91,6 +93,7 @@ export const TOKENS = {
     input: '221 22% 18%',
     ring: '202 52% 62%',
     overlay: '224 40% 3%',
+    'on-overlay': '210 40% 98%',
     urgent: '352 72% 62%',
     'urgent-foreground': '350 60% 10%',
     found: '160 60% 48%',

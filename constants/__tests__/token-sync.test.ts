@@ -29,7 +29,7 @@ function readCssVars(selector: string): Record<string, string> {
   return vars;
 }
 
-/** `199 85% 34%` -> `#0d72a0`,与浏览器/原生解析同一套 HSL 规则。 */
+/** `208 58% 33%` -> `#235785`,与浏览器/原生解析同一套 HSL 规则。 */
 function hslTripleToHex(triple: string): string {
   const [hRaw, sRaw, lRaw] = triple.split(/\s+/);
   const h = Number(hRaw) / 360;
@@ -49,20 +49,22 @@ function hslTripleToHex(triple: string): string {
 
 const tokenNames = Object.keys(TOKENS.light) as TokenName[];
 
+/** CSS 侧多写、漏写都要失败(单向比对会放过拼错的变量名)。 */
+function assertSameSet(vars: Record<string, string>, scheme: 'light' | 'dark') {
+  const cssColorVars = Object.keys(vars).filter((k) => k !== 'radius').sort();
+  expect(cssColorVars).toEqual([...tokenNames].sort());
+  for (const name of tokenNames) {
+    expect(`${name}=${vars[name]}`).toBe(`${name}=${TOKENS[scheme][name]}`);
+  }
+}
+
 describe('token 单一来源', () => {
-  it('global.css 的 :root 与 TOKENS.light 逐条一致', () => {
-    const root = readCssVars(':root');
-    expect(Object.keys(root).length).toBeGreaterThanOrEqual(tokenNames.length);
-    for (const name of tokenNames) {
-      expect(`${name}=${root[name]}`).toBe(`${name}=${TOKENS.light[name]}`);
-    }
+  it('global.css 的 :root 与 TOKENS.light 双向逐条一致', () => {
+    assertSameSet(readCssVars(':root'), 'light');
   });
 
-  it('global.css 的 .dark:root 与 TOKENS.dark 逐条一致', () => {
-    const dark = readCssVars('.dark:root');
-    for (const name of tokenNames) {
-      expect(`${name}=${dark[name]}`).toBe(`${name}=${TOKENS.dark[name]}`);
-    }
+  it('global.css 的 .dark:root 与 TOKENS.dark 双向逐条一致', () => {
+    assertSameSet(readCssVars('.dark:root'), 'dark');
   });
 
   it('NATIVE_BRAND 的每个字面色都是 TOKENS.light 的十六进制形式', () => {

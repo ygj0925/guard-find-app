@@ -256,8 +256,8 @@ export default function CommunityScreen() {
                   ))}
                   {item.images.length > 3 ? (
                     <View
-                      className="items-center justify-center"
-                      style={{ width: 104, height: 104, borderRadius: 8, backgroundColor: 'rgba(0,0,0,0.06)' }}
+                      className="bg-overlay/10 items-center justify-center"
+                      style={{ width: 104, height: 104, borderRadius: 8 }}
                     >
                       <Text className="text-muted-foreground text-lg font-semibold">+{item.images.length - 3}</Text>
                     </View>

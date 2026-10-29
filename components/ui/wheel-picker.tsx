@@ -45,16 +45,8 @@ export function WheelPicker({ items, value, onChange, itemHeight = 40, height = 
     <View style={{ height, width, overflow: 'hidden' }}>
       {/* 中心高亮带 */}
       <View
-        style={{
-          position: 'absolute',
-          top: padding,
-          height: itemHeight,
-          left: 8,
-          right: 8,
-          borderRadius: 10,
-          borderWidth: 1,
-          borderColor: 'rgba(128,128,128,0.25)',
-        }}
+        className="border-border/25 absolute rounded-md"
+        style={{ top: padding, height: itemHeight, left: 8, right: 8, borderWidth: 1 }}
       />
       <ScrollView
         ref={ref}

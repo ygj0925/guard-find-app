@@ -6,7 +6,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Alert, FlatList, Modal, Pressable, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { CheckCircle2, Circle, Plus, Sparkles, Trash2 } from 'lucide-react-native';
+import { CheckCircle2, ChevronDown, ChevronUp, Circle, Plus, Sparkles, Trash2 } from 'lucide-react-native';
 
 import { Text } from '@/components/ui/text';
 import { Icon } from '@/components/ui/icon';
@@ -153,6 +153,24 @@ export default function TodoScreen() {
     [query, toast],
   );
 
+  /**
+   * 已完成分组的折叠开关(叠卡展开)。收起时它挂在列表尾部;展开时插到待办与已完成之间,
+   * 保证标签始终在它所引导的那批条目之上。
+   */
+  const doneToggleRow = (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityState={{ expanded: doneExpanded }}
+      accessibilityLabel={doneExpanded ? '收起已完成' : `展开已完成 ${finished.length} 项`}
+      onPress={() => setDoneExpanded((prev) => !prev)}
+      className="mt-2 mb-1.5 flex-row items-center px-1"
+      style={{ gap: 6 }}
+    >
+      <Icon as={doneExpanded ? ChevronUp : ChevronDown} size={14} className="text-muted-foreground" />
+      <Text className="text-muted-foreground text-xs font-semibold">已完成 {finished.length} 项</Text>
+    </Pressable>
+  );
+
   const renderItem = (record: ToolTodo) => (
     <View className="mb-1.5 flex-row items-center">
       <Pressable
@@ -223,7 +241,7 @@ export default function TodoScreen() {
   return (
     <SafeAreaView edges={['top']} className="flex-1 bg-background">
       <FlatList
-        data={[...pending, ...finished]}
+        data={[...pending, ...(doneExpanded ? finished : [])]}
         keyExtractor={(item) => item.id}
         className="flex-1 px-4"
         contentContainerStyle={{ paddingBottom: 104 }}
@@ -246,13 +264,18 @@ export default function TodoScreen() {
           )
         }
         ListFooterComponent={
-          pending.length > 0 && finished.length > 0 ? (
-            <View className="mt-2 mb-1 flex-row items-center px-1">
-              <Text className="text-muted-foreground text-xs font-semibold">已完成</Text>
-            </View>
-          ) : null
+          pending.length > 0 && finished.length > 0 && !doneExpanded ? doneToggleRow : null
         }
-        renderItem={({ item }) => renderItem(item)}
+        renderItem={({ item, index }) =>
+          doneExpanded && index === pending.length ? (
+            <>
+              {doneToggleRow}
+              {renderItem(item)}
+            </>
+          ) : (
+            renderItem(item)
+          )
+        }
       />
 
       {/* AI 拆解弹层:勾选子步骤批量添加 */}
@@ -369,6 +392,7 @@ function BouncingCheck({ done }: { done: boolean }) {
 
 /** 画线:完成后删除线从左向右延伸 + 文字淡出(勾选联动效果)。 */
 function StrikethroughText({ done, title }: { done: boolean; title: string }) {
+  const scheme = useColorScheme() ?? 'light';
   const line = useSharedValue(0);
   const textOpacity = useSharedValue(1);
   useEffect(() => {
@@ -382,7 +406,7 @@ function StrikethroughText({ done, title }: { done: boolean; title: string }) {
       <Animated.Text style={textStyle} className={done ? 'text-foreground text-sm' : 'text-foreground text-sm'}>
         {title}
       </Animated.Text>
-      <Animated.View style={[lineStyle, { height: 1.5, backgroundColor: 'rgba(128,128,128,0.8)', marginTop: -9 }]} />
+      <Animated.View style={[lineStyle, { height: 1.5, backgroundColor: token('muted-foreground', scheme), marginTop: -9 }]} />
     </View>
   );
 }

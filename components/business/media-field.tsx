@@ -159,8 +159,8 @@ function MediaThumb({
       {item.uri ? (
         <Image source={{ uri: item.uri }} style={{ width: 80, height: 80 }} resizeMode="cover" />
       ) : null}
-      <View className="absolute inset-x-0 bottom-0 bg-overlay/55 px-1 py-0.5">
-        <RNText numberOfLines={1} style={{ color: '#fff', fontSize: 10 }}>
+      <View className="absolute inset-x-0 bottom-0 bg-overlay/65 px-1 py-0.5">
+        <RNText numberOfLines={1} className="text-on-overlay text-[10px]">
           {item.state === 'done' ? '已上传' : item.state === 'error' ? '失败' : '上传中'}
         </RNText>
       </View>
@@ -168,18 +168,18 @@ function MediaThumb({
         accessibilityRole="button"
         accessibilityLabel="移除图片"
         onPress={onRemove}
-        className="absolute right-0 top-0 p-1"
+        className="bg-overlay/70 absolute right-0 top-0 rounded-full p-1"
       >
-        <Icon as={X} size={14} color="#fff" />
+        <Icon as={X} size={14} className="text-on-overlay" />
       </Pressable>
       {item.state === 'error' ? (
         <Pressable
           accessibilityRole="button"
           accessibilityLabel="重试上传"
           onPress={onRetry}
-          className="absolute bottom-0 right-0 p-1"
+          className="bg-overlay/70 absolute bottom-0 right-0 rounded-full p-1"
         >
-          <Icon as={RefreshCw} size={14} color="#fff" />
+          <Icon as={RefreshCw} size={14} className="text-on-overlay" />
         </Pressable>
       ) : null}
     </View>

@@ -10,12 +10,16 @@ export const REDUCE = ReduceMotion.System;
 /** 标准减速曲线(Reanimated 的 Easing 没有 cubicBezier,用 out(cubic) 等价形态)。 */
 export const EASING_OUT = Easing.out(Easing.cubic);
 
-/** 弹性参数。tap 是按下收缩,release 是松手回弹,snap 是拖动吸附,bounce 是勾选/旋钮弹跳。 */
+/**
+ * 弹性参数。这里只做"收口",不改变既有手感:
+ * tap/release 沿用 pressable-scale 原值;snap 沿用 draggable-progress 原值(只给 damping,
+ * 其余走 Reanimated 默认);bounce 用默认弹簧(todo 勾选弹跳原样)。
+ */
 export const SPRING = {
-  tap: { damping: 20, stiffness: 300, mass: 0.6, reduceMotion: REDUCE },
-  release: { damping: 16, stiffness: 260, mass: 0.6, reduceMotion: REDUCE },
-  snap: { damping: 20, stiffness: 180, mass: 0.8, reduceMotion: REDUCE },
-  bounce: { damping: 12, stiffness: 320, mass: 0.7, reduceMotion: REDUCE },
+  tap: { damping: 20, stiffness: 300, reduceMotion: REDUCE },
+  release: { damping: 16, stiffness: 260, reduceMotion: REDUCE },
+  snap: { damping: 20, reduceMotion: REDUCE },
+  bounce: { reduceMotion: REDUCE },
 } as const;
 
 /** 时长(ms)。 */

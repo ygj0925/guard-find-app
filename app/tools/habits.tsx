@@ -198,10 +198,7 @@ export default function HabitsScreen() {
           >
             <Card className="p-3">
               <View className="flex-row items-center">
-                <View
-                  className="mr-3 h-9 w-9 items-center justify-center rounded-full"
-                  style={{ backgroundColor: 'rgba(255,150,50,0.15)' }}
-                >
+                <View className="bg-pending/15 mr-3 h-9 w-9 items-center justify-center rounded-full">
                   <Icon as={Flame} size={16} className="text-pending" />
                 </View>
                 <View className="flex-1">

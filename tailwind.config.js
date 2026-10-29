@@ -62,6 +62,7 @@ module.exports = {
         input: 'hsl(var(--input) / <alpha-value>)',
         ring: 'hsl(var(--ring) / <alpha-value>)',
         overlay: 'hsl(var(--overlay) / <alpha-value>)',
+        'on-overlay': 'hsl(var(--on-overlay) / <alpha-value>)',
         // 业务语义色:紧急 / 已找回 / 待处理,必须"颜色 + 文字"同时出现,不单独靠颜色表意。
         urgent: {
           DEFAULT: 'hsl(var(--urgent) / <alpha-value>)',

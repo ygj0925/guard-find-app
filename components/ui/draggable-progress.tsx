@@ -7,6 +7,7 @@ import { Pressable, View } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, { runOnJS, useAnimatedStyle, useSharedValue, withSpring, withTiming } from 'react-native-reanimated';
 
+import { token } from '@/constants/Colors';
 import { DURATION, SPRING, timing } from '@/constants/Motion';
 
 export interface DraggableProgressProps {
@@ -105,7 +106,7 @@ export function DraggableProgress({
                 width: 22,
                 height: 22,
                 borderRadius: 11,
-                backgroundColor: '#ffffff',
+                backgroundColor: token('on-overlay'),
                 borderWidth: 2,
                 borderColor: activeColor,
               },
