@@ -25,14 +25,14 @@ export function revealRadius(x: number, y: number, width: number, height: number
   return Math.ceil(Math.max(...corners) * 1.15);
 }
 
-export function useCircularReveal(router: { push: (href: string) => void }) {
+export function useCircularReveal(router: { push: (href: never) => void }) {
   const { width, height } = useWindowDimensions();
   const [reveal, setReveal] = useState<RevealState | null>(null);
   const radius = useSharedValue(0);
 
   const finish = useCallback(
     (href: string) => {
-      router.push(href);
+      router.push(href as never);
       // 跳转渲染完成后收起遮罩
       setTimeout(() => setReveal(null), 120);
     },

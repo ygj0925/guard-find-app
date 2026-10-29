@@ -6,6 +6,7 @@
  * 记录落本地存储,避免登录过程 App 被系统回收后回跳目标丢失。
  */
 import { kvGetJson, kvSetJson } from './storage/kv';
+import type { Href } from 'expo-router';
 
 export const PENDING_KEY = 'guardfind.pending-action.v1';
 
@@ -26,10 +27,13 @@ export async function requireLogin(action: Omit<PendingAction, 'at'>): Promise<v
   await kvSetJson(PENDING_KEY, memory);
 }
 
-/** 拼给登录页的 redirect 参数(契约与路由都用 path 字符串,不做 URL 编码两次)。 */
-export function loginHref(action: Omit<PendingAction, 'at'>): string {
+/**
+ * 拼给登录页的 redirect 参数(契约与路由都用 path 字符串,不做 URL 编码两次)。
+ * 返回类型标 Href 以兼容 typed-routes(redirect 是运行时拼接,源头上是 string)。
+ */
+export function loginHref(action: Omit<PendingAction, 'at'>): Href {
   const target = action.href ?? '';
-  return `/auth/login?redirect=${encodeURIComponent(target)}`;
+  return `/auth/login?redirect=${encodeURIComponent(target)}` as Href;
 }
 
 export async function takePendingAction(): Promise<PendingAction | null> {

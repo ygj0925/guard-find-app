@@ -35,6 +35,7 @@ import { MESSAGE_CATEGORY_LABEL, MESSAGE_TYPE_LABEL, formatRelative } from '@/li
 import { toUserMessage } from '@/lib/api/error';
 import { onRealtimeMessage, onRealtimeStatus, type RealtimeStatus } from '@/lib/realtime';
 import { syncUnreadCount, useSession } from '@/store/session';
+import { useBreakpoint, contentWidthStyle } from '@/hooks/useBreakpoint';
 import { useSessionGuard } from '@/providers/SessionProvider';
 import { useToast } from '@/providers/ToastProvider';
 
@@ -66,6 +67,7 @@ interface Section {
 }
 
 export default function MessageTabScreen() {
+  const responsive = useBreakpoint();
   const router = useRouter();
   const { toast } = useToast();
   const { guard, signedIn } = useSessionGuard();
@@ -172,7 +174,8 @@ export default function MessageTabScreen() {
         toast('这条消息没有可跳转的内容,请按正文说明操作');
         return;
       }
-      router.push(target);
+      // target 为消息中心跳转目标(运行时字符串)
+      router.push(target as never);
     },
     [bumpUnread, feed, router, toast],
   );
@@ -284,7 +287,7 @@ export default function MessageTabScreen() {
 
       <SectionList
         className="flex-1 px-4"
-        contentContainerStyle={{ paddingBottom: 104 }}
+        contentContainerStyle={[{ paddingBottom: 104 }, contentWidthStyle(responsive)]}
         sections={sections}
         keyExtractor={(item) => item.id}
         stickySectionHeadersEnabled={false}
