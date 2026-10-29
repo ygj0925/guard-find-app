@@ -223,15 +223,16 @@ export default function LedgerScreen() {
               </View>
             </View>
             <View className="mt-3 flex-row">
-              <View className="flex-1">
+              {/* 模块特色:支出是记账的主指标,字号压过收入/结余形成主次层次 */}
+              <View className="flex-[1.4]">
                 <Text className="text-muted-foreground text-xs">支出</Text>
-                <Text className="text-urgent mt-1 text-lg font-bold">
+                <Text className="text-urgent mt-1 text-2xl font-bold">
                   {formatAmount(feed.monthExpense)}
                 </Text>
               </View>
               <View className="flex-1">
                 <Text className="text-muted-foreground text-xs">收入</Text>
-                <Text className="text-found mt-1 text-lg font-bold">
+                <Text className="text-found mt-1 text-base font-bold">
                   {formatAmount(feed.monthIncome)}
                 </Text>
               </View>
