@@ -14,7 +14,9 @@ import { Icon } from '@/components/ui/icon';
 import { Card } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { RemoteImage } from '@/components/business/RemoteImage';
-import { EmptyState, ErrorState, ListFooter, RefreshingControl, SectionCard } from '@/components/business/feedback';
+import { EmptyState, ErrorState, ListFooter, RefreshingControl } from '@/components/business/feedback';
+import { SkeletonList } from '@/components/ui/skeleton';
+import { PressableScale } from '@/components/ui/pressable-scale';
 import {
   deletePost,
   fetchMyPosts,
@@ -191,7 +193,7 @@ export default function CommunityScreen() {
         }
         ListEmptyComponent={
           query.isInitialLoading ? (
-            <SectionCard title="加载中…">{null}</SectionCard>
+            <SkeletonList rows={3} />
           ) : query.error ? (
             <ErrorState error={query.error} onRetry={() => void query.reload()} />
           ) : scope === 'mine' && !signedIn ? (
@@ -218,7 +220,7 @@ export default function CommunityScreen() {
           <ListFooter loading={false} hasMore={items.length < total} error={null} empty={items.length === 0} />
         }
         renderItem={({ item }) => (
-          <Pressable
+          <PressableScale
             accessibilityRole="button"
             accessibilityLabel={`动态:${item.nickname ?? ''} ${item.content.slice(0, 20)}`}
             onPress={() => router.push(`/community/detail?id=${item.id}`)}
@@ -287,7 +289,7 @@ export default function CommunityScreen() {
                 </View>
               </View>
             </Card>
-          </Pressable>
+          </PressableScale>
         )}
       />
 

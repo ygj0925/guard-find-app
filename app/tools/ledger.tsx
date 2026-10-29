@@ -16,8 +16,8 @@ import {
   ErrorState,
   ListFooter,
   RefreshingControl,
-  SectionCard,
 } from '@/components/business/feedback';
+import { SkeletonList } from '@/components/ui/skeleton';
 import { deleteLedgerRecord, fetchLedgerRecords, type LedgerRecord } from '@/lib/api/endpoints/ledger';
 import { buildLedgerCsv, csvFileName } from '@/lib/ledger/csv';
 import {
@@ -262,7 +262,7 @@ export default function LedgerScreen() {
         }
         ListEmptyComponent={
           feed.phase === 'loading' ? (
-            <SectionCard title="加载中…">{null}</SectionCard>
+            <SkeletonList rows={3} />
           ) : feed.phase === 'error' && feed.error ? (
             <ErrorState error={feed.error} onRetry={() => void feed.reload()} />
           ) : (

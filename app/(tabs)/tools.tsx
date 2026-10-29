@@ -4,7 +4,7 @@
  * 长按工具可置顶(排序持久化在 store/tools-order.ts);顶部 AI 周报横幅。
  */
 import React, { useCallback } from 'react';
-import { Alert, Pressable, ScrollView, View } from 'react-native';
+import { Alert, ScrollView, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Text } from '@/components/ui/text';
@@ -22,6 +22,7 @@ import { token } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { Newspaper } from 'lucide-react-native';
 import { useCircularReveal } from '@/components/ui/circular-reveal';
+import { PressableScale } from '@/components/ui/pressable-scale';
 import { TOOL_REGISTRY as TOOLS, type ToolEntry } from '@/lib/tools/registry';
 
 
@@ -115,7 +116,7 @@ export default function ToolsScreen() {
           />
         )}
 
-        <Pressable
+        <PressableScale
           accessibilityRole="button"
           accessibilityLabel="AI 周报"
           onPress={() => (signedIn ? router.push('/tools/weekly-report') : toast('登录后生成周报', 'warn'))}
@@ -132,11 +133,11 @@ export default function ToolsScreen() {
               </Text>
             </View>
           </Card>
-        </Pressable>
+        </PressableScale>
 
         <View className="flex-row flex-wrap justify-between">
           {ordered.map((tool) => (
-            <Pressable
+            <PressableScale
               key={tool.key}
               accessibilityRole="button"
               accessibilityLabel={tool.title}
@@ -158,7 +159,7 @@ export default function ToolsScreen() {
                   <Text className="text-pending mt-1 text-[10px] font-medium">即将上线</Text>
                 )}
               </Card>
-            </Pressable>
+            </PressableScale>
           ))}
         </View>
 

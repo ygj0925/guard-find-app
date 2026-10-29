@@ -12,7 +12,8 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { RemoteImage } from '@/components/business/RemoteImage';
-import { EmptyState, ErrorState, ListFooter, RefreshingControl, SectionCard } from '@/components/business/feedback';
+import { EmptyState, ErrorState, ListFooter, RefreshingControl } from '@/components/business/feedback';
+import { SkeletonList } from '@/components/ui/skeleton';
 import { fetchUserPosts, type CommunityPost } from '@/lib/api/endpoints/post';
 import { fetchSocialCounts, followUser, unfollowUser } from '@/lib/api/endpoints/social';
 import { relativeTime } from '@/app/(tabs)/community';
@@ -127,7 +128,7 @@ export default function SocialUserScreen() {
         }
         ListEmptyComponent={
           postsQuery.isInitialLoading ? (
-            <SectionCard title="加载中…">{null}</SectionCard>
+            <SkeletonList rows={3} />
           ) : postsQuery.error ? (
             <ErrorState error={postsQuery.error} onRetry={() => void postsQuery.reload()} />
           ) : (

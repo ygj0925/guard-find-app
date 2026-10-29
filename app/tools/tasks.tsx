@@ -14,7 +14,8 @@ import { Icon } from '@/components/ui/icon';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Field } from '@/components/form/fields';
-import { EmptyState, ErrorState, RefreshingControl, SectionCard } from '@/components/business/feedback';
+import { EmptyState, ErrorState, RefreshingControl } from '@/components/business/feedback';
+import { SkeletonList } from '@/components/ui/skeleton';
 import {
   createTask,
   deleteTask,
@@ -233,7 +234,7 @@ export default function TasksScreen() {
         }
         ListEmptyComponent={
           tasksQuery.isInitialLoading ? (
-            <SectionCard title="加载中…">{null}</SectionCard>
+            <SkeletonList rows={3} />
           ) : tasksQuery.error ? (
             <ErrorState error={tasksQuery.error} onRetry={() => void tasksQuery.reload()} />
           ) : scope === 'all' && !activeGroup ? (

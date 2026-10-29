@@ -13,7 +13,8 @@ import { Icon } from '@/components/ui/icon';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Field } from '@/components/form/fields';
-import { EmptyState, ErrorState, SectionCard } from '@/components/business/feedback';
+import { EmptyState, ErrorState } from '@/components/business/feedback';
+import { SkeletonList } from '@/components/ui/skeleton';
 import {
   createGoal,
   createKeyResult,
@@ -226,7 +227,7 @@ export default function GoalsScreen() {
         </View>
 
         {query.isInitialLoading ? (
-          <SectionCard title="加载中…">{null}</SectionCard>
+          <SkeletonList rows={3} />
         ) : query.error ? (
           <ErrorState error={query.error} onRetry={() => void query.reload()} />
         ) : goals.length === 0 ? (

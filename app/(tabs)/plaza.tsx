@@ -5,7 +5,7 @@
  * "就近"用常驻地或城市选择器结果,一期不申请定位权限。
  */
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { Alert, FlatList, Pressable, RefreshControl, ScrollView, View } from 'react-native';
+import { Alert, FlatList, RefreshControl, ScrollView, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Search } from 'lucide-react-native';
@@ -41,6 +41,7 @@ import { DEFAULT_QUICK_KEYS, getTool } from '@/lib/tools/registry';
 import { useFilters } from '@/providers/FiltersProvider';
 import { favoriteRunId, useSessionGuard } from '@/providers/SessionProvider';
 import { useToast } from '@/providers/ToastProvider';
+import { PressableScale } from '@/components/ui/pressable-scale';
 import { useCircularReveal } from '@/components/ui/circular-reveal';
 import { token } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
@@ -232,38 +233,38 @@ export default function PlazaScreen() {
   return (
     <SafeAreaView edges={['top']} className="flex-1 bg-background">
       <View className="flex-row items-center gap-2 px-4 pb-2 pt-1">
-        <Pressable
+        <PressableScale
           accessibilityRole="button"
           onPress={() => router.push('/search')}
           className="border-input bg-muted flex-1 flex-row items-center gap-2 rounded-md border px-3 py-2"
         >
           <Icon as={Search} size={15} className="text-muted-foreground" />
           <Text className="text-muted-foreground text-sm">搜索姓名 / 地区 / 特征</Text>
-        </Pressable>
-        <Pressable
+        </PressableScale>
+        <PressableScale
           accessibilityRole="button"
           onPress={() => setFilterOpen(true)}
           className="border-border rounded-md border px-3 py-2"
         >
           <Text className="text-sm">{filterCount ? `筛选 ${filterCount}` : '筛选'}</Text>
-        </Pressable>
+        </PressableScale>
       </View>
 
       {/* 我的快捷入口:与工具箱置顶共用偏好;长按可上移/下移/移除 */}
       <View className="pb-1 pt-1">
         <View className="flex-row items-center justify-between px-4 pb-1">
           <Text className="text-muted-foreground text-xs font-semibold">我的快捷入口</Text>
-          <Pressable
+          <PressableScale
             accessibilityRole="button"
             accessibilityLabel="去工具箱管理"
             onPress={() => router.push('/(tabs)/tools')}
           >
             <Text className="text-primary text-xs">管理</Text>
-          </Pressable>
+          </PressableScale>
         </View>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 12 }}>
           {quickTools.map((tool) => (
-            <Pressable
+            <PressableScale
               key={tool.key}
               accessibilityRole="button"
               accessibilityLabel={`快捷打开${tool.title}`}
@@ -307,7 +308,7 @@ export default function PlazaScreen() {
               <Text className="text-muted-foreground mt-1 text-xs" numberOfLines={1}>
                 {tool.title}
               </Text>
-            </Pressable>
+            </PressableScale>
           ))}
           {overlay}
         </ScrollView>
@@ -320,7 +321,7 @@ export default function PlazaScreen() {
         contentContainerStyle={{ paddingRight: 16 }}
       >
         {SORTS.map((item) => (
-          <Pressable
+          <PressableScale
             key={item.key}
             accessibilityRole="tab"
             accessibilityState={{ selected: item.key === sort }}
@@ -332,25 +333,25 @@ export default function PlazaScreen() {
             <Text className={item.key === sort ? 'text-primary-foreground text-sm' : 'text-sm'}>
               {item.label}
             </Text>
-          </Pressable>
+          </PressableScale>
         ))}
         {/* 城市对四种流都可叠加(契约 feed 接受 provinceCode/cityCode);就近流必须有一个城市。 */}
-        <Pressable
+        <PressableScale
           accessibilityRole="button"
           accessibilityLabel="选择城市"
           onPress={() => setCityOpen(true)}
           className="border-primary rounded-full border border-dashed px-4 py-1.5"
         >
           <Text className="text-primary text-sm">城市:{cityLabel || '全部'}</Text>
-        </Pressable>
-        <Pressable
+        </PressableScale>
+        <PressableScale
           accessibilityRole="button"
           accessibilityLabel="重置城市选择"
           onPress={() => setCity(null)}
           className="border-border rounded-full border px-4 py-1.5"
         >
           <Text className="text-muted-foreground text-sm">清除城市</Text>
-        </Pressable>
+        </PressableScale>
       </ScrollView>
 
       <FlatList

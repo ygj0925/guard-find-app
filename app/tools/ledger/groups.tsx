@@ -14,7 +14,8 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Field } from '@/components/form/fields';
-import { EmptyState, ErrorState, SectionCard } from '@/components/business/feedback';
+import { EmptyState, ErrorState } from '@/components/business/feedback';
+import { SkeletonList } from '@/components/ui/skeleton';
 import {
   createLedgerGroup,
   fetchLedgerGroups,
@@ -134,7 +135,7 @@ export default function LedgerGroupsScreen() {
         </Pressable>
 
         {query.isInitialLoading ? (
-          <SectionCard title="加载中…">{null}</SectionCard>
+          <SkeletonList rows={3} />
         ) : query.error ? (
           <ErrorState error={query.error} onRetry={() => void query.reload()} />
         ) : (

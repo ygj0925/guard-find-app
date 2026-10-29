@@ -13,7 +13,8 @@ import { Icon } from '@/components/ui/icon';
 import { Card } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { RemoteImage } from '@/components/business/RemoteImage';
-import { ErrorState, SectionCard } from '@/components/business/feedback';
+import { ErrorState } from '@/components/business/feedback';
+import { SkeletonList } from '@/components/ui/skeleton';
 import {
   createPostComment,
   fetchPostComments,
@@ -126,7 +127,7 @@ export default function PostDetailScreen() {
         contentContainerStyle={{ paddingBottom: 96 }}
         ListHeaderComponent={
           detail.isInitialLoading || !post ? (
-            <SectionCard title="加载中…">{null}</SectionCard>
+            <SkeletonList rows={3} />
           ) : (
             <View className="px-4">
               <View className="flex-row items-center">

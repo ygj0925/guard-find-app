@@ -16,8 +16,9 @@ import {
   ErrorState,
   ListFooter,
   RefreshingControl,
-  SectionCard,
-} from '@/components/business/feedback';import {
+} from '@/components/business/feedback';
+import { SkeletonList } from '@/components/ui/skeleton';
+import {
   createAiConversation,
   deleteAiConversation,
   fetchAiConversations,
@@ -140,7 +141,7 @@ export default function AiConversationsScreen() {
         }
         ListEmptyComponent={
           query.isInitialLoading ? (
-            <SectionCard title="加载中…">{null}</SectionCard>
+            <SkeletonList rows={3} />
           ) : query.error ? (
             <ErrorState error={query.error} onRetry={() => void query.reload()} />
           ) : (
