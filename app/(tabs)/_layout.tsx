@@ -14,7 +14,6 @@ import { Icon } from '@/components/ui/icon';
 import { Colors } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { useSession } from '@/store/session';
-import { useBreakpoint } from '@/hooks/useBreakpoint';
 
 export const unstable_settings = { initialRouteName: 'plaza' };
 
@@ -35,8 +34,6 @@ export default function TabLayout() {
   const palette = Colors[scheme === 'dark' ? 'dark' : 'light'];
   const unread = useSession((state) => state.unreadCount);
   const signedIn = useSession((state) => state.phase === 'authenticated');
-  // 宽屏(iPad 横屏/PC)侧边栏导航,手机保持底部胶囊 —— 业界分栏主流形态
-  const { isDesktop } = useBreakpoint();
 
   return (
     <Tabs

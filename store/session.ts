@@ -6,8 +6,7 @@
  */
 import { create } from 'zustand';
 import { configureClient, notifyAuthenticated } from '@/lib/api/client';
-import { authApi, type AppProfileReq, type AppUser, type LoginResp } from '@/lib/api/endpoints/auth';
-import type { IdentityType } from '@/lib/api/endpoints/auth';
+import { authApi, type AppProfileReq, type AppUser, type IdentityType, type LoginResp } from '@/lib/api/endpoints/auth';
 import { messageApi } from '@/lib/api/endpoints/message';
 import {
   isSessionExpired,

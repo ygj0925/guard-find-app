@@ -3,8 +3,7 @@
  * 我的档案里反复出现,统一在这里出,避免每页各写一套文案。
  */
 import React from 'react';
-import { Pressable, RefreshControl, StyleSheet, View } from 'react-native';
-import { ActivityIndicator } from 'react-native';
+import { ActivityIndicator, Pressable, RefreshControl, StyleSheet, View } from 'react-native';
 import { Text } from '@/components/ui/text';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';

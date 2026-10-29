@@ -8,7 +8,7 @@
  *   3. 联系方式永不出现在公开视图,唯一的联系入口是"提交线索"。
  */
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { Pressable, ScrollView, View } from 'react-native';
+import { ScrollView, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Heart, MapPin, Share2 } from 'lucide-react-native';

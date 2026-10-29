@@ -101,6 +101,7 @@ export function describeError(error: unknown): { message: string; stack?: string
 function platformLabel(): string {
   // 平台名只用于诊断聚合,不构成行为分支,所以允许在这里读 Platform。
   try {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports -- 诊断模块必须能在非 RN 环境(单测/CI)加载,惰性 require 是刻意的
     const rn = require('react-native') as { Platform?: { OS?: string } };
     return rn.Platform?.OS ?? 'unknown';
   } catch {

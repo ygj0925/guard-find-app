@@ -4,7 +4,7 @@
  * 鸿蒙侧 expo-notifications 未验证(规划 8.1 P2),验证后再做真闹钟。
  */
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { Alert, Pressable, ScrollView, TextInput, View } from 'react-native';
+import { Alert, Pressable, ScrollView, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Text } from '@/components/ui/text';

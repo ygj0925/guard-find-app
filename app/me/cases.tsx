@@ -10,7 +10,7 @@
  *   2. 标记找回必须选确认依据(`POLICE|GUARDIAN|DNA`),没选不发请求;
  *   3. 申请删除不可恢复,必须二次确认(先勾知悉,再点删除)。
  */
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { Pressable, ScrollView, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -41,7 +41,6 @@ import type { FeedResp } from '@/lib/api/endpoints/common';
 import {
   caseApi,
   type CaseDetail,
-  type CaseMineSummary,
   type CaseStatus,
   type ConfirmType,
 } from '@/lib/api/endpoints/case';

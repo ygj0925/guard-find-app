@@ -21,7 +21,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Icon } from '@/components/ui/icon';
 import { Skeleton } from '@/components/ui/skeleton';
-import { EmptyState, ErrorState, ListFooter, NoticeBar } from '@/components/business/feedback';
+import { EmptyState, ListFooter, NoticeBar } from '@/components/business/feedback';
 import { PUSH_LIMIT_NOTE } from '@/components/business/compliance';
 import { useFeed } from '@/hooks/useFeed';
 import {

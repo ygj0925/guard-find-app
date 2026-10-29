@@ -43,7 +43,9 @@ export function RegionPicker({
   const [city, setCity] = useState<string | null>(value?.cityCode ?? null);
   const [district, setDistrict] = useState<string | null>(value?.districtCode ?? null);
 
-  const provinces = filters?.regions ?? [];
+  const regions = filters?.regions;
+  // 每次渲染新建数组会让下游 memo 全量失效,所以把兜底空数组也记忆化
+  const provinces = useMemo(() => regions ?? [], [regions]);
   const cities = useMemo(
     () => childrenOf(provinces.find((node) => node.code === province)),
     [provinces, province],
@@ -203,7 +205,7 @@ export function DateTimePicker({
   );
 
   const exceedsMax = (candidate: DateTimeSelection): boolean => {
-    const keys: Array<keyof DateTimeSelection> = ['year', 'month', 'day', 'hour', 'minute'];
+    const keys: (keyof DateTimeSelection)[] = ['year', 'month', 'day', 'hour', 'minute'];
     for (const key of keys) {
       if (candidate[key] > max[key]) return true;
       if (candidate[key] < max[key]) return false;

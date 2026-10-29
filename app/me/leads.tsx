@@ -18,7 +18,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Icon } from '@/components/ui/icon';
 import { Skeleton } from '@/components/ui/skeleton';
 import { HighRiskBadge, LeadStatusBadge } from '@/components/business/status-badges';
-import { EmptyState, ErrorState, InlineRow, ListFooter, NoticeBar } from '@/components/business/feedback';
+import { EmptyState, InlineRow, ListFooter, NoticeBar } from '@/components/business/feedback';
 import { useFeed } from '@/hooks/useFeed';
 import { leadApi, type Lead } from '@/lib/api/endpoints/lead';
 import type { FeedResp } from '@/lib/api/endpoints/common';

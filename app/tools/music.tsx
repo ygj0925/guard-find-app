@@ -46,8 +46,6 @@ export default function MusicScreen() {
   useEffect(() => {
     stateRef.current = state;
   }, [state]);
-  /** 进度条实测宽度(onLayout),点击换算比例用。 */
-  const [barWidth, setBarWidth] = useState(0);
 
   useEffect(() => {
     void (async () => {
@@ -117,15 +115,6 @@ export default function MusicScreen() {
     [playTrack, state.index, tracks.length],
   );
 
-  const seekRatio = useCallback(
-    (ratio: number) => {
-      const seconds = ratioToSeconds(ratio, state.duration);
-      musicPlayer.seek(seconds);
-      setState((prev) => ({ ...prev, position: seconds }));
-    },
-    [state.duration],
-  );
-
   const current = state.index >= 0 ? tracks[state.index] : null;
   const progress = state.duration > 0 ? state.position / state.duration : 0;
 
@@ -141,7 +130,7 @@ export default function MusicScreen() {
         </Text>
         {/* 吸附卡+画线:拖动画线跟随,松手吸附 seek */}
         <DraggableProgress
-          progress={state.duration > 0 ? state.position / state.duration : 0}
+          progress={progress}
           onDrag={(ratio) => setState((prev) => ({ ...prev, position: ratio * prev.duration }))}
           onSeek={(ratio) => musicPlayer.seek(ratioToSeconds(ratio, state.duration))}
           activeColor={token('primary', scheme)}
@@ -170,7 +159,7 @@ export default function MusicScreen() {
         </View>
       </Card>
     );
-  }, [barWidth, current, progress, scheme, seekRatio, skip, state, togglePlay, tracks.length]);
+  }, [current, progress, scheme, skip, state, togglePlay, tracks.length]);
 
   return (
     <SafeAreaView edges={['top']} className="flex-1 bg-background">
