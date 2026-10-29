@@ -7,6 +7,7 @@ import {
   CalendarClock,
   Calculator,
   ClipboardCheck,
+  KeyRound,
   ClipboardList,
   Clock,
   Divide,
@@ -17,6 +18,7 @@ import {
   MessagesSquare,
   Music,
   Ruler,
+  Percent,
   Sparkles,
   SquareDashed,
   Target,
@@ -53,7 +55,9 @@ export const TOOL_REGISTRY: ToolEntry[] = [
   { key: 'random', title: '随机决定', description: '转盘 · 骰子 · 硬币', icon: Ruler, href: '/tools/random' },
   { key: 'unit', title: '单位换算', description: '长度 · 重量 · 温度 · 离线可用', icon: Ruler, href: '/tools/unit-convert' },
   { key: 'calc', title: '计算器', description: '基础四则 · 离线可用', icon: Divide, href: '/tools/calculator' },
+  { key: 'password', title: '密码生成', description: '安全随机 · 强度评分', icon: KeyRound, href: '/tools/password' },
   { key: 'forum', title: '圈子论坛', description: '发帖 · 交流 · 互助', icon: MessagesSquare },
+  { key: 'discount', title: '折扣比较', description: '比单价 · 算折扣', icon: Percent, href: '/tools/discount' },
   { key: 'weather', title: '天气', description: '实时天气 · 未来趋势', icon: CloudSun },
 ];
 
