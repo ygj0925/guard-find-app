@@ -42,11 +42,13 @@ import { NoticeBar, SectionCard } from '@/components/business/feedback';
 import { GENDER_LABEL, IDENTITY_LABEL } from '@/lib/format';
 import { env } from '@/lib/env';
 import { useSession } from '@/store/session';
+import { useBreakpoint, contentWidthStyle } from '@/hooks/useBreakpoint';
 import { useAppearance } from '@/store/appearance';
 import { useSessionGuard } from '@/providers/SessionProvider';
 import { useToast } from '@/providers/ToastProvider';
 
 export default function MeTabScreen() {
+  const responsive = useBreakpoint();
   const router = useRouter();
   const { toast } = useToast();
   const mode = useAppearance((state) => state.mode);
@@ -65,7 +67,8 @@ export default function MeTabScreen() {
   const openProtected = useCallback(
     (href: string, label: string) => {
       if (guard({ href, label })) return;
-      router.push(href);
+      // href 为运行时拼接的字符串,typed-routes 下断言宽化
+      router.push(href as never);
     },
     [guard, router],
   );
@@ -79,7 +82,7 @@ export default function MeTabScreen() {
 
   return (
     <SafeAreaView edges={['top']} className="flex-1 bg-background">
-      <ScrollView className="flex-1 px-4" contentContainerStyle={{ paddingBottom: 104 }}>
+      <ScrollView className="flex-1 px-4" contentContainerStyle={[{ paddingBottom: 104 }, contentWidthStyle(responsive)]}>
         <View className="bg-card border-border mb-3 flex-row items-center gap-3 rounded-xl border p-4">
           <Avatar alt="头像" className="size-14">
             {user?.avatar ? <AvatarImage source={{ uri: user.avatar }} /> : null}

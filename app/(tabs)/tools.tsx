@@ -13,6 +13,7 @@ import { Card } from '@/components/ui/card';
 import { SectionCard, EmptyState, ErrorState } from '@/components/business/feedback';
 import { useRequest } from '@/hooks/useRequest';
 import { useSession } from '@/store/session';
+import { useBreakpoint, contentWidthStyle } from '@/hooks/useBreakpoint';
 import { useToolsOrder, pinTools } from '@/store/tools-order';
 import { fetchLedgerSummary, type LedgerSummary } from '@/lib/api/endpoints/ledger';
 import { formatAmount } from '@/lib/ledger/stats';
@@ -27,6 +28,7 @@ import { TOOL_REGISTRY as TOOLS, type ToolEntry } from '@/lib/tools/registry';
 
 
 export default function ToolsScreen() {
+  const responsive = useBreakpoint();
   const router = useRouter();
   const { toast } = useToast();
   const signedIn = useSession((state) => state.phase === 'authenticated');
@@ -75,7 +77,7 @@ export default function ToolsScreen() {
 
   return (
     <SafeAreaView edges={['top']} className="flex-1 bg-background">
-      <ScrollView className="flex-1 px-4" contentContainerStyle={{ paddingBottom: 104 }}>
+      <ScrollView className="flex-1 px-4" contentContainerStyle={[{ paddingBottom: 104 }, contentWidthStyle(responsive)]}>
         <View className="mb-4 mt-2">
           <Text className="text-2xl font-bold">工具箱</Text>
           <Text className="text-muted-foreground mt-1 text-sm">高频小工具,一个就够</Text>
@@ -140,9 +142,9 @@ export default function ToolsScreen() {
               accessibilityLabel={tool.title}
               onPress={(event) => openTool(tool, event.nativeEvent.pageX, event.nativeEvent.pageY)}
               onLongPress={() => longPressTool(tool)}
-              className="mb-3 w-[48%]"
+              className="mb-3 w-[47%] md:w-[31%] lg:w-[23%]"
             >
-              <Card className={`p-4 ${tool.href ? '' : 'opacity-60'}`}>
+              <Card className={`p-4 web:cursor-pointer hover:opacity-90 ${tool.href ? '' : 'opacity-60'}`}>
                 <View className="bg-accent mb-2 h-10 w-10 items-center justify-center rounded-xl">
                   <Icon
                     as={tool.icon}

@@ -26,6 +26,7 @@ import { useRequest } from '@/hooks/useRequest';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { token } from '@/constants/Colors';
 import { useSession } from '@/store/session';
+import { useBreakpoint, contentWidthStyle } from '@/hooks/useBreakpoint';
 import { useToast } from '@/providers/ToastProvider';
 import { loginHref } from '@/lib/nav';
 
@@ -44,6 +45,7 @@ export function relativeTime(createTime: string | null | undefined, now: Date = 
 }
 
 export default function CommunityScreen() {
+  const responsive = useBreakpoint();
   const router = useRouter();
   const { toast } = useToast();
   const scheme = useColorScheme() ?? 'light';
@@ -137,7 +139,7 @@ export default function CommunityScreen() {
         data={listData}
         keyExtractor={(item) => item.id}
         className="flex-1 px-4"
-        contentContainerStyle={{ paddingBottom: 104 }}
+        contentContainerStyle={[{ paddingBottom: 104 }, contentWidthStyle(responsive)]}
         refreshControl={RefreshingControl(query.status === 'loading', () => void query.reload())}
         onEndReached={() => void loadMore()}
         onEndReachedThreshold={0.2}
@@ -197,7 +199,7 @@ export default function CommunityScreen() {
               title="登录后查看我的动态"
               description="登录后即可管理你发布的所有内容"
               actionLabel="去登录"
-              onAction={() => router.push(loginHref({ href: '/community/detail?scope=mine', from: 'community' }))}
+              onAction={() => router.push(loginHref({ href: '/community/detail?scope=mine', from: 'community' }) as never)}
             />
           ) : scope === 'mine' ? (
             <EmptyState
@@ -205,7 +207,7 @@ export default function CommunityScreen() {
               description="点右下角 + 记录第一刻"
               actionLabel={signedIn ? '发布动态' : '去登录'}
               onAction={() =>
-                router.push(signedIn ? '/community/publish' : loginHref({ href: '/community/publish', from: 'community' }))
+                router.push(signedIn ? '/community/publish' : (loginHref({ href: '/community/publish', from: 'community' }) as never))
               }
             />
           ) : (
@@ -295,7 +297,7 @@ export default function CommunityScreen() {
         onPress={() =>
           signedIn
             ? router.push('/community/publish')
-            : router.push(loginHref({ href: '/community/publish', from: 'community' }))
+            : router.push(loginHref({ href: '/community/publish', from: 'community' }) as never)
         }
         className="absolute bottom-28 right-5 h-14 w-14 items-center justify-center rounded-full"
         style={{

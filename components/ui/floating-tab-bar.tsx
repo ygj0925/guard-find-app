@@ -1,15 +1,15 @@
 /**
- * 悬浮椭圆 TabBar:圆角 999 的胶囊容器悬浮在底部,选中项呈药丸高亮(图标 + 文字),
- * 未选中项只显示图标。替代系统式贴底 TabBar。
+ * 响应式 TabBar:
+ *   手机(< 1024)   = 悬浮椭圆胶囊贴底,选中项药丸高亮(图标+文字)
+ *   宽屏(>= 1024)  = 左侧竖排侧边栏(全高),标签常显 —— iPad 横屏/PC/折叠屏展开的主流形态
  *
  * 约束同 (tabs)/_layout.tsx:只用 RN 核心组件,不引新原生依赖;
  * 不用 expo-blur(鸿蒙无适配),容器用高不透明度 card 色 + 描边 + 投影。
- * 外层 View 的 paddingBottom(安全区 + 悬浮间距)会被 useBottomTabBarHeight
- * 计入,列表页的 paddingBottom 无需为悬浮形态额外调整。
  */
 import React from 'react';
 import { Platform, Pressable, Text, View, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useBreakpoint } from '@/hooks/useBreakpoint';
 import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 
 import { token } from '@/constants/Colors';
@@ -19,6 +19,8 @@ export function FloatingTabBar({ state, descriptors, navigation }: BottomTabBarP
   const scheme = useColorScheme() ?? 'light';
   const key = scheme === 'dark' ? 'dark' : 'light';
   const insets = useSafeAreaInsets();
+  const { isDesktop } = useBreakpoint();
+  const vertical = isDesktop;
 
   const card = token('card', key);
   const border = token('border', key);
@@ -30,20 +32,32 @@ export function FloatingTabBar({ state, descriptors, navigation }: BottomTabBarP
 
   return (
     <View
-      style={{
-        paddingBottom: insets.bottom + 10,
-        paddingHorizontal: 18,
-        backgroundColor: 'transparent',
-      }}
+      style={
+        vertical
+          ? {
+              width: 88,
+              height: '100%',
+              paddingTop: insets.top + 12,
+              paddingBottom: insets.bottom,
+              backgroundColor: card,
+              borderRightWidth: 1,
+              borderRightColor: border,
+            }
+          : {
+              paddingBottom: insets.bottom + 10,
+              paddingHorizontal: 18,
+              backgroundColor: 'transparent',
+            }
+      }
     >
       <View
         style={[
-          styles.pill,
+          vertical ? styles.rail : styles.pill,
           {
-            backgroundColor: card,
-            borderColor: border,
-            shadowColor: primary,
-            elevation: 10,
+            backgroundColor: vertical ? 'transparent' : card,
+            borderColor: vertical ? 'transparent' : border,
+            shadowColor: vertical ? 'transparent' : primary,
+            elevation: vertical ? 0 : 10,
           },
         ]}
       >
@@ -75,13 +89,14 @@ export function FloatingTabBar({ state, descriptors, navigation }: BottomTabBarP
           return (
             <Pressable
               key={route.key}
-              accessibilityRole="button"
+              accessibilityRole="tab"
               accessibilityState={focused ? { selected: true } : {}}
               accessibilityLabel={options.tabBarAccessibilityLabel ?? label}
               onPress={onPress}
               onLongPress={onLongPress}
               style={({ pressed }) => [
                 styles.item,
+                vertical && styles.itemVertical,
                 focused && { backgroundColor: primary },
                 pressed && !focused && { opacity: 0.7 },
               ]}
@@ -90,16 +105,18 @@ export function FloatingTabBar({ state, descriptors, navigation }: BottomTabBarP
                 {icon}
                 {badgeText ? (
                   <View style={[styles.badge, { backgroundColor: urgent }]}>
-                    <Text style={{ color: urgentForeground, fontSize: 9, fontWeight: '700' }}>
-                      {badgeText}
-                    </Text>
+                    <Text style={{ color: urgentForeground, fontSize: 9, fontWeight: '700' }}>{badgeText}</Text>
                   </View>
                 ) : null}
               </View>
-              {focused ? (
+              {focused || vertical ? (
                 <Text
                   numberOfLines={1}
-                  style={{ color: primaryForeground, fontSize: 12, fontWeight: '600' }}
+                  style={{
+                    color: focused ? primaryForeground : inactive,
+                    fontSize: vertical ? 11 : 12,
+                    fontWeight: '600',
+                  }}
                 >
                   {label}
                 </Text>
@@ -127,6 +144,12 @@ const styles = StyleSheet.create({
       ? { shadowOpacity: 0.35, shadowRadius: 18, shadowOffset: { width: 0, height: 8 } }
       : {}),
   },
+  rail: {
+    flexDirection: 'column',
+    alignItems: 'stretch',
+    gap: 4,
+    paddingHorizontal: 8,
+  },
   item: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -137,6 +160,13 @@ const styles = StyleSheet.create({
     gap: 6,
     minWidth: 44,
     minHeight: 44,
+  },
+  itemVertical: {
+    flexDirection: 'column',
+    gap: 4,
+    borderRadius: 14,
+    paddingVertical: 8,
+    paddingHorizontal: 8,
   },
   badge: {
     position: 'absolute',

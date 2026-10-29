@@ -35,6 +35,7 @@ import {
 import { buildSlotKey, resolveCity, usePlazaView } from '@/store/plaza-view';
 import { useFavorites } from '@/store/favorites';
 import { useSession } from '@/store/session';
+import { useBreakpoint, contentWidthStyle } from '@/hooks/useBreakpoint';
 import { useToolsOrder, pinTools } from '@/store/tools-order';
 import { DEFAULT_QUICK_KEYS, getTool } from '@/lib/tools/registry';
 import { useFilters } from '@/providers/FiltersProvider';
@@ -55,6 +56,7 @@ const SORTS: { key: PlazaSort; label: string }[] = [
 ];
 
 export default function PlazaScreen() {
+  const responsive = useBreakpoint();
   const router = useRouter();
   const sort = usePlazaView((state) => state.sort);
   const setSort = usePlazaView((state) => state.setSort);
@@ -297,7 +299,7 @@ export default function PlazaScreen() {
                   { text: '取消', style: 'cancel' },
                 ]);
               }}
-              className="mx-1 w-16 items-center rounded-xl py-2"
+              className="mx-1 w-16 items-center rounded-xl py-2 web:cursor-pointer hover:opacity-80"
             >
               <View className="bg-accent h-11 w-11 items-center justify-center rounded-xl">
                 <Icon as={tool.icon} size={20} className="text-primary" />
@@ -353,7 +355,7 @@ export default function PlazaScreen() {
 
       <FlatList
         className="flex-1 px-4"
-        contentContainerStyle={{ paddingBottom: 104 }}
+        contentContainerStyle={[{ paddingBottom: 104 }, contentWidthStyle(responsive)]}
         data={feed.items}
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
