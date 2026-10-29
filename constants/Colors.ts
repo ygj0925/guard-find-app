@@ -34,69 +34,75 @@ export type TokenName =
   | 'pending'
   | 'pending-foreground';
 
-/** HSL 三元组,与 global.css 的 `--x: H S% L%` 一一对应。 */
+/**
+ * HSL 三元组,与 global.css 的 `--x: H S% L%` 一一对应。
+ *
+ * 基调(信任优先,寻亲/公益场景):主色是深墨蓝而非电光蓝,深色端取消霓虹青;
+ * 紧急红 / 喜报绿 / 待核实琥珀三色的浅色值按 WCAG AA 反推(文字态对比 4.9~7.1),
+ * 不允许只靠颜色区分状态,必须同时配文字标签。
+ */
 export const TOKENS = {
   light: {
-    background: '210 45% 97%',
-    foreground: '222 47% 10%',
+    background: '210 36% 97%',
+    foreground: '222 45% 11%',
     card: '0 0% 100%',
-    'card-foreground': '222 47% 10%',
+    'card-foreground': '222 45% 11%',
     popover: '0 0% 100%',
-    'popover-foreground': '222 47% 10%',
-    primary: '199 85% 34%',
+    'popover-foreground': '222 45% 11%',
+    primary: '208 58% 33%',
     'primary-foreground': '210 40% 98%',
-    secondary: '200 40% 93%',
-    'secondary-foreground': '200 80% 26%',
-    muted: '210 30% 93%',
-    'muted-foreground': '215 18% 42%',
-    accent: '195 80% 92%',
-    'accent-foreground': '198 90% 26%',
-    destructive: '355 75% 48%',
+    secondary: '206 30% 94%',
+    'secondary-foreground': '208 50% 28%',
+    muted: '210 28% 93%',
+    'muted-foreground': '215 17% 42%',
+    accent: '205 45% 93%',
+    'accent-foreground': '208 55% 26%',
+    destructive: '354 72% 43%',
     'destructive-foreground': '210 40% 98%',
-    border: '212 30% 86%',
-    input: '212 30% 86%',
-    ring: '199 85% 34%',
-    overlay: '222 47% 8%',
-    urgent: '355 75% 48%',
+    border: '212 26% 86%',
+    input: '212 26% 86%',
+    ring: '208 58% 33%',
+    overlay: '222 45% 8%',
+    urgent: '354 72% 43%',
     'urgent-foreground': '210 40% 98%',
-    found: '160 65% 32%',
+    found: '160 62% 27%',
     'found-foreground': '160 45% 97%',
-    pending: '38 95% 42%',
+    pending: '32 82% 34%',
     'pending-foreground': '40 90% 97%',
   },
   dark: {
-    background: '224 44% 6%',
-    foreground: '210 40% 96%',
-    card: '223 36% 10%',
-    'card-foreground': '210 40% 96%',
-    popover: '223 36% 10%',
-    'popover-foreground': '210 40% 96%',
-    primary: '191 91% 55%',
-    'primary-foreground': '200 80% 10%',
-    secondary: '220 30% 16%',
-    'secondary-foreground': '195 60% 85%',
-    muted: '220 28% 15%',
-    'muted-foreground': '215 20% 64%',
-    accent: '200 45% 18%',
-    'accent-foreground': '191 80% 78%',
-    destructive: '355 65% 55%',
-    'destructive-foreground': '210 40% 98%',
-    border: '221 26% 18%',
-    input: '221 26% 18%',
-    ring: '191 91% 55%',
-    overlay: '224 44% 3%',
-    urgent: '352 80% 60%',
+    background: '224 40% 6%',
+    foreground: '210 36% 96%',
+    card: '223 34% 10%',
+    'card-foreground': '210 36% 96%',
+    popover: '223 34% 10%',
+    'popover-foreground': '210 36% 96%',
+    primary: '202 52% 62%',
+    'primary-foreground': '204 60% 10%',
+    secondary: '220 26% 16%',
+    'secondary-foreground': '202 40% 84%',
+    muted: '220 24% 15%',
+    'muted-foreground': '214 18% 64%',
+    accent: '205 32% 18%',
+    'accent-foreground': '202 45% 80%',
+    destructive: '352 72% 62%',
+    'destructive-foreground': '352 60% 10%',
+    border: '221 22% 18%',
+    input: '221 22% 18%',
+    ring: '202 52% 62%',
+    overlay: '224 40% 3%',
+    urgent: '352 72% 62%',
     'urgent-foreground': '350 60% 10%',
-    found: '160 70% 48%',
+    found: '160 60% 48%',
     'found-foreground': '160 60% 8%',
-    pending: '40 95% 58%',
+    pending: '34 78% 58%',
     'pending-foreground': '35 80% 10%',
   },
 } as const satisfies Record<'light' | 'dark', Record<TokenName, string>>;
 
 export type Scheme = keyof typeof TOKENS;
 
-/** `201 72% 30%` -> `hsl(201, 72%, 30%)`,RN 颜色解析器可用的形式。 */
+/** `208 58% 33%` -> `hsl(208, 58%, 33%)`,RN 颜色解析器可用的形式。 */
 export function hsl(triple: string): string {
   const [h, s, l] = triple.split(/\s+/);
   return `hsl(${h}, ${s}, ${l})`;
@@ -139,9 +145,9 @@ export const Colors = {
 
 /** app.json 里只能写字面色,这份常量是写进原生配置的那一次例外的出处(由测试与 HSL 对齐)。 */
 export const NATIVE_BRAND = {
-  primaryHex: '#0d72a0',
-  backgroundHex: '#f4f7fb',
-  urgentHex: '#d61f2e',
-  foundHex: '#1d8763',
-  pendingHex: '#d18605',
+  primaryHex: '#235785',
+  backgroundHex: '#f5f7fa',
+  urgentHex: '#bd1f2e',
+  foundHex: '#1a7053',
+  pendingHex: '#9e5b10',
 } as const;

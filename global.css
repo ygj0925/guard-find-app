@@ -5,72 +5,74 @@
 /*
  * 品牌 token 事实源:constants/Colors.ts 的 TOKENS 与本文件必须逐字一致,
  * 由 constants/__tests__/token-sync.test.ts 在 CI 里校验,漂移即测试失败。
- * 语义约定:
- *   primary  = 电光蓝(主操作、选中态;浅色 hsl(199 85% 34%),深色霓虹青 hsl(191 91% 55%))
+ * 语义约定(信任优先基调,寻亲/公益场景):
+ *   primary  = 墨蓝(主操作、选中态;浅色 hsl(208 58% 33%),深色 hsl(202 52% 62%),不用霓虹青)
  *   urgent   = 紧急红(超时未找回、驳回)
  *   found    = 找回绿(喜报、成功)
  *   pending  = 待核实琥珀(草稿、待审核、高风险线索)
+ * 三色系的浅色值按 WCAG AA 反推,保证 text-urgent/text-found/text-pending
+ * 在 --background 上做小字也过线(4.9~7.1);深色端改用深墨字配亮底,避免亮红+白字不过线。
  * 三色系必须同时配文字标签使用,不允许只靠颜色区分状态(色觉无障碍要求)。
- * 科技感基调:浅色 = 冷调冰白底 + 电光蓝;深色 = 深空藏蓝底 + 霓虹青。
+ * 中性底:浅色 = 冷白(轻微蓝相),深色 = 深藏蓝;不用纯黑纯白。
  */
 @layer base {
   :root {
-    --background: 210 45% 97%;
-    --foreground: 222 47% 10%;
+    --background: 210 36% 97%;
+    --foreground: 222 45% 11%;
     --card: 0 0% 100%;
-    --card-foreground: 222 47% 10%;
+    --card-foreground: 222 45% 11%;
     --popover: 0 0% 100%;
-    --popover-foreground: 222 47% 10%;
-    --primary: 199 85% 34%;
+    --popover-foreground: 222 45% 11%;
+    --primary: 208 58% 33%;
     --primary-foreground: 210 40% 98%;
-    --secondary: 200 40% 93%;
-    --secondary-foreground: 200 80% 26%;
-    --muted: 210 30% 93%;
-    --muted-foreground: 215 18% 42%;
-    --accent: 195 80% 92%;
-    --accent-foreground: 198 90% 26%;
-    --destructive: 355 75% 48%;
+    --secondary: 206 30% 94%;
+    --secondary-foreground: 208 50% 28%;
+    --muted: 210 28% 93%;
+    --muted-foreground: 215 17% 42%;
+    --accent: 205 45% 93%;
+    --accent-foreground: 208 55% 26%;
+    --destructive: 354 72% 43%;
     --destructive-foreground: 210 40% 98%;
-    --border: 212 30% 86%;
-    --input: 212 30% 86%;
-    --ring: 199 85% 34%;
+    --border: 212 26% 86%;
+    --input: 212 26% 86%;
+    --ring: 208 58% 33%;
     /* 遮罩:不用纯黑,取前景色的深墨蓝,四端与深色模式下都保持"压暗而非涂黑" */
-    --overlay: 222 47% 8%;
+    --overlay: 222 45% 8%;
     --radius: 0.875rem;
-    --urgent: 355 75% 48%;
+    --urgent: 354 72% 43%;
     --urgent-foreground: 210 40% 98%;
-    --found: 160 65% 32%;
+    --found: 160 62% 27%;
     --found-foreground: 160 45% 97%;
-    --pending: 38 95% 42%;
+    --pending: 32 82% 34%;
     --pending-foreground: 40 90% 97%;
   }
 
   .dark:root {
-    --background: 224 44% 6%;
-    --foreground: 210 40% 96%;
-    --card: 223 36% 10%;
-    --card-foreground: 210 40% 96%;
-    --popover: 223 36% 10%;
-    --popover-foreground: 210 40% 96%;
-    --primary: 191 91% 55%;
-    --primary-foreground: 200 80% 10%;
-    --secondary: 220 30% 16%;
-    --secondary-foreground: 195 60% 85%;
-    --muted: 220 28% 15%;
-    --muted-foreground: 215 20% 64%;
-    --accent: 200 45% 18%;
-    --accent-foreground: 191 80% 78%;
-    --destructive: 355 65% 55%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 221 26% 18%;
-    --input: 221 26% 18%;
-    --ring: 191 91% 55%;
-    --overlay: 224 44% 3%;
-    --urgent: 352 80% 60%;
+    --background: 224 40% 6%;
+    --foreground: 210 36% 96%;
+    --card: 223 34% 10%;
+    --card-foreground: 210 36% 96%;
+    --popover: 223 34% 10%;
+    --popover-foreground: 210 36% 96%;
+    --primary: 202 52% 62%;
+    --primary-foreground: 204 60% 10%;
+    --secondary: 220 26% 16%;
+    --secondary-foreground: 202 40% 84%;
+    --muted: 220 24% 15%;
+    --muted-foreground: 214 18% 64%;
+    --accent: 205 32% 18%;
+    --accent-foreground: 202 45% 80%;
+    --destructive: 352 72% 62%;
+    --destructive-foreground: 352 60% 10%;
+    --border: 221 22% 18%;
+    --input: 221 22% 18%;
+    --ring: 202 52% 62%;
+    --overlay: 224 40% 3%;
+    --urgent: 352 72% 62%;
     --urgent-foreground: 350 60% 10%;
-    --found: 160 70% 48%;
+    --found: 160 60% 48%;
     --found-foreground: 160 60% 8%;
-    --pending: 40 95% 58%;
+    --pending: 34 78% 58%;
     --pending-foreground: 35 80% 10%;
   }
 }
