@@ -35,7 +35,7 @@ export function deleteGoal(id: string): Promise<void> {
   return api.delete<void>(`/app/tool/goal/${id}`);
 }
 
-export function createKeyResult(goalId: string, kr: { title: string; targetValue: number; unit?: string }): Promise<number> {
+export function createKeyResult(goalId: string, kr: { title: string; targetValue: number; unit?: string; weight?: number; confidence?: number }): Promise<number> {
   return api.post<number>(`/app/tool/goal/${goalId}/kr`, kr);
 }
 
@@ -49,4 +49,39 @@ export function toggleKeyResult(krId: string): Promise<void> {
 
 export function deleteKeyResult(krId: string): Promise<void> {
   return api.delete<void>(`/app/tool/goal/kr/${krId}`);
+}
+
+
+/** KR 进度更新(带说明)。 */
+export function updateKrProgressWithNote(krId: string, currentValue: number, note?: string): Promise<void> {
+  return api.post<void>(`/app/tool/goal/kr/${krId}/progress`, { currentValue, note });
+}
+
+/** KR 时间线。 */
+export interface KrLog {
+  id: string;
+  fromValue: number | null;
+  toValue: number;
+  confidence: number | null;
+  note: string | null;
+  nickname: string | null;
+  createTime?: string;
+}
+
+export function fetchKrLogs(krId: string): Promise<KrLog[]> {
+  return api.get<KrLog[]>(`/app/tool/goal/kr/${krId}/logs`);
+}
+
+/** 关联/取消任务。 */
+export function linkTaskToKr(krId: string, taskId: string): Promise<void> {
+  return api.post<void>(`/app/tool/goal/kr/${krId}/tasks/${taskId}`);
+}
+
+export function unlinkTaskFromKr(krId: string, taskId: string): Promise<void> {
+  return api.delete<void>(`/app/tool/goal/kr/${krId}/tasks/${taskId}`);
+}
+
+/** 设置复盘评分。 */
+export function setGoalScore(id: string, score: number): Promise<void> {
+  return api.put<void>(`/app/tool/goal/${id}/score`, { score });
 }
