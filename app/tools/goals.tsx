@@ -243,15 +243,20 @@ export default function GoalsScreen() {
               <View className="flex-row items-center justify-between">
                 <View className="flex-1">
                   <Text className="text-base font-semibold">{goal.title}</Text>
-                  <Text className="text-muted-foreground mt-0.5 text-xs">
-                    {goal.period} · 整体进度 {percentText(goal.progress)}
-                  </Text>
+                  <Text className="text-muted-foreground mt-0.5 text-xs">{goal.period}</Text>
                 </View>
+                {/* 模块特色:整体进度百分比大字(OKR 的核心读数) */}
+                <Text
+                  className="text-primary text-2xl font-bold"
+                  accessibilityLabel={`整体进度 ${percentText(goal.progress)}`}
+                >
+                  {percentText(goal.progress)}
+                </Text>
                 <Pressable
                   accessibilityRole="button"
                   accessibilityLabel={`删除目标 ${goal.title}`}
                   onPress={() => confirmDeleteGoal(goal)}
-                  className="p-1"
+                  className="ml-1 p-1"
                 >
                   <Icon as={Trash2} size={14} className="text-muted-foreground" />
                 </Pressable>

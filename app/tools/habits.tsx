@@ -198,7 +198,11 @@ export default function HabitsScreen() {
           >
             <Card className="p-3">
               <View className="flex-row items-center">
-                <View className="bg-pending/15 mr-3 h-9 w-9 items-center justify-center rounded-full">
+                {/* 模块特色:streak 热度——连续越久火焰底色越暖越浓(封顶 7 天) */}
+                <View
+                  className="mr-3 h-9 w-9 items-center justify-center rounded-full"
+                  style={{ backgroundColor: `rgba(255,150,50,${0.12 + Math.min(item.currentStreak, 7) * 0.04})` }}
+                >
                   <Icon as={Flame} size={16} className="text-pending" />
                 </View>
                 <View className="flex-1">
