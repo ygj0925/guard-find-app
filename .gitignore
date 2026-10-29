@@ -29,7 +29,8 @@ yarn-error.*
 .DS_Store
 *.pem
 
-# local env files
+# local env files(真实地址不入库;仅 .env.example 可提交)
+.env
 .env*.local
 
 # typescript
