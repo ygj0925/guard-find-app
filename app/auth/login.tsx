@@ -31,6 +31,8 @@ import { peekPendingAction, requireLogin, redirectFromParams } from '@/lib/nav';
 import { notifyAuthenticated } from '@/lib/api/client';
 import { useSession } from '@/store/session';
 import { useToast } from '@/providers/ToastProvider';
+import { useColorScheme } from '@/hooks/useColorScheme';
+import { token } from '@/constants/Colors';
 
 const PHONE_PATTERN = /^1[3-9]\d{9}$/;
 const CODE_PATTERN = /^\d{6}$/;
@@ -45,6 +47,7 @@ export default function LoginScreen() {
   const applyLogin = useSession((state) => state.applyLogin);
   const { toast } = useToast();
 
+  const scheme = useColorScheme() ?? 'light';
   const [mode, setMode] = useState<Mode>('PHONE');
   const [phone, setPhone] = useState('');
   const [code, setCode] = useState('');
@@ -351,9 +354,45 @@ export default function LoginScreen() {
           >
             <Text className="text-muted-foreground text-sm">先逛逛寻人广场(无需登录)</Text>
           </Pressable>
+
+          {/* 三方登录:微信 / QQ / 抖音(需要平台凭证后开放) */}
+          <View className="mt-8">
+            <View className="flex-row items-center" style={{ gap: 12 }}>
+              <View className="h-px flex-1" style={{ backgroundColor: token('border', scheme) }} />
+              <Text className="text-muted-foreground text-xs">其他登录方式</Text>
+              <View className="h-px flex-1" style={{ backgroundColor: token('border', scheme) }} />
+            </View>
+            <View className="mt-5 flex-row justify-center" style={{ gap: 28 }}>
+              <ThirdPartyButton provider="wechat" label="微信" color="#07C160" />
+              <ThirdPartyButton provider="qq" label="QQ" color="#12B7F5" />
+              <ThirdPartyButton provider="douyin" label="抖音" color="#FE2C55" />
+            </View>
+          </View>
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
+  );
+}
+
+/** 三方登录圆标按钮(暂未配置凭证,点击提示即将开放)。 */
+function ThirdPartyButton({ provider, label, color }: { provider: string; label: string; color: string }) {
+  const { toast } = useToast();
+  const scheme = useColorScheme() ?? 'light';
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={`${label}登录`}
+      onPress={() => toast(`${label}登录即将开放,请先使用手机号登录`, 'info')}
+      className="items-center"
+      style={{ gap: 6 }}
+    >
+      <View
+        className="h-12 w-12 items-center justify-center rounded-full"
+        style={{ backgroundColor: `${color}18`, borderWidth: 1.5, borderColor: `${color}40` }}
+      >
+        <Text style={{ color, fontSize: 13, fontWeight: '700' }}>{label}</Text>
+      </View>
+    </Pressable>
   );
 }
 
