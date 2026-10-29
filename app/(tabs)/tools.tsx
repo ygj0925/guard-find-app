@@ -23,7 +23,7 @@ import { useColorScheme } from '@/hooks/useColorScheme';
 import { Newspaper } from 'lucide-react-native';
 import { useCircularReveal } from '@/components/ui/circular-reveal';
 import { PressableScale } from '@/components/ui/pressable-scale';
-import { TOOL_REGISTRY as TOOLS, type ToolEntry } from '@/lib/tools/registry';
+import { TOOL_REGISTRY as TOOLS, CATEGORY_COLORS, type ToolEntry } from '@/lib/tools/registry';
 
 
 
@@ -146,11 +146,11 @@ export default function ToolsScreen() {
               className="mb-3 w-[47%] md:w-[31%] lg:w-[23%]"
             >
               <Card className={`p-4 web:cursor-pointer hover:opacity-90 ${tool.href ? '' : 'opacity-60'}`}>
-                <View className="bg-accent mb-2 h-10 w-10 items-center justify-center rounded-xl">
+                <View className="mb-2 h-10 w-10 items-center justify-center rounded-xl" style={{ backgroundColor: CATEGORY_COLORS[tool.category]?.bg }}>
                   <Icon
                     as={tool.icon}
                     size={20}
-                    className={tool.href ? 'text-primary' : 'text-muted-foreground'}
+                    color={CATEGORY_COLORS[tool.category]?.fg}
                   />
                 </View>
                 <Text className="text-base font-semibold">{tool.title}</Text>
