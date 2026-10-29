@@ -18,6 +18,7 @@ import {
   ListTodo,
   MessagesSquare,
   Music,
+  PawPrint,
   Percent,
   Ruler,
   Sparkles,
@@ -81,6 +82,7 @@ export const TOOL_REGISTRY: ToolEntry[] = [
   { key: 'calc', title: '计算器', description: '基础四则 · 离线可用', icon: Calculator, category: 'utility', href: '/tools/calculator' },
   { key: 'password', title: '密码生成', description: '安全随机 · 强度评分', icon: KeyRound, category: 'utility', href: '/tools/password' },
   { key: 'discount', title: '折扣比较', description: '比单价 · 算折扣', icon: Percent, category: 'finance', href: '/tools/discount' },
+  { key: 'pet', title: '宠物成长', description: '体重曲线 · 疫苗 · 里程碑', icon: PawPrint, category: 'health', href: '/tools/pet' },
   { key: 'forum', title: '圈子论坛', description: '发帖 · 交流 · 互助', icon: MessagesSquare, category: 'social' },
   { key: 'weather', title: '天气', description: '实时天气 · 未来趋势', icon: CloudSun, category: 'utility' },
 ];
