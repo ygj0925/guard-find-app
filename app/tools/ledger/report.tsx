@@ -238,9 +238,9 @@ function TrendBars({
               />
             </View>
             {showLabel ? (
-              <Text className="text-muted-foreground mt-1 text-[8px]">{point.label}</Text>
+              <Text className="text-muted-foreground mt-1 text-[10px]">{point.label}</Text>
             ) : (
-              <Text className="mt-1 text-[8px]"> </Text>
+              <Text className="mt-1 text-[10px]"> </Text>
             )}
           </View>
         );

@@ -4,7 +4,7 @@
 
 /*
  * 品牌 token 事实源:constants/Colors.ts 的 TOKENS 与本文件必须逐字一致,
- * 由 __tests__/token-sync.test.ts 在 CI 里校验,漂移即测试失败。
+ * 由 constants/__tests__/token-sync.test.ts 在 CI 里校验,漂移即测试失败。
  * 语义约定:
  *   primary  = 电光蓝(主操作、选中态;浅色 hsl(199 85% 34%),深色霓虹青 hsl(191 91% 55%))
  *   urgent   = 紧急红(超时未找回、驳回)
@@ -34,7 +34,9 @@
     --border: 212 30% 86%;
     --input: 212 30% 86%;
     --ring: 199 85% 34%;
-    --radius: 0.75rem;
+    /* 遮罩:不用纯黑,取前景色的深墨蓝,四端与深色模式下都保持"压暗而非涂黑" */
+    --overlay: 222 47% 8%;
+    --radius: 0.875rem;
     --urgent: 355 75% 48%;
     --urgent-foreground: 210 40% 98%;
     --found: 160 65% 32%;
@@ -63,6 +65,7 @@
     --border: 221 26% 18%;
     --input: 221 26% 18%;
     --ring: 191 91% 55%;
+    --overlay: 224 44% 3%;
     --urgent: 352 80% 60%;
     --urgent-foreground: 350 60% 10%;
     --found: 160 70% 48%;

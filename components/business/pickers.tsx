@@ -70,7 +70,7 @@ export function RegionPicker({
 
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
-      <Pressable className="flex-1 bg-black/40" onPress={onClose}>
+      <Pressable className="flex-1 bg-overlay/40" onPress={onClose}>
         <View className="absolute inset-x-0 bottom-0 h-[72%] rounded-t-2xl bg-background p-4">
           <Text className="mb-2 text-base font-semibold">
             {level === 3 ? '选择失踪地点' : '选择城市'}
@@ -228,7 +228,7 @@ export function DateTimePicker({
 
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
-      <Pressable className="flex-1 bg-black/40" onPress={onClose}>
+      <Pressable className="flex-1 bg-overlay/40" onPress={onClose}>
         <View className="absolute inset-x-0 bottom-0 rounded-t-2xl bg-background p-4">
           <Text className="mb-1 text-base font-semibold">{title}</Text>
           <Text className="text-muted-foreground mb-3 text-xs">

@@ -7,6 +7,8 @@ import React, { useCallback, useState } from 'react';
 import { Modal, Pressable, StyleSheet, View, useWindowDimensions } from 'react-native';
 import Animated, { runOnJS, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 
+import { DURATION, timing } from '@/constants/Motion';
+
 interface RevealState {
   x: number;
   y: number;
@@ -48,7 +50,7 @@ export function useCircularReveal(router: { push: (href: never) => void }) {
       // eslint-disable-next-line react-hooks/immutability
       radius.value = 0;
       setReveal({ x, y, color, href });
-      radius.value = withTiming(revealRadius(x, y, width, height), { duration: 380 }, (finished) => {
+      radius.value = withTiming(revealRadius(x, y, width, height), timing(DURATION.reveal), (finished) => {
         if (finished) runOnJS(finish)(href);
       });
     },

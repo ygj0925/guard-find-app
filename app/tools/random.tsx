@@ -6,6 +6,9 @@ import React, { useCallback, useMemo, useState } from 'react';
 import { Alert, Animated, Easing, Pressable, ScrollView, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Coins, Dices, Disc3 } from 'lucide-react-native';
+import { useReducedMotion } from 'react-native-reanimated';
+
+import { DURATION } from '@/constants/Motion';
 
 import { Text } from '@/components/ui/text';
 import { Icon } from '@/components/ui/icon';
@@ -18,6 +21,7 @@ type Mode = 'wheel' | 'dice' | 'coin';
 
 export default function RandomScreen() {
   const scheme = useColorScheme() ?? 'light';
+  const reduceMotion = useReducedMotion();
   const [mode, setMode] = useState<Mode>('wheel');
   const [options, setOptions] = useState('火锅\n烧烤\n面条\n汉堡');
   const [dice, setDice] = useState<number | null>(null);
@@ -47,7 +51,7 @@ export default function RandomScreen() {
     const target = Math.random() * 360;
     Animated.timing(spin, {
       toValue: rounds * 360 + target,
-      duration: 2200,
+      duration: reduceMotion ? 0 : DURATION.spin,
       easing: Easing.out(Easing.cubic),
       useNativeDriver: true,
     }).start(() => {
@@ -60,7 +64,7 @@ export default function RandomScreen() {
         showResult(picked);
       }, 120);
     });
-  }, [optionList, spin, spinning, showResult]);
+  }, [optionList, reduceMotion, spin, spinning, showResult]);
 
   const rollDice = useCallback(() => {
     const value = 1 + Math.floor(Math.random() * 6);

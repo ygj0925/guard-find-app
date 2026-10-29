@@ -188,7 +188,7 @@ export default function LedgerGroupsScreen() {
 
       {/* 新建组 */}
       <Modal visible={createOpen} transparent animationType="slide" onRequestClose={() => setCreateOpen(false)}>
-        <View className="flex-1 justify-end bg-black/40">
+        <View className="flex-1 justify-end bg-overlay/40">
           <View className="bg-background rounded-t-2xl px-4 pb-8 pt-4">
             <Text className="mb-3 text-lg font-bold">新建家庭组</Text>
             <Field label="组名" error={errors.name} required>
@@ -208,7 +208,7 @@ export default function LedgerGroupsScreen() {
 
       {/* 凭码加入 */}
       <Modal visible={joinOpen} transparent animationType="slide" onRequestClose={() => setJoinOpen(false)}>
-        <View className="flex-1 justify-end bg-black/40">
+        <View className="flex-1 justify-end bg-overlay/40">
           <View className="bg-background rounded-t-2xl px-4 pb-8 pt-4">
             <Text className="mb-1 text-lg font-bold">加入家庭组</Text>
             <Text className="text-muted-foreground mb-3 text-xs">向组长要 6 位邀请码</Text>

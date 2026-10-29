@@ -2,7 +2,7 @@
  * 品牌 token 事实源(spec D8:global.css 与 Colors.ts 必须同源)。
  *
  * 做法:CSS 变量值写在本文件的 TOKENS 里(NativeWind 运行时读 global.css,
- * JS 侧颜色读本文件),`__tests__/token-sync.test.ts` 会逐条比对两者,漂移即 CI 失败。
+ * JS 侧颜色读本文件),`constants/__tests__/token-sync.test.ts` 会逐条比对两者,漂移即 CI 失败。
  * RN 支持 `hsl(h, s%, l%)` 字符串,所以不需要再转 hex。
  */
 
@@ -26,6 +26,7 @@ export type TokenName =
   | 'border'
   | 'input'
   | 'ring'
+  | 'overlay'
   | 'urgent'
   | 'urgent-foreground'
   | 'found'
@@ -55,6 +56,7 @@ export const TOKENS = {
     border: '212 30% 86%',
     input: '212 30% 86%',
     ring: '199 85% 34%',
+    overlay: '222 47% 8%',
     urgent: '355 75% 48%',
     'urgent-foreground': '210 40% 98%',
     found: '160 65% 32%',
@@ -82,6 +84,7 @@ export const TOKENS = {
     border: '221 26% 18%',
     input: '221 26% 18%',
     ring: '191 91% 55%',
+    overlay: '224 44% 3%',
     urgent: '352 80% 60%',
     'urgent-foreground': '350 60% 10%',
     found: '160 70% 48%',

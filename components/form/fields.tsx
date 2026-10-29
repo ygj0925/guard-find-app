@@ -220,7 +220,7 @@ export function OptionSheetField(props: {
         </Text>
       </Pressable>
       <Modal visible={open} transparent animationType="slide" onRequestClose={() => setOpen(false)}>
-        <Pressable className="flex-1 bg-black/40" onPress={() => setOpen(false)}>
+        <Pressable className="flex-1 bg-overlay/40" onPress={() => setOpen(false)}>
           <View className="absolute inset-x-0 bottom-0 max-h-[70%] rounded-t-2xl bg-background p-4">
             <Text className="mb-3 text-base font-semibold">{label}</Text>
             <ScrollView>

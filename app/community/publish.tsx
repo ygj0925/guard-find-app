@@ -121,7 +121,7 @@ export default function PostPublishScreen() {
                     accessibilityRole="button"
                     accessibilityLabel="移除图片"
                     onPress={() => setImages((prev) => prev.filter((item) => item !== uri))}
-                    className="absolute right-1 top-1 h-5 w-5 items-center justify-center rounded-full bg-black/50"
+                    className="absolute right-1 top-1 h-5 w-5 items-center justify-center rounded-full bg-overlay/50"
                   >
                     <Icon as={X} size={12} className="text-primary-foreground" />
                   </Pressable>

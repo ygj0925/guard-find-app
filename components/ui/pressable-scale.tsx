@@ -7,6 +7,8 @@ import { Pressable, PressableProps, ViewStyle } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 import { cssInterop } from 'nativewind';
 
+import { SPRING } from '@/constants/Motion';
+
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 // NativeWind 只给核心组件注册了 className→style,createAnimatedComponent 产出的是新组件对象,
@@ -26,12 +28,12 @@ export function PressableScale({ children, scaleTo = 0.97, className, style, ...
 
   const onPressIn = useCallback(() => {
     // eslint-disable-next-line react-hooks/immutability -- Reanimated SharedValue 官方写法
-    scale.value = withSpring(scaleTo, { damping: 20, stiffness: 300 });
+    scale.value = withSpring(scaleTo, SPRING.tap);
   }, [scale, scaleTo]);
 
   const onPressOut = useCallback(() => {
     // eslint-disable-next-line react-hooks/immutability -- Reanimated SharedValue 官方写法
-    scale.value = withSpring(1, { damping: 16, stiffness: 260 });
+    scale.value = withSpring(1, SPRING.release);
   }, [scale]);
 
   const animated = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));

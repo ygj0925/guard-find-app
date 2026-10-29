@@ -30,7 +30,7 @@ export function FilterSheet({
 
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
-      <Pressable className="flex-1 bg-black/40" onPress={onClose}>
+      <Pressable className="flex-1 bg-overlay/40" onPress={onClose}>
         <View className="absolute inset-x-0 bottom-0 max-h-[80%] rounded-t-2xl bg-background p-4">
           <Text className="mb-1 text-base font-semibold">筛选条件</Text>
           <Text className="text-muted-foreground mb-3 text-xs">

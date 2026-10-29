@@ -5,7 +5,9 @@
 import React, { useEffect, useState } from 'react';
 import { Pressable, View } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
-import Animated, { runOnJS, useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
+import Animated, { runOnJS, useAnimatedStyle, useSharedValue, withSpring, withTiming } from 'react-native-reanimated';
+
+import { DURATION, SPRING, timing } from '@/constants/Motion';
 
 export interface DraggableProgressProps {
   /** 进度 0-1(受控)。 */
@@ -34,10 +36,11 @@ export function DraggableProgress({
   const [width, setWidth] = useState(0);
   const dragRatio = useSharedValue(progress);
   const dragging = useSharedValue(false);
+  const thumbScale = useSharedValue(1);
 
-  // 外部进度变化(轮询)且未在拖动时,跟随
+  // 外部进度变化(轮询)且未在拖动时,平滑跟随而不是硬跳一格
   useEffect(() => {
-    if (!dragging.value) dragRatio.value = progress;
+    if (!dragging.value) dragRatio.value = withTiming(progress, timing(DURATION.fast));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [progress]);
 
@@ -56,6 +59,7 @@ export function DraggableProgress({
     .enabled(!disabled && width > 0)
     .onBegin(() => {
       dragging.value = true;
+      thumbScale.value = withSpring(1.35, SPRING.bounce);
     })
     .onUpdate((event) => {
       const ratio = Math.min(1, Math.max(0, event.x / width));
@@ -64,8 +68,9 @@ export function DraggableProgress({
     })
     .onEnd(() => {
       dragging.value = false;
+      thumbScale.value = withSpring(1, SPRING.release);
       const ratio = Math.min(1, Math.max(0, dragRatio.value));
-      dragRatio.value = withSpring(ratio, { damping: 20 });
+      dragRatio.value = withSpring(ratio, SPRING.snap);
       runOnJS(onSeekRef.value)?.(ratio);
     });
   /* eslint-enable react-hooks/immutability */
@@ -76,10 +81,10 @@ export function DraggableProgress({
     backgroundColor: activeColor,
   }));
 
-  // 吸附卡:圆点弹簧吸附
+  // 吸附卡:圆点由独立 SharedValue 驱动缩放(此前在 worklet 里调 withSpring 会逐帧重触发)
   const thumbStyle = useAnimatedStyle(() => ({
     left: `${Math.round(dragRatio.value * 100)}%`,
-    transform: [{ translateX: -11 }, { scale: dragging.value ? 1.35 : withSpring(1) }],
+    transform: [{ translateX: -11 }, { scale: thumbScale.value }],
   }));
 
   return (

@@ -15,7 +15,7 @@
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
-        "backgroundColor": "#f8fafc"
+        "backgroundColor": "#f4f7fb"
       },
       "package": "com.guardfind.app"
     },
@@ -38,7 +38,7 @@
       "orientation": "portrait",
       "splash": {
         "image": "./assets/images/splash-icon.png",
-        "backgroundColor": "#f8fafc"
+        "backgroundColor": "#f4f7fb"
       }
     }
   }

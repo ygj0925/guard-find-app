@@ -39,7 +39,7 @@ export function RemoteImage({
   const showPlaceholder = !uri || failed;
 
   const body = (
-    <View style={styles.container} testID={testID}>
+    <View style={styles.container} className="bg-muted" testID={testID}>
       {!showPlaceholder ? (
         <Image
           source={{ uri: uri as string }}
@@ -50,9 +50,9 @@ export function RemoteImage({
           accessibilityRole="image"
         />
       ) : null}
-      {!showPlaceholder && !loaded ? <View style={styles.loading} /> : null}
+      {!showPlaceholder && !loaded ? <View style={styles.loading} className="bg-muted" /> : null}
       {showPlaceholder ? (
-        <View style={styles.placeholder}>
+        <View style={styles.placeholder} className="bg-muted">
           <Text className="text-muted-foreground text-xs" numberOfLines={2}>
             {fallbackLabel}
           </Text>
@@ -68,14 +68,14 @@ export function RemoteImage({
   );
 }
 
+// 底色一律走 bg-muted(见上方 className),这里只留布局属性,避免写死灰底在深色下不翻。
 const styles = StyleSheet.create({
-  container: { overflow: 'hidden', backgroundColor: '#e5e7eb', minHeight: 44 },
+  container: { overflow: 'hidden', minHeight: 44 },
   placeholder: {
     ...StyleSheet.absoluteFillObject,
     alignItems: 'center',
     justifyContent: 'center',
     padding: 6,
-    backgroundColor: '#eef2f7',
   },
-  loading: { ...StyleSheet.absoluteFillObject, backgroundColor: '#e5e7eb' },
+  loading: { ...StyleSheet.absoluteFillObject },
 });

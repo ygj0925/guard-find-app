@@ -34,6 +34,8 @@ import { loginHref } from '@/lib/nav';
 import { requestAiDecompose } from '@/lib/api/endpoints/ai';
 import Animated, { useAnimatedStyle, useSharedValue, withSequence, withSpring, withTiming } from 'react-native-reanimated';
 
+import { DURATION, SPRING, timing } from '@/constants/Motion';
+
 export default function TodoScreen() {
   const router = useRouter();
   const { toast } = useToast();
@@ -255,7 +257,7 @@ export default function TodoScreen() {
 
       {/* AI 拆解弹层:勾选子步骤批量添加 */}
       <Modal visible={decomposeTarget !== null} transparent animationType="slide" onRequestClose={() => setDecomposeTarget(null)}>
-        <View className="flex-1 justify-end bg-black/40">
+        <View className="flex-1 justify-end bg-overlay/40">
           <View className="bg-background rounded-t-2xl px-4 pb-8 pt-4">
             <Text className="mb-1 text-lg font-bold">AI 拆解</Text>
             <Text className="text-muted-foreground mb-3 text-xs" numberOfLines={2}>
@@ -354,7 +356,7 @@ function BouncingCheck({ done }: { done: boolean }) {
   const scale = useSharedValue(1);
   useEffect(() => {
     if (done) {
-      scale.value = withSequence(withTiming(1.45, { duration: 120 }), withSpring(1));
+      scale.value = withSequence(withTiming(1.45, timing(DURATION.instant)), withSpring(1, SPRING.bounce));
     }
   }, [done, scale]);
   const style = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
@@ -370,8 +372,8 @@ function StrikethroughText({ done, title }: { done: boolean; title: string }) {
   const line = useSharedValue(0);
   const textOpacity = useSharedValue(1);
   useEffect(() => {
-    line.value = withTiming(done ? 1 : 0, { duration: 260 });
-    textOpacity.value = withTiming(done ? 0.55 : 1, { duration: 260 });
+    line.value = withTiming(done ? 1 : 0, timing(DURATION.normal));
+    textOpacity.value = withTiming(done ? 0.55 : 1, timing(DURATION.normal));
   }, [done, line, textOpacity]);
   const lineStyle = useAnimatedStyle(() => ({ width: `${Math.round(line.value * 100)}%` }));
   const textStyle = useAnimatedStyle(() => ({ opacity: textOpacity.value }));

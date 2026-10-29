@@ -363,7 +363,7 @@ export default function GoalsScreen() {
 
       {/* 新建目标 */}
       <Modal visible={goalOpen} transparent animationType="slide" onRequestClose={() => setGoalOpen(false)}>
-        <View className="flex-1 justify-end bg-black/40">
+        <View className="flex-1 justify-end bg-overlay/40">
           <View className="bg-background rounded-t-2xl px-4 pb-8 pt-4">
             <Text className="mb-3 text-lg font-bold">新建目标</Text>
             <Field label="目标描述" error={goalError} required hint="定方向,鼓舞人心,比如「Q4 养成规律运动」">
@@ -408,7 +408,7 @@ export default function GoalsScreen() {
 
       {/* 添加 KR */}
       <Modal visible={krTarget !== null} transparent animationType="slide" onRequestClose={() => setKrTarget(null)}>
-        <View className="flex-1 justify-end bg-black/40">
+        <View className="flex-1 justify-end bg-overlay/40">
           <View className="bg-background rounded-t-2xl px-4 pb-8 pt-4">
             <Text className="mb-1 text-lg font-bold">添加关键结果</Text>
             <Text className="text-muted-foreground mb-3 text-xs" numberOfLines={1}>
@@ -468,7 +468,7 @@ export default function GoalsScreen() {
         animationType="slide"
         onRequestClose={() => setProgressTarget(null)}
       >
-        <View className="flex-1 justify-end bg-black/40">
+        <View className="flex-1 justify-end bg-overlay/40">
           <View className="bg-background rounded-t-2xl px-4 pb-8 pt-4">
             <Text className="mb-1 text-lg font-bold">更新进度</Text>
             <Text className="text-muted-foreground mb-3 text-xs" numberOfLines={1}>

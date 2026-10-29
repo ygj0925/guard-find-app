@@ -159,7 +159,7 @@ function MediaThumb({
       {item.uri ? (
         <Image source={{ uri: item.uri }} style={{ width: 80, height: 80 }} resizeMode="cover" />
       ) : null}
-      <View className="absolute inset-x-0 bottom-0 bg-black/55 px-1 py-0.5">
+      <View className="absolute inset-x-0 bottom-0 bg-overlay/55 px-1 py-0.5">
         <RNText numberOfLines={1} style={{ color: '#fff', fontSize: 10 }}>
           {item.state === 'done' ? '已上传' : item.state === 'error' ? '失败' : '上传中'}
         </RNText>

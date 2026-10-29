@@ -313,7 +313,7 @@ export default function TasksScreen() {
 
       {/* 创建弹层 */}
       <Modal visible={createOpen} transparent animationType="slide" onRequestClose={() => setCreateOpen(false)}>
-        <View className="flex-1 justify-end bg-black/40">
+        <View className="flex-1 justify-end bg-overlay/40">
           <View className="bg-background rounded-t-2xl px-4 pb-8 pt-4">
             <ScrollView style={{ maxHeight: 480 }}>
               <Text className="mb-3 text-lg font-bold">新建任务</Text>

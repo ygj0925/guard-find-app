@@ -216,7 +216,7 @@ export default function CountdownScreen() {
       />
 
       <Modal visible={editorOpen} transparent animationType="slide" onRequestClose={() => setEditorOpen(false)}>
-        <View className="flex-1 justify-end bg-black/40">
+        <View className="flex-1 justify-end bg-overlay/40">
           <View className="bg-background rounded-t-2xl px-4 pb-8 pt-4">
             <Text className="mb-3 text-lg font-bold">{editing ? '编辑倒数日' : '新增倒数日'}</Text>
             <Field label="事项名称" error={errors.title} required>
