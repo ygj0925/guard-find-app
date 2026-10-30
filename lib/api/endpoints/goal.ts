@@ -12,14 +12,28 @@ export interface ToolKeyResult {
   status: 1 | 2;
   /** 进度 0-1。 */
   progress: number;
+  /** 权重(1-10)。 */
+  weight: number;
+  /** 信心指数(1-10)。 */
+  confidence: number;
+  /** onTrack / atRisk / behind / done。 */
+  krStatus: string;
+  /** 关联任务已完成数。 */
+  taskDone?: number;
+  /** 关联任务总数。 */
+  taskTotal?: number;
 }
 
 export interface ToolGoal {
   id: string;
   title: string;
-  /** `2026` 或 `2026Q4`。 */
+  /** `yyyy` 或 `yyyyQ4`。 */
   period: string;
   progress: number;
+  /** onTrack/atRisk/behind/done。 */
+  goalStatus?: string;
+  /** 期末复盘评分(0-1,可空)。 */
+  score?: number | null;
   keyResults: ToolKeyResult[];
 }
 

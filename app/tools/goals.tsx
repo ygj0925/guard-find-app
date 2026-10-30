@@ -306,6 +306,7 @@ export default function GoalsScreen() {
                         </Text>
                         <Text className="text-muted-foreground mt-0.5 text-xs">
                           {kr.currentValue} / {kr.targetValue} · {percentText(kr.progress)}
+                          {kr.taskTotal && kr.taskTotal > 0 ? ` · 任务 ${kr.taskDone}/${kr.taskTotal}` : ''}
                         </Text>
                       </Pressable>
                       <Pressable
