@@ -110,6 +110,7 @@ export default function RootLayout() {
                       <Stack.Screen name="tools/report-detail" options={{ title: '汇报详情' }} />
                       <Stack.Screen name="tools/report-entry" options={{ title: '月报' }} />
                       <Stack.Screen name="tools/password" options={{ title: '密码生成' }} />
+                      <Stack.Screen name="tools/kinship" options={{ title: '亲戚称呼' }} />
                       <Stack.Screen name="tools/discount" options={{ title: '折扣比较' }} />
                       <Stack.Screen name="tools/pet" options={{ title: '宠物成长' }} />
                       <Stack.Screen name="community/publish" options={{ title: '发布动态', presentation: 'modal' }} />
