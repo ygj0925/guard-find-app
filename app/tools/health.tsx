@@ -10,6 +10,7 @@ import { Text } from '@/components/ui/text';
 import { Card } from '@/components/ui/card';
 import { SectionCard } from '@/components/business/feedback';
 import { bmiLevel, calcBmi, calcBmr, dailyWaterMl } from '@/lib/calc/health';
+import { heartRateZones } from '@/lib/calc/fitness';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { token } from '@/constants/Colors';
 
@@ -131,7 +132,21 @@ export default function HealthScreen() {
           <SectionCard title="请填写有效的年龄、身高与体重">{null}</SectionCard>
         )}
 
-        <Text className="text-muted-foreground mt-3 text-center text-xs leading-4">
+        {result?.bmr != null ? (
+          <SectionCard title='心率训练区间' description='最大心率 = 220 - 年龄'>
+            {(heartRateZones(Number(age)) ?? []).map((zone) => (
+              <View key={zone.zone} className='mb-1.5 flex-row items-center justify-between rounded-lg border border-border px-3 py-2'>
+                <View className='flex-1'>
+                  <Text className='text-foreground text-sm font-medium'>{zone.label}</Text>
+                  <Text className='text-muted-foreground text-xs'>{zone.purpose}</Text>
+                </View>
+                <Text className='text-primary text-sm font-bold'>{zone.min}-{zone.max} bpm</Text>
+              </View>
+            ))}
+          </SectionCard>
+        ) : null}
+
+        <Text className='text-muted-foreground mt-3 text-center text-xs leading-4'>
           计算结果仅作参考,不构成医疗建议;健康状况请咨询专业医生。
         </Text>
       </ScrollView>
