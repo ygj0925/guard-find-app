@@ -9,6 +9,8 @@ import { useRouter } from 'expo-router';
 import { Text } from '@/components/ui/text';
 import { Card } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Icon } from '@/components/ui/icon';
+import { Headset } from 'lucide-react-native';
 import { EmptyState, ErrorState, RefreshingControl, SectionCard } from '@/components/business/feedback';
 import {
   deleteImConversation, fetchConversations,
@@ -59,6 +61,20 @@ export default function ImListScreen() {
         ListHeaderComponent={
           <View className="mb-3 mt-2">
             <Text className="text-2xl font-bold">消息</Text>
+            {/* 官方客服固定入口 */}
+            <Pressable accessibilityRole="button" accessibilityLabel="联系官方客服"
+              onPress={() => router.push('/im/chat?mode=support&peerName=%E5%AE%98%E6%96%B9%E5%AE%A2%E6%9C%8D' as never)}
+              className="mt-3">
+              <Card className="flex-row items-center p-3">
+                <View className="bg-accent size-12 items-center justify-center rounded-full">
+                  <Icon as={Headset} size={20} className="text-accent-foreground" />
+                </View>
+                <View className="ml-3 flex-1">
+                  <Text className="text-foreground text-sm font-semibold">官方客服</Text>
+                  <Text className="text-muted-foreground mt-0.5 text-xs">问题反馈 · 意见建议,工作日 9:00-18:00</Text>
+                </View>
+              </Card>
+            </Pressable>
           </View>
         }
         ListEmptyComponent={

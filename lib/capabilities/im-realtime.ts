@@ -58,6 +58,15 @@ function connect(): void {
     } catch {
       return;
     }
+    if (frame.action === 'admin_message') {
+      // 客服回复(无会话概念):通知处于客服聊天页的订阅者
+      for (const handler of shared.handlers.values()) {
+        if (handler.conversationId === 'support') {
+          try { handler.onPush(); } catch { /* 单个订阅者异常不影响其他 */ }
+        }
+      }
+      return;
+    }
     if (frame.action !== 'new_message' || frame.conversationId == null) return;
     const pushedConvId = String(frame.conversationId);
     for (const handler of shared.handlers.values()) {

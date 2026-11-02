@@ -44,3 +44,13 @@ export function markImRead(conversationId: string): Promise<void> {
 export function deleteImConversation(conversationId: string): Promise<void> {
   return api.delete<void>(`/app/im/conversation/${conversationId}`);
 }
+
+/* ---------- 联系客服(后台管理员接待) ---------- */
+
+export function fetchSupportMessages(afterId?: string): Promise<ImMessage[]> {
+  return api.get<ImMessage[]>('/app/im/support/messages', afterId ? { afterId } : undefined);
+}
+
+export function sendSupportMessage(content: string): Promise<ImMessage> {
+  return api.post<ImMessage>('/app/im/support/message', { content });
+}

@@ -31,6 +31,7 @@ export interface Property {
   contactPhone: string | null;
   status: PropertyStatus;
   viewCount: number;
+  isFavorited?: boolean | null;
   images: string[];
   createTime?: string;
 }
@@ -89,4 +90,58 @@ export function deleteProperty(id: string): Promise<void> {
 
 export function updatePropertyStatus(id: string, status: PropertyStatus): Promise<void> {
   return api.post<void>(`/app/property/${id}/status`, undefined, { params: { status } });
+}
+
+/* ---------- 收藏 / 浏览历史 / 预约看房 ---------- */
+
+export interface BookingReq {
+  bookingTime: string;
+  contactName: string;
+  contactPhone: string;
+  remark?: string;
+}
+
+export type BookingStatus = 1 | 2 | 3 | 4;
+
+export interface PropertyBooking {
+  id: string;
+  propertyId: string;
+  propertyTitle: string | null;
+  propertyImage: string | null;
+  propertyPrice: number | null;
+  propertyPriceType: string | null;
+  userId: string;
+  userNickname: string | null;
+  userAvatar: string | null;
+  ownerId: string;
+  bookingTime: string;
+  contactName: string | null;
+  contactPhone: string | null;
+  remark: string | null;
+  status: BookingStatus;
+  createTime?: string;
+}
+
+export function toggleFavorite(id: string): Promise<boolean> {
+  return api.post<{ favorited: boolean }>(`/app/property/${id}/favorite`).then((r) => r.favorited);
+}
+
+export function fetchFavorites(page: number, size: number): Promise<PropertyPage> {
+  return api.get<PropertyPage>('/app/property/favorites', { page, size });
+}
+
+export function fetchViewHistory(page: number, size: number): Promise<PropertyPage> {
+  return api.get<PropertyPage>('/app/property/history', { page, size });
+}
+
+export function createBooking(id: string, req: BookingReq): Promise<number> {
+  return api.post<number>(`/app/property/${id}/booking`, req);
+}
+
+export function fetchBookings(role: 'guest' | 'owner', page: number, size: number): Promise<{ records: PropertyBooking[]; total: number }> {
+  return api.get<{ records: PropertyBooking[]; total: number }>('/app/property/bookings', { role, page, size });
+}
+
+export function updateBookingStatus(id: string, status: BookingStatus): Promise<void> {
+  return api.post<void>(`/app/property/booking/${id}/status`, undefined, { params: { status } });
 }

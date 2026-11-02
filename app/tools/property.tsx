@@ -115,6 +115,22 @@ export default function PropertyScreen() {
                 </Pressable>
               ) : null}
             </View>
+            {/* 收藏/足迹/预约 快捷入口 */}
+            {signedIn ? (
+              <View className="mt-2 flex-row" style={{ gap: 8 }}>
+                {([
+                  { key: 'favorites', label: '收藏' },
+                  { key: 'history', label: '足迹' },
+                  { key: 'bookings', label: '预约' },
+                ] as const).map((entry) => (
+                  <Pressable key={entry.key} accessibilityRole="button" accessibilityLabel={entry.label}
+                    onPress={() => router.push(`/tools/property-${entry.key}` as never)}
+                    className="border-border flex-1 items-center rounded-xl border py-2">
+                    <Text className="text-foreground text-xs font-semibold">{entry.label}</Text>
+                  </Pressable>
+                ))}
+              </View>
+            ) : null}
             <View className="mt-3 flex-row rounded-full bg-muted p-1">
               {(['plaza', 'mine'] as const).map((key) => (
                 <Pressable key={key} accessibilityRole="button"

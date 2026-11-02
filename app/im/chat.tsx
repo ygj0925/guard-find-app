@@ -1,6 +1,6 @@
 /**
  * IM 聊天页:气泡流 + 输入条 + 3 秒轮询新消息 + WS 实时推送。
- * 支持两种入口:带 convId(会话列表进入)或仅带 peerId(房源详情等场景,进入即建会话)。
+ * 三种入口:带 convId(会话列表)、仅带 peerId(房源详情,进入即建会话)、mode=support(联系客服)。
  */
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { FlatList, KeyboardAvoidingView, Pressable, TextInput, View } from 'react-native';
@@ -9,7 +9,8 @@ import { useLocalSearchParams } from 'expo-router';
 
 import { Text } from '@/components/ui/text';
 import {
-  fetchImMessages, getOrCreateConversation, markImRead, sendImMessage, type ImMessage,
+  fetchImMessages, fetchSupportMessages, getOrCreateConversation, markImRead, sendImMessage, sendSupportMessage,
+  type ImMessage,
 } from '@/lib/api/endpoints/im';
 import { imRealtime } from '@/lib/capabilities';
 import { useColorScheme } from '@/hooks/useColorScheme';
@@ -18,15 +19,16 @@ import { useToast } from '@/providers/ToastProvider';
 import { useSession } from '@/store/session';
 
 export default function ImChatScreen() {
-  const params = useLocalSearchParams<{ convId: string; peerId?: string; peerName?: string }>();
+  const params = useLocalSearchParams<{ convId: string; peerId?: string; peerName?: string; mode?: string }>();
   const paramConvId = params.convId ?? '';
   const peerId = params.peerId ?? '';
-  const peerName = params.peerName ?? '对方';
+  const isSupport = params.mode === 'support';
+  const peerName = params.peerName ?? (isSupport ? '官方客服' : '对方');
   const { toast } = useToast();
   const scheme = useColorScheme() ?? 'light';
   const myUserId = useSession((state) => state.user?.id ?? null);
 
-  const [convId, setConvId] = useState(paramConvId);
+  const [convId, setConvId] = useState(isSupport ? 'support' : paramConvId);
   const [messages, setMessages] = useState<ImMessage[]>([]);
   const [draft, setDraft] = useState('');
   const [sending, setSending] = useState(false);
@@ -34,7 +36,7 @@ export default function ImChatScreen() {
 
   // 仅带 peerId 进入(房源详情"发私信聊"):先建会话再加载
   useEffect(() => {
-    if (convId || !peerId) return;
+    if (isSupport || convId || !peerId) return;
     void (async () => {
       try {
         const conv = await getOrCreateConversation(peerId);
@@ -43,32 +45,35 @@ export default function ImChatScreen() {
         toast('建立会话失败,请稍后再试', 'error');
       }
     })();
-  }, [convId, peerId, toast]);
+  }, [isSupport, convId, peerId, toast]);
 
   // 初始加载
   useEffect(() => {
     if (!convId) return;
     void (async () => {
       try {
-        const msgs = await fetchImMessages(convId);
+        const msgs = isSupport ? await fetchSupportMessages() : await fetchImMessages(convId);
         setMessages(msgs);
         if (msgs.length > 0) lastIdRef.current = msgs[msgs.length - 1].id;
-        await markImRead(convId);
+        if (!isSupport) await markImRead(convId);
       } catch { /* silent */ }
     })();
-  }, [convId]);
+  }, [convId, isSupport]);
 
   // 增量拉取新消息:轮询与 WS 推送共用同一条追加/去重/标已读路径
   const pollNew = useCallback(async () => {
+    if (!convId) return;
     try {
-      const msgs = await fetchImMessages(convId, lastIdRef.current ?? undefined);
+      const msgs = isSupport
+        ? await fetchSupportMessages(lastIdRef.current ?? undefined)
+        : await fetchImMessages(convId, lastIdRef.current ?? undefined);
       if (msgs.length > 0) {
         setMessages((prev) => [...prev, ...msgs]);
         lastIdRef.current = msgs[msgs.length - 1].id;
-        await markImRead(convId);
+        if (!isSupport) await markImRead(convId);
       }
     } catch { /* silent */ }
-  }, [convId]);
+  }, [convId, isSupport]);
 
   // 3 秒轮询兜底(WS 不可用/断开时的最终消息来源)
   useEffect(() => {
@@ -89,14 +94,14 @@ export default function ImChatScreen() {
     setSending(true);
     setDraft('');
     try {
-      const msg = await sendImMessage(convId, content);
+      const msg = isSupport ? await sendSupportMessage(content) : await sendImMessage(convId, content);
       setMessages((prev) => [...prev, msg]);
       lastIdRef.current = msg.id;
     } catch (cause) {
       setDraft(content);
       toast(cause instanceof Error && cause.message ? cause.message : '发送失败,请稍后再试', 'error');
     } finally { setSending(false); }
-  }, [convId, draft, sending, toast]);
+  }, [convId, draft, sending, isSupport, toast]);
 
 
   const renderItem = useCallback(({ item }: { item: ImMessage }) => {
