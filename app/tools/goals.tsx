@@ -21,10 +21,12 @@ import {
   deleteGoal,
   deleteKeyResult,
   fetchGoals,
+  linkTaskToKr,
   toggleKeyResult,
   updateKrProgress,
   type ToolGoal,
 } from '@/lib/api/endpoints/goal';
+import { fetchTasks, type ToolTask } from '@/lib/api/endpoints/task';
 import { useRequest } from '@/hooks/useRequest';
 import { useSession } from '@/store/session';
 import { useColorScheme } from '@/hooks/useColorScheme';
@@ -63,6 +65,10 @@ export default function GoalsScreen() {
   // 进度弹层
   const [progressTarget, setProgressTarget] = useState<{ krId: string; title: string; unit: string | null } | null>(null);
   const [progressValue, setProgressValue] = useState('');
+  // 关联任务弹层
+  const [linkTarget, setLinkTarget] = useState<{ krId: string; title: string } | null>(null);
+  const [myTasks, setMyTasks] = useState<ToolTask[]>([]);
+  const [linking, setLinking] = useState(false);
 
   const submitGoal = useCallback(async () => {
     const title = goalTitle.trim();
@@ -132,6 +138,32 @@ export default function GoalsScreen() {
       setBusy(false);
     }
   }, [busy, progressTarget, progressValue, query, toast]);
+
+  // 打开关联任务弹层:拉取我的任务列表
+  const openLinkTasks = useCallback(async (krId: string, krTitle: string) => {
+    setLinkTarget({ krId, title: krTitle });
+    setLinking(true);
+    try {
+      const resp = await fetchTasks('mine');
+      setMyTasks(resp);
+    } catch {
+      toast('获取任务列表失败', 'error');
+      setLinkTarget(null);
+    } finally {
+      setLinking(false);
+    }
+  }, [toast]);
+
+  const doLink = useCallback(async (taskId: string) => {
+    if (!linkTarget) return;
+    try {
+      await linkTaskToKr(linkTarget.krId, taskId);
+      toast('已关联', 'success');
+      await query.reload();
+    } catch (cause) {
+      toast(cause instanceof Error && cause.message ? cause.message : '关联失败', 'error');
+    }
+  }, [linkTarget, query, toast]);
 
   const confirmDeleteGoal = useCallback(
     (goal: ToolGoal) => {
@@ -308,6 +340,14 @@ export default function GoalsScreen() {
                           {kr.currentValue} / {kr.targetValue} · {percentText(kr.progress)}
                           {kr.taskTotal && kr.taskTotal > 0 ? ` · 任务 ${kr.taskDone}/${kr.taskTotal}` : ''}
                         </Text>
+                      </Pressable>
+                      <Pressable
+                        accessibilityRole="button"
+                        accessibilityLabel={`关联任务到:${kr.title}`}
+                        onPress={() => void openLinkTasks(kr.id, kr.title)}
+                        className="mr-1 rounded-full px-2 py-1"
+                      >
+                        <Text className="text-primary text-xs font-semibold">+任务</Text>
                       </Pressable>
                       <Pressable
                         accessibilityRole="button"
@@ -497,6 +537,43 @@ export default function GoalsScreen() {
                 <Text>{busy ? '保存中…' : '保存'}</Text>
               </Button>
             </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* 关联任务弹层 */}
+      <Modal visible={linkTarget !== null} transparent animationType="slide" onRequestClose={() => setLinkTarget(null)}>
+        <View className="flex-1 justify-end bg-black/40">
+          <View className="bg-background rounded-t-2xl px-4 pb-8 pt-4">
+            <Text className="mb-1 text-lg font-bold">关联任务</Text>
+            <Text className="text-muted-foreground mb-3 text-xs" numberOfLines={1}>
+              {linkTarget?.title}
+            </Text>
+            {linking ? (
+              <Text className="text-muted-foreground py-6 text-center text-sm">加载中…</Text>
+            ) : myTasks.length === 0 ? (
+              <Text className="text-muted-foreground py-6 text-center text-sm">没有可关联的任务</Text>
+            ) : (
+              <ScrollView style={{ maxHeight: 280 }}>
+                {myTasks.map((task) => (
+                  <Pressable key={task.id} accessibilityRole="button"
+                    accessibilityLabel={`关联任务:${task.title}`}
+                    onPress={() => void doLink(task.id)}
+                    className="border-border mb-1 flex-row items-center justify-between rounded-lg border p-2.5">
+                    <View className="flex-1">
+                      <Text className="text-foreground text-sm">{task.title}</Text>
+                      <Text className="text-muted-foreground text-xs">
+                        {task.status === 3 ? '已完成' : task.status === 2 ? '进行中' : '待办'}
+                      </Text>
+                    </View>
+                    <Text className="text-primary text-xs font-semibold">关联</Text>
+                  </Pressable>
+                ))}
+              </ScrollView>
+            )}
+            <Button variant="outline" className="mt-3" onPress={() => setLinkTarget(null)}>
+              <Text>关闭</Text>
+            </Button>
           </View>
         </View>
       </Modal>
