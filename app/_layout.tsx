@@ -112,6 +112,7 @@ export default function RootLayout() {
                       <Stack.Screen name="tools/password" options={{ title: '密码生成' }} />
                       <Stack.Screen name="tools/kinship" options={{ title: '亲戚称呼' }} />
                       <Stack.Screen name="tools/property" options={{ title: '房产' }} />
+                      <Stack.Screen name="tools/budget" options={{ title: '预算管理' }} />
                       <Stack.Screen name="tools/property-detail" options={{ title: '房源详情' }} />
                       <Stack.Screen name="tools/property-publish" options={{ title: '发布房源', presentation: 'modal' }} />
                       <Stack.Screen name="tools/discount" options={{ title: '折扣比较' }} />
