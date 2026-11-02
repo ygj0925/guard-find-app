@@ -118,9 +118,10 @@ export default function PropertyDetailScreen() {
           </Card>
         ) : null}
 
-        {property.contactPhone ? (
+        {property.contactPhone || property.userId !== myUserId ? (
           <Card className="mt-3 p-4">
             <Text className="text-muted-foreground mb-2 text-xs font-semibold">联系方式</Text>
+            {property.contactPhone ? (
             <View className="flex-row items-center justify-between">
               <View className="flex-row items-center" style={{ gap: 8 }}>
                 <Icon as={Phone} size={14} className="text-primary" />
@@ -139,11 +140,12 @@ export default function PropertyDetailScreen() {
                 <Text className="text-accent-foreground text-xs font-semibold">打电话</Text>
               </Pressable>
             </View>
+            ) : null}
             {property.userId !== myUserId ? (
               <Pressable
                 accessibilityRole="button"
                 accessibilityLabel="发私信"
-                onPress={() => router.push(`/im/chat?convId=&peerId=${property.userId}&peerName=${encodeURIComponent(property.contactName ?? '房东')}` as never)}
+                onPress={() => router.push(`/im/chat?peerId=${property.userId}&peerName=${encodeURIComponent(property.contactName ?? '房东')}` as never)}
                 className="mt-2 flex-row items-center"
                 style={{ gap: 6 }}
               >

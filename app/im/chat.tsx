@@ -1,6 +1,6 @@
 /**
- * IM 聊天页:气泡流 + 输入条 + 3 秒轮询新消息。
- * 对方昵称/头像从路由参数取;发送乐观上屏,轮询同步。
+ * IM 聊天页:气泡流 + 输入条 + 3 秒轮询新消息 + WS 实时推送。
+ * 支持两种入口:带 convId(会话列表进入)或仅带 peerId(房源详情等场景,进入即建会话)。
  */
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { FlatList, KeyboardAvoidingView, Pressable, TextInput, View } from 'react-native';
@@ -9,7 +9,7 @@ import { useLocalSearchParams } from 'expo-router';
 
 import { Text } from '@/components/ui/text';
 import {
-  fetchImMessages, markImRead, sendImMessage, type ImMessage,
+  fetchImMessages, getOrCreateConversation, markImRead, sendImMessage, type ImMessage,
 } from '@/lib/api/endpoints/im';
 import { imRealtime } from '@/lib/capabilities';
 import { useColorScheme } from '@/hooks/useColorScheme';
@@ -18,17 +18,32 @@ import { useToast } from '@/providers/ToastProvider';
 import { useSession } from '@/store/session';
 
 export default function ImChatScreen() {
-  const params = useLocalSearchParams<{ convId: string; peerName?: string }>();
-  const convId = params.convId ?? '';
+  const params = useLocalSearchParams<{ convId: string; peerId?: string; peerName?: string }>();
+  const paramConvId = params.convId ?? '';
+  const peerId = params.peerId ?? '';
   const peerName = params.peerName ?? '对方';
   const { toast } = useToast();
   const scheme = useColorScheme() ?? 'light';
   const myUserId = useSession((state) => state.user?.id ?? null);
 
+  const [convId, setConvId] = useState(paramConvId);
   const [messages, setMessages] = useState<ImMessage[]>([]);
   const [draft, setDraft] = useState('');
   const [sending, setSending] = useState(false);
   const lastIdRef = useRef<string | null>(null);
+
+  // 仅带 peerId 进入(房源详情"发私信聊"):先建会话再加载
+  useEffect(() => {
+    if (convId || !peerId) return;
+    void (async () => {
+      try {
+        const conv = await getOrCreateConversation(peerId);
+        setConvId(conv.id);
+      } catch {
+        toast('建立会话失败,请稍后再试', 'error');
+      }
+    })();
+  }, [convId, peerId, toast]);
 
   // 初始加载
   useEffect(() => {
@@ -70,7 +85,7 @@ export default function ImChatScreen() {
 
   const send = useCallback(async () => {
     const content = draft.trim();
-    if (!content || sending) return;
+    if (!content || sending || !convId) return;
     setSending(true);
     setDraft('');
     try {
