@@ -12,6 +12,7 @@ import {
   ClipboardList,
   Clock,
   Flame,
+  Building2,
   CloudSun,
   HeartPulse,
   KeyRound,
@@ -84,6 +85,7 @@ export const TOOL_REGISTRY: ToolEntry[] = [
   { key: 'kinship', title: '亲戚称呼', description: '三代内 · 实时计算', icon: Users, category: 'utility', href: '/tools/kinship' },
   { key: 'discount', title: '折扣比较', description: '比单价 · 算折扣', icon: Percent, category: 'finance', href: '/tools/discount' },
   { key: 'pet', title: '宠物成长', description: '体重曲线 · 疫苗 · 里程碑', icon: PawPrint, category: 'health', href: '/tools/pet' },
+  { key: 'property', title: '房产', description: '找房 · 发房源 · 上下架', icon: Building2, category: 'finance', href: '/tools/property' },
   { key: 'forum', title: '圈子论坛', description: '发帖 · 交流 · 互助', icon: MessagesSquare, category: 'social' },
   { key: 'weather', title: '天气', description: '实时天气 · 未来趋势', icon: CloudSun, category: 'utility' },
 ];
