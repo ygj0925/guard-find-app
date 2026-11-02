@@ -1,7 +1,7 @@
 import React, { useCallback, useState } from 'react';
 import { Alert, FlatList, Pressable, ScrollView, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
+import { useFocusEffect, useRouter } from 'expo-router';
 import { Building2, MapPin, Plus } from 'lucide-react-native';
 import { Text } from '@/components/ui/text';
 import { Icon } from '@/components/ui/icon';
@@ -36,6 +36,14 @@ export default function PropertyScreen() {
   }, [tab, signedIn]);
 
   const query = useRequest(() => load(1, 'initial'), [signedIn, tab]);
+
+  // 从发布/编辑页返回时自动刷新
+  useFocusEffect(
+    useCallback(() => {
+      if (items.length > 0 || total > 0) void load(1, 'initial');
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [tab]),
+  );
 
   const loadMore = useCallback(async () => {
     if (items.length >= total) return;
