@@ -1,5 +1,5 @@
 import React, { useCallback, useState } from 'react';
-import { Alert, FlatList, Pressable, ScrollView, View } from 'react-native';
+import { Alert, FlatList, Pressable, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { Building2, MapPin, Plus } from 'lucide-react-native';
@@ -12,16 +12,22 @@ import { EmptyState, ErrorState, ListFooter, RefreshingControl, SectionCard } fr
 import { useRequest } from '@/hooks/useRequest';
 import { useSession } from '@/store/session';
 import { useToast } from '@/providers/ToastProvider';
+import { useColorScheme } from '@/hooks/useColorScheme';
+import { token } from '@/constants/Colors';
 import { loginHref } from '@/lib/nav';
 import { deleteProperty, fetchMyProperties, fetchProperties, updatePropertyStatus, type Property } from '@/lib/api/endpoints/property';
 
 const PAGE_SIZE = 10;
+const TYPE_LABEL: Record<string, string> = { house: '住宅', apartment: '公寓', villa: '别墅', shop: '商铺' };
 
 export default function PropertyScreen() {
   const router = useRouter();
   const { toast } = useToast();
+  const scheme = useColorScheme() ?? 'light';
   const signedIn = useSession((state) => state.phase === 'authenticated');
   const [tab, setTab] = useState<'plaza' | 'mine'>('plaza');
+  const [filterType, setFilterType] = useState<'all' | 'house' | 'apartment' | 'villa' | 'shop'>('all');
+  const [filterPriceType, setFilterPriceType] = useState<'all' | 'rent' | 'sale'>('all');
   const [page, setPage] = useState(1);
   const [items, setItems] = useState<Property[]>([]);
   const [total, setTotal] = useState(0);
@@ -29,13 +35,17 @@ export default function PropertyScreen() {
   const load = useCallback(async (targetPage: number, mode: 'initial' | 'more') => {
     const resp = tab === 'mine'
       ? await fetchMyProperties(targetPage, PAGE_SIZE)
-          : await fetchProperties({ page: targetPage, size: PAGE_SIZE });
+      : await fetchProperties({
+          page: targetPage, size: PAGE_SIZE,
+          propertyType: filterType !== 'all' ? filterType : undefined,
+          priceType: filterPriceType !== 'all' ? filterPriceType : undefined,
+        });
     setItems((prev) => (mode === 'more' ? [...prev, ...resp.records] : resp.records));
     setTotal(resp.total);
     setPage(targetPage);
-  }, [tab, signedIn]);
+  }, [tab, filterType, filterPriceType]);
 
-  const query = useRequest(() => load(1, 'initial'), [signedIn, tab]);
+  const query = useRequest(() => load(1, 'initial'), [signedIn, tab, filterType, filterPriceType]);
 
   // 从发布/编辑页返回时自动刷新
   useFocusEffect(
@@ -117,6 +127,39 @@ export default function PropertyScreen() {
                 </Pressable>
               ))}
             </View>
+            {/* 筛选行:类型 + 租售 */}
+            {tab === 'plaza' ? (
+              <View className="mt-2 flex-row flex-wrap items-center" style={{ gap: 6 }}>
+                {(['all', 'house', 'apartment', 'villa', 'shop'] as const).map((t) => (
+                  <Pressable key={t} accessibilityRole="button"
+                    accessibilityLabel={t === 'all' ? '全部类型' : TYPE_LABEL[t]}
+                    onPress={() => setFilterType(t)}
+                    className="rounded-full border px-3 py-1"
+                    style={{
+                      borderColor: filterType === t ? token('primary', scheme) : token('border', scheme),
+                      backgroundColor: filterType === t ? token('accent', scheme) : 'transparent',
+                    }}>
+                    <Text className={`text-xs ${filterType === t ? 'text-primary font-semibold' : 'text-muted-foreground'}`}>
+                      {t === 'all' ? '全部' : TYPE_LABEL[t]}
+                    </Text>
+                  </Pressable>
+                ))}
+                {(['all', 'rent', 'sale'] as const).map((t) => (
+                  <Pressable key={t} accessibilityRole="button"
+                    accessibilityLabel={t === 'all' ? '全部价格' : t === 'rent' ? '租' : '售'}
+                    onPress={() => setFilterPriceType(t)}
+                    className="rounded-full border px-3 py-1"
+                    style={{
+                      borderColor: filterPriceType === t ? token('primary', scheme) : token('border', scheme),
+                      backgroundColor: filterPriceType === t ? token('accent', scheme) : 'transparent',
+                    }}>
+                    <Text className={`text-xs ${filterPriceType === t ? 'text-primary font-semibold' : 'text-muted-foreground'}`}>
+                      {t === 'all' ? '租售' : t === 'rent' ? '租' : '售'}
+                    </Text>
+                  </Pressable>
+                ))}
+              </View>
+            ) : null}
           </View>
         }
         ListEmptyComponent={
