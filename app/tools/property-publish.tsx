@@ -37,12 +37,11 @@ export default function PropertyPublishScreen() {
   const { toast } = useToast();
   const scheme = useColorScheme() ?? 'light';
 
-  const [status, setStatus] = useState<1 | 2 | 3>(1);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [busy, setBusy] = useState(false);
 
   // 编辑模式回填:通过 useRequest onData 回调,避免 effect 内同步 setState
-  const detail = useRequest(
+  useRequest(
     () => (editId ? fetchPropertyDetail(editId) : Promise.resolve(null)),
     [editId],
     {
@@ -56,8 +55,10 @@ export default function PropertyPublishScreen() {
         setPriceType(data.priceType as PriceType); setAddress(data.address);
         setDistrict(data.district ?? ''); setCity(data.city ?? '');
         setContactName(data.contactName ?? ''); setContactPhone(data.contactPhone ?? '');
+        setCommunity(data.community ?? '');
+        setAvailableFrom(data.availableFrom ? String(data.availableFrom).slice(0, 10) : '');
+        setRentalMode(data.rentalMode === 'whole' || data.rentalMode === 'shared' ? data.rentalMode : '');
         setSelectedFacilities(data.facilities); setImages(data.images);
-        setStatus(data.status === 3 ? 3 : data.status === 2 ? 2 : 1);
       },
     },
   );
@@ -77,6 +78,9 @@ export default function PropertyPublishScreen() {
   const [city, setCity] = useState('');
   const [contactName, setContactName] = useState('');
   const [contactPhone, setContactPhone] = useState('');
+  const [community, setCommunity] = useState('');
+  const [availableFrom, setAvailableFrom] = useState('');
+  const [rentalMode, setRentalMode] = useState<'whole' | 'shared' | ''>('');
   const [selectedFacilities, setSelectedFacilities] = useState<string[]>([]);
   const [images, setImages] = useState<string[]>([]);
 
@@ -105,9 +109,12 @@ export default function PropertyPublishScreen() {
     if (!title.trim()) next.title = '请填写标题';
     if (!price.trim() || Number(price) <= 0) next.price = '请填写有效价格';
     if (!address.trim()) next.address = '请填写地址';
+    if (availableFrom.trim() && !/^\d{4}-\d{2}-\d{2}$/.test(availableFrom.trim())) {
+      next.availableFrom = '可入住日期格式应为 2026-12-01';
+    }
     setErrors(next);
     return Object.keys(next).length === 0;
-  }, [address, price, title]);
+  }, [address, availableFrom, price, title]);
 
   const save = useCallback(async (targetStatus: 1 | 2) => {
     if (!validate() || busy) return;
@@ -121,6 +128,9 @@ export default function PropertyPublishScreen() {
         orientation: orientation.trim() || undefined,
         decoration: decoration.trim() || undefined,
         price: Number(price), priceType, address: address.trim(),
+        community: community.trim() || undefined,
+        availableFrom: availableFrom.trim() || undefined,
+        rentalMode: priceType === 'rent' && rentalMode ? rentalMode : undefined,
         district: district.trim() || undefined, city: city.trim() || undefined,
         facilities: selectedFacilities.length > 0 ? selectedFacilities : undefined,
         contactName: contactName.trim() || undefined,
@@ -135,7 +145,7 @@ export default function PropertyPublishScreen() {
     } catch (cause) {
       toast(cause instanceof Error && cause.message ? cause.message : '保存失败,请稍后再试', 'error');
     } finally { setBusy(false); }
-  }, [address, busy, city, contactName, contactPhone, decoration, description, district, editId, floorInfo, images, layout, orientation, price, priceType, router, selectedFacilities, title, toast, validate]);
+  }, [address, areaSqm, availableFrom, busy, city, community, contactName, contactPhone, decoration, description, district, editId, floorInfo, images, layout, orientation, price, priceType, propertyType, rentalMode, router, selectedFacilities, title, toast, validate]);
 
   const inputStyle = { color: token('foreground', scheme), borderColor: token('border', scheme) } as const;
   const chipStyle = (selected: boolean) => ({
@@ -231,20 +241,48 @@ export default function PropertyPublishScreen() {
           </View>
 
           <Field label="详细地址" error={errors.address} required>
-            <Input value={address} onChangeText={setAddress} placeholder="xx 小区 xx 号楼" style={inputStyle} aria-label="详细地址" />
+            <Input value={address} onChangeText={setAddress} placeholder="xx 号楼 xx 单元 xx 室" style={inputStyle} aria-label="详细地址" />
           </Field>
           <View className="flex-row" style={{ gap: 8 }}>
+            <View className="flex-1">
+              <Field label="小区名称">
+                <Input value={community} onChangeText={setCommunity} style={inputStyle} placeholder="如 阳光花园" aria-label="小区名称" />
+              </Field>
+            </View>
             <View className="flex-1">
               <Field label="区域">
                 <Input value={district} onChangeText={setDistrict} style={inputStyle} placeholder="xx 区" aria-label="区域" />
               </Field>
             </View>
+          </View>
+          <View className="flex-row" style={{ gap: 8 }}>
             <View className="flex-1">
               <Field label="城市">
                 <Input value={city} onChangeText={setCity} style={inputStyle} placeholder="xx 市" aria-label="城市" />
               </Field>
             </View>
+            <View className="flex-1">
+              <Field label="可入住日期" hint="格式 2026-12-01" error={errors.availableFrom}>
+                <Input value={availableFrom} onChangeText={setAvailableFrom} style={inputStyle} placeholder="2026-12-01" aria-label="可入住日期" />
+              </Field>
+            </View>
           </View>
+
+          {/* 租赁方式(仅出租) */}
+          {priceType === 'rent' ? (
+            <Field label="租赁方式">
+              <View className="flex-row" style={{ gap: 6 }}>
+                {([['whole', '整租'], ['shared', '合租']] as const).map(([key, label]) => (
+                  <Pressable key={key} accessibilityRole="button" accessibilityLabel={label}
+                    onPress={() => setRentalMode(rentalMode === key ? '' : key)}
+                    className="flex-1 items-center rounded-lg border py-2"
+                    style={chipStyle(rentalMode === key)}>
+                    <Text className={`text-xs ${rentalMode === key ? 'text-primary font-semibold' : 'text-muted-foreground'}`}>{label}</Text>
+                  </Pressable>
+                ))}
+              </View>
+            </Field>
+          ) : null}
 
           <Field label="配套设施(选填)">
             <View className="flex-row flex-wrap" style={{ gap: 6 }}>

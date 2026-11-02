@@ -167,9 +167,14 @@ export default function PropertyDetailScreen() {
         ) : null}
 
         <View className="mt-3 flex-row flex-wrap" style={{ gap: 6 }}>
+          {property.community ? <Text className="bg-muted rounded-full px-3 py-1 text-xs">{property.community}</Text> : null}
+          {property.rentalMode ? (
+            <Text className="bg-muted rounded-full px-3 py-1 text-xs">{property.rentalMode === 'whole' ? '整租' : '合租'}</Text>
+          ) : null}
           {property.floorInfo ? <Text className="bg-muted rounded-full px-3 py-1 text-xs">{property.floorInfo}层</Text> : null}
           {property.orientation ? <Text className="bg-muted rounded-full px-3 py-1 text-xs">{property.orientation}</Text> : null}
           {property.decoration ? <Text className="bg-muted rounded-full px-3 py-1 text-xs">{property.decoration}</Text> : null}
+          {property.availableFrom ? <Text className="bg-muted rounded-full px-3 py-1 text-xs">{String(property.availableFrom).slice(0, 10)} 可入住</Text> : null}
           <Text className="bg-muted rounded-full px-3 py-1 text-xs">浏览 {property.viewCount}</Text>
         </View>
 

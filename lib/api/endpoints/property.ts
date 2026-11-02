@@ -23,6 +23,9 @@ export interface Property {
   decoration: string | null;
   price: number;
   priceType: PriceType;
+  community: string | null;
+  availableFrom: string | null;
+  rentalMode: 'whole' | 'shared' | null;
   address: string;
   district: string | null;
   city: string | null;
@@ -47,6 +50,9 @@ export interface PropertyReq {
   decoration?: string;
   price: number;
   priceType: PriceType;
+  community?: string;
+  availableFrom?: string;
+  rentalMode?: 'whole' | 'shared';
   address: string;
   district?: string;
   city?: string;
@@ -67,7 +73,7 @@ export function createProperty(req: PropertyReq): Promise<number> {
 }
 
 export function fetchProperties(params: {
-  page: number; size: number; city?: string; propertyType?: string; priceType?: string;
+  page: number; size: number; city?: string; propertyType?: string; priceType?: string; rentalMode?: string;
 }): Promise<PropertyPage> {
   return api.get<PropertyPage>('/app/property/list', params);
 }

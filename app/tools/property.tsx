@@ -28,6 +28,7 @@ export default function PropertyScreen() {
   const [tab, setTab] = useState<'plaza' | 'mine'>('plaza');
   const [filterType, setFilterType] = useState<'all' | 'house' | 'apartment' | 'villa' | 'shop'>('all');
   const [filterPriceType, setFilterPriceType] = useState<'all' | 'rent' | 'sale'>('all');
+  const [filterRentalMode, setFilterRentalMode] = useState<'all' | 'whole' | 'shared'>('all');
   const [page, setPage] = useState(1);
   const [items, setItems] = useState<Property[]>([]);
   const [total, setTotal] = useState(0);
@@ -39,13 +40,14 @@ export default function PropertyScreen() {
           page: targetPage, size: PAGE_SIZE,
           propertyType: filterType !== 'all' ? filterType : undefined,
           priceType: filterPriceType !== 'all' ? filterPriceType : undefined,
+          rentalMode: filterRentalMode !== 'all' ? filterRentalMode : undefined,
         });
     setItems((prev) => (mode === 'more' ? [...prev, ...resp.records] : resp.records));
     setTotal(resp.total);
     setPage(targetPage);
-  }, [tab, filterType, filterPriceType]);
+  }, [tab, filterType, filterPriceType, filterRentalMode]);
 
-  const query = useRequest(() => load(1, 'initial'), [signedIn, tab, filterType, filterPriceType]);
+  const query = useRequest(() => load(1, 'initial'), [signedIn, tab, filterType, filterPriceType, filterRentalMode]);
 
   // 从发布/编辑页返回时自动刷新
   useFocusEffect(
@@ -174,6 +176,21 @@ export default function PropertyScreen() {
                     </Text>
                   </Pressable>
                 ))}
+                {/* 整租/合租(仅出租时) */}
+                {filterPriceType === 'rent' ? (['all', 'whole', 'shared'] as const).map((t) => (
+                  <Pressable key={t} accessibilityRole="button"
+                    accessibilityLabel={t === 'all' ? '全部方式' : t === 'whole' ? '整租' : '合租'}
+                    onPress={() => setFilterRentalMode(t)}
+                    className="rounded-full border px-3 py-1"
+                    style={{
+                      borderColor: filterRentalMode === t ? token('primary', scheme) : token('border', scheme),
+                      backgroundColor: filterRentalMode === t ? token('accent', scheme) : 'transparent',
+                    }}>
+                    <Text className={`text-xs ${filterRentalMode === t ? 'text-primary font-semibold' : 'text-muted-foreground'}`}>
+                      {t === 'all' ? '方式' : t === 'whole' ? '整租' : '合租'}
+                    </Text>
+                  </Pressable>
+                )) : null}
               </View>
             ) : null}
           </View>
@@ -225,6 +242,7 @@ export default function PropertyScreen() {
                   </Text>
                 </View>
                 <Text className="text-muted-foreground mt-1 text-xs" numberOfLines={1}>
+                  {item.rentalMode === 'whole' ? '整租' : item.rentalMode === 'shared' ? '合租' : ''}
                   {item.layout ?? ''} {item.areaSqm ? `${item.areaSqm}㎡` : ''}
                   {item.orientation ? ` · ${item.orientation}` : ''}
                   {item.floorInfo ? ` · ${item.floorInfo}层` : ''}
