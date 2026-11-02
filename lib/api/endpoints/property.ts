@@ -12,6 +12,7 @@ export interface Property {
   userId: string;
   ownerNickname: string | null;
   ownerAvatar: string | null;
+  ownerIsManager: boolean | null;
   title: string;
   description: string | null;
   propertyType: PropertyType;

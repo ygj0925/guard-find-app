@@ -193,7 +193,14 @@ export default function PropertyScreen() {
               )}
               <View className="mt-2">
                 <View className="flex-row items-center justify-between">
-                  <Text className="text-foreground flex-1 text-sm font-semibold" numberOfLines={1}>{item.title}</Text>
+                  <View className="flex-1 flex-row items-center" style={{ gap: 6 }}>
+                    <Text className="text-foreground shrink text-sm font-semibold" numberOfLines={1}>{item.title}</Text>
+                    {item.ownerIsManager ? (
+                      <View className="bg-accent rounded-full px-2 py-0.5">
+                        <Text className="text-accent-foreground shrink-0 text-[10px] font-bold">认证管家</Text>
+                      </View>
+                    ) : null}
+                  </View>
                   <Text className="text-urgent text-base font-bold">
                     ¥{item.price}
                     <Text className="text-muted-foreground text-xs font-normal">

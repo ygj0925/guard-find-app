@@ -21,3 +21,4 @@ export {
   type CapabilityResult,
   type CapabilityFailureReason,
 } from './result';
+export { imRealtime, type ImRealtimeApi, type ImRealtimeHandler } from './im-realtime';

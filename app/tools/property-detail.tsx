@@ -66,13 +66,20 @@ export default function PropertyDetailScreen() {
 
         <Text className="text-foreground text-xl font-bold">{property.title}</Text>
         <View className="mt-2 flex-row items-center" style={{ gap: 8 }}>
-          <Text className="text-urgent text-2xl font-bold">
-            ¥{property.price}
-            <Text className="text-muted-foreground text-sm font-normal">
-              {property.priceType === 'rent' ? '/月' : ''}
+          <View className="flex-row items-center" style={{ gap: 6 }}>
+            <Text className="text-urgent text-2xl font-bold">
+              ¥{property.price}
+              <Text className="text-muted-foreground text-sm font-normal">
+                {property.priceType === 'rent' ? '/月' : ''}
+              </Text>
             </Text>
-          </Text>
-          <Text className="text-muted-foreground text-sm">
+            {property.ownerIsManager ? (
+              <View className="bg-accent rounded-full px-2 py-0.5">
+                <Text className="text-accent-foreground text-[10px] font-bold">认证管家</Text>
+              </View>
+            ) : null}
+          </View>
+          <Text className="text-muted-foreground flex-1 text-sm" numberOfLines={1}>
             {TYPE_LABEL[property.propertyType] ?? ''} · {property.layout ?? ''} · {property.areaSqm ?? ''}㎡
           </Text>
         </View>

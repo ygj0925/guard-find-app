@@ -11,6 +11,7 @@ import { Text } from '@/components/ui/text';
 import {
   fetchImMessages, markImRead, sendImMessage, type ImMessage,
 } from '@/lib/api/endpoints/im';
+import { imRealtime } from '@/lib/capabilities';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { token } from '@/constants/Colors';
 import { useToast } from '@/providers/ToastProvider';
@@ -42,23 +43,30 @@ export default function ImChatScreen() {
     })();
   }, [convId]);
 
-  // 3 秒轮询新消息
+  // 增量拉取新消息:轮询与 WS 推送共用同一条追加/去重/标已读路径
+  const pollNew = useCallback(async () => {
+    try {
+      const msgs = await fetchImMessages(convId, lastIdRef.current ?? undefined);
+      if (msgs.length > 0) {
+        setMessages((prev) => [...prev, ...msgs]);
+        lastIdRef.current = msgs[msgs.length - 1].id;
+        await markImRead(convId);
+      }
+    } catch { /* silent */ }
+  }, [convId]);
+
+  // 3 秒轮询兜底(WS 不可用/断开时的最终消息来源)
   useEffect(() => {
     if (!convId) return;
-    const timer = setInterval(() => {
-      void (async () => {
-        try {
-          const msgs = await fetchImMessages(convId, lastIdRef.current ?? undefined);
-          if (msgs.length > 0) {
-            setMessages((prev) => [...prev, ...msgs]);
-            lastIdRef.current = msgs[msgs.length - 1].id;
-            await markImRead(convId);
-          }
-        } catch { /* silent */ }
-      })();
-    }, 3000);
+    const timer = setInterval(() => void pollNew(), 3000);
     return () => clearInterval(timer);
-  }, [convId]);
+  }, [convId, pollNew]);
+
+  // WebSocket 实时推送:到达即立刻增量拉取(WS 仅负责提速,不直接改状态)
+  useEffect(() => {
+    if (!convId) return;
+    return imRealtime.subscribe({ conversationId: convId, onPush: () => void pollNew() });
+  }, [convId, pollNew]);
 
   const send = useCallback(async () => {
     const content = draft.trim();
