@@ -1,11 +1,11 @@
 /**
  * 房产详情:图片列表 + 全字段展示 + 联系按钮 + 上下架(仅房东)。
  */
-import React from 'react';
-import { Pressable, ScrollView, View } from 'react-native';
+import React, { useState } from 'react';
+import { Linking, Modal, Pressable, ScrollView, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { MapPin, Phone } from 'lucide-react-native';
+import { MapPin, MessageCircle, Phone } from 'lucide-react-native';
 
 import { Text } from '@/components/ui/text';
 import { Icon } from '@/components/ui/icon';
@@ -17,19 +17,18 @@ import { ErrorState } from '@/components/business/feedback';
 import { fetchPropertyDetail } from '@/lib/api/endpoints/property';
 import { useRequest } from '@/hooks/useRequest';
 import { useSession } from '@/store/session';
-import { useToast } from '@/providers/ToastProvider';
-
 const TYPE_LABEL: Record<string, string> = { house: '住宅', apartment: '公寓', villa: '别墅', shop: '商铺' };
 
 export default function PropertyDetailScreen() {
   const params = useLocalSearchParams<{ id: string }>();
   const id = params.id ?? '';
   const router = useRouter();
-  const { toast } = useToast();
   const myUserId = useSession((state) => state.user?.id ?? null);
 
   const query = useRequest(() => fetchPropertyDetail(id), [id]);
   const property = query.data;
+
+  const [previewUri, setPreviewUri] = useState<string | null>(null);
 
   if (query.error) {
     return (
@@ -54,7 +53,9 @@ export default function PropertyDetailScreen() {
         {property.images.length > 0 ? (
           <ScrollView horizontal showsHorizontalScrollIndicator={false} className="mb-3 mt-2">
             {property.images.map((uri) => (
-              <RemoteImage key={uri} uri={uri} style={{ width: 280, height: 190, borderRadius: 12, marginRight: 8 }} />
+              <Pressable key={uri} onPress={() => setPreviewUri(uri)}>
+                <RemoteImage uri={uri} style={{ width: 280, height: 190, borderRadius: 12, marginRight: 8 }} />
+              </Pressable>
             ))}
           </ScrollView>
         ) : (
@@ -110,15 +111,39 @@ export default function PropertyDetailScreen() {
           </Card>
         ) : null}
 
-        {property.contactName || property.contactPhone ? (
+        {property.contactPhone ? (
           <Card className="mt-3 p-4">
             <Text className="text-muted-foreground mb-2 text-xs font-semibold">联系方式</Text>
-            <View className="flex-row items-center" style={{ gap: 8 }}>
-              <Icon as={Phone} size={14} className="text-primary" />
-              <Text className="text-foreground text-sm">
-                {property.contactName ?? ''} {property.contactPhone ?? ''}
-              </Text>
+            <View className="flex-row items-center justify-between">
+              <View className="flex-row items-center" style={{ gap: 8 }}>
+                <Icon as={Phone} size={14} className="text-primary" />
+                <Text className="text-foreground text-sm">
+                  {property.contactName ?? ''} {property.contactPhone ?? ''}
+                </Text>
+              </View>
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel="拨打电话"
+                onPress={() => Linking.openURL(`tel:${property.contactPhone}`)}
+                className="bg-accent flex-row items-center rounded-full px-4 py-2"
+                style={{ gap: 4 }}
+              >
+                <Icon as={Phone} size={14} className="text-accent-foreground" />
+                <Text className="text-accent-foreground text-xs font-semibold">打电话</Text>
+              </Pressable>
             </View>
+            {property.userId !== myUserId ? (
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel="发私信"
+                onPress={() => router.push(`/im/chat?convId=&peerId=${property.userId}&peerName=${encodeURIComponent(property.contactName ?? '房东')}` as never)}
+                className="mt-2 flex-row items-center"
+                style={{ gap: 6 }}
+              >
+                <Icon as={MessageCircle} size={14} className="text-primary" />
+                <Text className="text-primary text-xs font-semibold">发私信聊</Text>
+              </Pressable>
+            ) : null}
           </Card>
         ) : null}
 
@@ -127,6 +152,13 @@ export default function PropertyDetailScreen() {
             <Text>返回管理</Text>
           </Button>
         ) : null}
+
+        {/* 大图预览 */}
+        <Modal visible={previewUri !== null} transparent onRequestClose={() => setPreviewUri(null)}>
+          <Pressable style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.9)', justifyContent: 'center' }} onPress={() => setPreviewUri(null)}>
+            <RemoteImage uri={previewUri} style={{ width: '100%', height: 300 }} resizeMode="contain" />
+          </Pressable>
+        </Modal>
       </ScrollView>
     </SafeAreaView>
   );
