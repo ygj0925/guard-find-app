@@ -14,11 +14,13 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Field } from '@/components/form/fields';
 import { RemoteImage } from '@/components/business/RemoteImage';
+import { RegionPicker, type RegionSelection } from '@/components/business/pickers';
 import { createProperty, fetchPropertyDetail, updateProperty, type PropertyType, type PriceType } from '@/lib/api/endpoints/property';
 import { uploadApi } from '@/lib/api/endpoints/upload';
 import { imagePicker } from '@/lib/capabilities';
 import { useRequest } from '@/hooks/useRequest';
 import { useToast } from '@/providers/ToastProvider';
+import { useFilters } from '@/providers/FiltersProvider';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { token } from '@/constants/Colors';
 
@@ -35,6 +37,7 @@ export default function PropertyPublishScreen() {
   const editId = params.id ?? null;
   const router = useRouter();
   const { toast } = useToast();
+  const { regionLabel } = useFilters();
   const scheme = useColorScheme() ?? 'light';
 
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -53,7 +56,8 @@ export default function PropertyPublishScreen() {
         setFloorInfo(data.floorInfo ?? ''); setOrientation(data.orientation ?? '');
         setDecoration(data.decoration ?? '精装'); setPrice(String(data.price));
         setPriceType(data.priceType as PriceType); setAddress(data.address);
-        setDistrict(data.district ?? ''); setCity(data.city ?? '');
+        // 区划码未随房源存档,编辑态只回显文本,重新选择后再带码
+        setRegion({ provinceCode: null, cityCode: null, districtCode: null, label: [data.city, data.district].filter(Boolean).join(' ') });
         setContactName(data.contactName ?? ''); setContactPhone(data.contactPhone ?? '');
         setCommunity(data.community ?? '');
         setAvailableFrom(data.availableFrom ? String(data.availableFrom).slice(0, 10) : '');
@@ -74,8 +78,8 @@ export default function PropertyPublishScreen() {
   const [price, setPrice] = useState('');
   const [priceType, setPriceType] = useState<PriceType>('rent');
   const [address, setAddress] = useState('');
-  const [district, setDistrict] = useState('');
-  const [city, setCity] = useState('');
+  const [region, setRegion] = useState<RegionSelection>({ provinceCode: null, cityCode: null, districtCode: null, label: '' });
+  const [regionOpen, setRegionOpen] = useState(false);
   const [contactName, setContactName] = useState('');
   const [contactPhone, setContactPhone] = useState('');
   const [community, setCommunity] = useState('');
@@ -131,7 +135,8 @@ export default function PropertyPublishScreen() {
         community: community.trim() || undefined,
         availableFrom: availableFrom.trim() || undefined,
         rentalMode: priceType === 'rent' && rentalMode ? rentalMode : undefined,
-        district: district.trim() || undefined, city: city.trim() || undefined,
+        district: region.districtCode ? regionLabel(region.districtCode) : undefined,
+        city: region.cityCode ? regionLabel(region.cityCode) : undefined,
         facilities: selectedFacilities.length > 0 ? selectedFacilities : undefined,
         contactName: contactName.trim() || undefined,
         contactPhone: contactPhone.trim() || undefined,
@@ -145,7 +150,7 @@ export default function PropertyPublishScreen() {
     } catch (cause) {
       toast(cause instanceof Error && cause.message ? cause.message : '保存失败,请稍后再试', 'error');
     } finally { setBusy(false); }
-  }, [address, areaSqm, availableFrom, busy, city, community, contactName, contactPhone, decoration, description, district, editId, floorInfo, images, layout, orientation, price, priceType, propertyType, rentalMode, router, selectedFacilities, title, toast, validate]);
+  }, [address, areaSqm, availableFrom, busy, community, contactName, contactPhone, decoration, description, editId, floorInfo, images, layout, orientation, price, priceType, propertyType, region, regionLabel, rentalMode, router, selectedFacilities, title, toast, validate]);
 
   const inputStyle = { color: token('foreground', scheme), borderColor: token('border', scheme) } as const;
   const chipStyle = (selected: boolean) => ({
@@ -250,23 +255,26 @@ export default function PropertyPublishScreen() {
               </Field>
             </View>
             <View className="flex-1">
-              <Field label="区域">
-                <Input value={district} onChangeText={setDistrict} style={inputStyle} placeholder="xx 区" aria-label="区域" />
-              </Field>
-            </View>
-          </View>
-          <View className="flex-row" style={{ gap: 8 }}>
-            <View className="flex-1">
-              <Field label="城市">
-                <Input value={city} onChangeText={setCity} style={inputStyle} placeholder="xx 市" aria-label="城市" />
-              </Field>
-            </View>
-            <View className="flex-1">
               <Field label="可入住日期" hint="格式 2026-12-01" error={errors.availableFrom}>
                 <Input value={availableFrom} onChangeText={setAvailableFrom} style={inputStyle} placeholder="2026-12-01" aria-label="可入住日期" />
               </Field>
             </View>
           </View>
+
+          {/* 所在地区:省市区级联(数据来自服务端区划库,与小程序同源) */}
+          <Field label="所在地区" hint="省市区三级选择">
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="选择所在地区"
+              onPress={() => setRegionOpen(true)}
+              className="border-border rounded-lg border px-3 py-2.5"
+              style={{ borderColor: token('border', scheme) }}
+            >
+              <Text className={`text-sm ${region.label ? '' : 'text-muted-foreground'}`}>
+                {region.label || '请选择省/市/区'}
+              </Text>
+            </Pressable>
+          </Field>
 
           {/* 租赁方式(仅出租) */}
           {priceType === 'rent' ? (
@@ -349,6 +357,14 @@ export default function PropertyPublishScreen() {
           </View>
         </Card>
       </ScrollView>
+
+      <RegionPicker
+        visible={regionOpen}
+        level={3}
+        value={region}
+        onClose={() => setRegionOpen(false)}
+        onChange={setRegion}
+      />
     </SafeAreaView>
   );
 }
