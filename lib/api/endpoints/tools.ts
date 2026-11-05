@@ -1,5 +1,5 @@
 /**
- * 工具箱小工具(`/app/tool`)—— 倒数日 + 待办。
+ * 工具箱小工具(`/app/tool`)—— 倒数日 + 待办 + 便笺。
  * 单位换算纯本地,不走服务端。
  */
 import { api } from '../client';
@@ -73,4 +73,66 @@ export function deleteTodo(id: string): Promise<void> {
 
 export function fetchTodos(): Promise<ToolTodo[]> {
   return api.get<ToolTodo[]>('/app/tool/todo/list');
+}
+
+// ==================== 灵感便笺 ====================
+
+export interface ToolNote {
+  id: string;
+  title: string;
+  content: string;
+  pinned: boolean;
+  archived: boolean;
+  version: number;
+  createTime?: string;
+  updateTime?: string | null;
+}
+
+export interface ToolNotePage {
+  list: ToolNote[];
+  total: number;
+}
+
+export interface ToolNoteReq {
+  title: string;
+  content?: string;
+  archived?: boolean;
+  /** 修改时必传,取自上次读取的 version。 */
+  version?: number;
+}
+
+export interface ToolNoteQuery {
+  page?: number;
+  size?: number;
+  keyword?: string;
+  archived?: boolean;
+}
+
+export function createNote(req: ToolNoteReq): Promise<number> {
+  return api.post<number>('/app/tool/note', req);
+}
+
+export function updateNote(id: string, req: ToolNoteReq): Promise<void> {
+  return api.put<void>(`/app/tool/note/${id}`, req);
+}
+
+export function toggleNotePin(id: string): Promise<void> {
+  return api.post<void>(`/app/tool/note/${id}/pin`);
+}
+
+export function toggleNoteArchive(id: string): Promise<void> {
+  return api.post<void>(`/app/tool/note/${id}/archive`);
+}
+
+export function deleteNote(id: string): Promise<void> {
+  return api.delete<void>(`/app/tool/note/${id}`);
+}
+
+export function fetchNotes(query: ToolNoteQuery = {}): Promise<ToolNotePage> {
+  const params = new URLSearchParams();
+  params.set('page', String(query.page ?? 1));
+  params.set('size', String(query.size ?? 20));
+  if (query.keyword) params.set('keyword', query.keyword);
+  if (query.archived) params.set('archived', 'true');
+  return api.get<ToolNotePage>(`/app/tool/note/list?${params.toString()}`);
 }
