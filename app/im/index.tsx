@@ -1,10 +1,10 @@
 /**
  * IM 消息列表:所有会话(头像/昵称/最后消息/未读角标),点击进聊天页。
  */
-import React, { useCallback } from 'react';
-import { Alert, FlatList, Pressable, View } from 'react-native';
+import React, { useCallback, useEffect, useRef } from 'react';
+import { Alert, AppState, FlatList, Pressable, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
+import { useFocusEffect, useRouter } from 'expo-router';
 
 import { Text } from '@/components/ui/text';
 import { Card } from '@/components/ui/card';
@@ -17,6 +17,7 @@ import {
   type ImConversation,
 } from '@/lib/api/endpoints/im';
 import { useRequest } from '@/hooks/useRequest';
+import { imRealtime } from '@/lib/capabilities';
 import { useSession } from '@/store/session';
 import { useToast } from '@/providers/ToastProvider';
 import { loginHref } from '@/lib/nav';
@@ -28,6 +29,50 @@ export default function ImListScreen() {
 
   const query = useRequest(() => fetchConversations(), [signedIn]);
   const conversations = query.data ?? [];
+  const { reload, setData } = query;
+
+  const focusedRef = useRef(false);
+  const firstFocusRef = useRef(true);
+  const refreshTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // 退出登录立刻清空上一身份的会话,避免重新登录时闪出旧数据。
+  useEffect(() => {
+    if (!signedIn) setData(null);
+  }, [signedIn, setData]);
+
+  // 推送到达后合并短时间内的多次刷新,避免群发消息时连续打接口。
+  const scheduleReload = useCallback(() => {
+    if (!focusedRef.current || AppState.currentState !== 'active') return;
+    if (refreshTimer.current) clearTimeout(refreshTimer.current);
+    refreshTimer.current = setTimeout(() => {
+      refreshTimer.current = null;
+      void reload();
+    }, 200);
+  }, [reload]);
+
+  // 页面可见才订阅推送与轮询;首次进入交给 useRequest 自己加载。
+  useFocusEffect(
+    useCallback(() => {
+      focusedRef.current = true;
+      if (firstFocusRef.current) firstFocusRef.current = false;
+      else void reload();
+      const off = signedIn
+        ? imRealtime.subscribe({ conversationId: '*', onPush: scheduleReload })
+        : undefined;
+      const timer = setInterval(() => {
+        if (focusedRef.current && AppState.currentState === 'active') void reload();
+      }, 15000);
+      return () => {
+        focusedRef.current = false;
+        if (refreshTimer.current) {
+          clearTimeout(refreshTimer.current);
+          refreshTimer.current = null;
+        }
+        off?.();
+        clearInterval(timer);
+      };
+    }, [reload, scheduleReload, signedIn]),
+  );
 
   const confirmDelete = useCallback((conv: ImConversation) => {
     Alert.alert('删除这个会话?', '仅自己视角隐藏', [

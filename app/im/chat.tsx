@@ -1,11 +1,14 @@
 /**
  * IM 聊天页:气泡流 + 输入条 + 3 秒轮询新消息 + WS 实时推送。
  * 三种入口:带 convId(会话列表)、仅带 peerId(房源详情,进入即建会话)、mode=support(联系客服)。
+ *
+ * 同步规则集中在 lib/im/chat-sync:读请求单飞、消息按 ID 去重、发送不推进读游标;
+ * 本页只负责“可见且在前台”的生命周期与 UI 状态。
  */
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { FlatList, KeyboardAvoidingView, Pressable, TextInput, View } from 'react-native';
+import { AppState, FlatList, KeyboardAvoidingView, Pressable, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useLocalSearchParams } from 'expo-router';
+import { useFocusEffect, useLocalSearchParams } from 'expo-router';
 
 import { Text } from '@/components/ui/text';
 import {
@@ -13,6 +16,7 @@ import {
   type ImMessage,
 } from '@/lib/api/endpoints/im';
 import { imRealtime } from '@/lib/capabilities';
+import { createChatSync } from '@/lib/im/chat-sync';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { token } from '@/constants/Colors';
 import { useToast } from '@/providers/ToastProvider';
@@ -26,13 +30,59 @@ export default function ImChatScreen() {
   const peerName = params.peerName ?? (isSupport ? '官方客服' : '对方');
   const { toast } = useToast();
   const scheme = useColorScheme() ?? 'light';
+  const sessionToken = useSession((state) => state.token ?? '');
   const myUserId = useSession((state) => state.user?.id ?? null);
 
   const [convId, setConvId] = useState(isSupport ? 'support' : paramConvId);
   const [messages, setMessages] = useState<ImMessage[]>([]);
   const [draft, setDraft] = useState('');
-  const [sending, setSending] = useState(false);
-  const lastIdRef = useRef<string | null>(null);
+  const [sending, setSendingState] = useState(false);
+
+  const convIdRef = useRef(convId);
+  const tokenRef = useRef(sessionToken);
+  const draftRef = useRef('');
+  const sendingRef = useRef(false);
+  const focusedRef = useRef(false);
+  const appStateRef = useRef(AppState.currentState);
+  const toastRef = useRef(toast);
+  const [sync, setSync] = useState<ReturnType<typeof createChatSync> | null>(null);
+
+  useEffect(() => {
+    convIdRef.current = convId;
+  }, [convId]);
+  useEffect(() => {
+    tokenRef.current = sessionToken;
+  }, [sessionToken]);
+  useEffect(() => {
+    toastRef.current = toast;
+  }, [toast]);
+
+  const setSending = useCallback((value: boolean) => {
+    sendingRef.current = value;
+    setSendingState(value);
+  }, []);
+
+  // 控制器只在挂载时创建一次(持有读游标),回调通过 ref 读取最新身份与可见状态。
+  useEffect(() => {
+    const controller = createChatSync({
+      isSupport,
+      conversationId: () => convIdRef.current,
+      token: () => tokenRef.current,
+      isActive: () => focusedRef.current && appStateRef.current === 'active',
+      read: (id, afterId) => isSupport ? fetchSupportMessages(afterId) : fetchImMessages(id, afterId),
+      send: (id, content) => isSupport ? sendSupportMessage(content) : sendImMessage(id, content),
+      markRead: async (id) => { await markImRead(id); },
+      subscribe: (id, refresh) => imRealtime.subscribe({
+        conversationId: isSupport ? 'support' : id,
+        onPush: refresh,
+      }),
+      setMessages,
+      setSending,
+      onError: (message) => toastRef.current(message, 'error'),
+    });
+    setSync(controller);
+    return () => controller.deactivate();
+  }, [isSupport, setSending]);
 
   // 仅带 peerId 进入(房源详情"发私信聊"):先建会话再加载
   useEffect(() => {
@@ -47,62 +97,74 @@ export default function ImChatScreen() {
     })();
   }, [isSupport, convId, peerId, toast]);
 
-  // 初始加载
+  // 身份或会话变化:清空旧消息,再按当前可见状态决定是否立即读取。
   useEffect(() => {
-    if (!convId) return;
-    void (async () => {
-      try {
-        const msgs = isSupport ? await fetchSupportMessages() : await fetchImMessages(convId);
-        setMessages(msgs);
-        if (msgs.length > 0) lastIdRef.current = msgs[msgs.length - 1].id;
-        if (!isSupport) await markImRead(convId);
-      } catch { /* silent */ }
-    })();
-  }, [convId, isSupport]);
+    if (!sync) return;
+    if (!sessionToken || !convId) {
+      sync.reset();
+      return;
+    }
+    sync.setIdentity(sessionToken, convId);
+    if (focusedRef.current && appStateRef.current === 'active') sync.activate();
+  }, [sync, sessionToken, convId]);
 
-  // 增量拉取新消息:轮询与 WS 推送共用同一条追加/去重/标已读路径
-  const pollNew = useCallback(async () => {
-    if (!convId) return;
-    try {
-      const msgs = isSupport
-        ? await fetchSupportMessages(lastIdRef.current ?? undefined)
-        : await fetchImMessages(convId, lastIdRef.current ?? undefined);
-      if (msgs.length > 0) {
-        setMessages((prev) => [...prev, ...msgs]);
-        lastIdRef.current = msgs[msgs.length - 1].id;
-        if (!isSupport) await markImRead(convId);
+  // 页面可见:订阅推送 + 首次全量读取;离开页面立即停读并退订。
+  useFocusEffect(
+    useCallback(() => {
+      focusedRef.current = true;
+      if (sync && tokenRef.current && convIdRef.current && appStateRef.current === 'active') {
+        sync.setIdentity(tokenRef.current, convIdRef.current);
+        sync.activate();
       }
-    } catch { /* silent */ }
-  }, [convId, isSupport]);
+      return () => {
+        focusedRef.current = false;
+        sync?.deactivate();
+      };
+    }, [sync]),
+  );
 
-  // 3 秒轮询兜底(WS 不可用/断开时的最终消息来源)
+  // 前后台切换:后台不读不订,回到前台重建订阅并补拉。
   useEffect(() => {
-    if (!convId) return;
-    const timer = setInterval(() => void pollNew(), 3000);
+    if (!sync) return;
+    const subscription = AppState.addEventListener('change', (next) => {
+      const previous = appStateRef.current;
+      appStateRef.current = next;
+      if (!focusedRef.current) return;
+      if (next === 'active') {
+        if (previous !== 'active' && tokenRef.current && convIdRef.current) {
+          sync.setIdentity(tokenRef.current, convIdRef.current);
+          sync.activate();
+        }
+        return;
+      }
+      sync.deactivate();
+    });
+    return () => subscription.remove();
+  }, [sync]);
+
+  // 3 秒轮询兜底(WS 不可用/断开时的最终消息来源);refresh 自带单飞去重。
+  useEffect(() => {
+    if (!sync) return;
+    const timer = setInterval(() => sync.refresh(), 3000);
     return () => clearInterval(timer);
-  }, [convId, pollNew]);
+  }, [sync]);
 
-  // WebSocket 实时推送:到达即立刻增量拉取(WS 仅负责提速,不直接改状态)
-  useEffect(() => {
-    if (!convId) return;
-    return imRealtime.subscribe({ conversationId: convId, onPush: () => void pollNew() });
-  }, [convId, pollNew]);
+  const updateDraft = useCallback((value: string) => {
+    draftRef.current = value;
+    setDraft(value);
+  }, []);
 
   const send = useCallback(async () => {
-    const content = draft.trim();
-    if (!content || sending || !convId) return;
-    setSending(true);
-    setDraft('');
-    try {
-      const msg = isSupport ? await sendSupportMessage(content) : await sendImMessage(convId, content);
-      setMessages((prev) => [...prev, msg]);
-      lastIdRef.current = msg.id;
-    } catch (cause) {
-      setDraft(content);
-      toast(cause instanceof Error && cause.message ? cause.message : '发送失败,请稍后再试', 'error');
-    } finally { setSending(false); }
-  }, [convId, draft, sending, isSupport, toast]);
-
+    if (!sync) return;
+    const content = draftRef.current.trim();
+    if (!content || sendingRef.current || !convIdRef.current) return;
+    updateDraft('');
+    const sent = await sync.send(content);
+    // 失败且用户尚未输入新内容时恢复原文,避免覆盖正在输入的新草稿。
+    if (!sent && !draftRef.current) {
+      updateDraft(content);
+    }
+  }, [sync, updateDraft]);
 
   const renderItem = useCallback(({ item }: { item: ImMessage }) => {
     const fromPeer = item.senderId.toString() !== myUserId?.toString();
@@ -151,7 +213,7 @@ export default function ImChatScreen() {
             className="border-border text-foreground flex-1 rounded-full border px-4 py-2 text-sm"
             style={{ color: token('foreground', scheme) }}
             value={draft}
-            onChangeText={setDraft}
+            onChangeText={updateDraft}
             placeholder={`回复 ${peerName}…`}
             placeholderTextColor={token('muted-foreground', scheme)}
             accessibilityLabel="消息输入框"
