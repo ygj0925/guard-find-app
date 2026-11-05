@@ -1,5 +1,5 @@
 /**
- * 工具箱小工具(`/app/tool`)—— 倒数日 + 待办 + 便笺。
+ * 工具箱小工具(`/app/tool`)—— 倒数日 + 待办 + 便笺 + 物品收纳。
  * 单位换算纯本地,不走服务端。
  */
 import { api } from '../client';
@@ -135,4 +135,71 @@ export function fetchNotes(query: ToolNoteQuery = {}): Promise<ToolNotePage> {
   if (query.keyword) params.set('keyword', query.keyword);
   if (query.archived) params.set('archived', 'true');
   return api.get<ToolNotePage>(`/app/tool/note/list?${params.toString()}`);
+}
+
+// ==================== 物品收纳 ====================
+
+export interface ToolItem {
+  id: string;
+  name: string;
+  location: string;
+  quantity: number;
+  note: string;
+  archived: boolean;
+  version: number;
+  createTime?: string;
+  updateTime?: string | null;
+}
+
+export interface ToolItemPage {
+  list: ToolItem[];
+  total: number;
+}
+
+export interface ToolItemReq {
+  name: string;
+  location?: string;
+  quantity?: number;
+  note?: string;
+  archived?: boolean;
+  /** 修改时必传,取自上次读取的 version。 */
+  version?: number;
+}
+
+export interface ToolItemQuery {
+  page?: number;
+  size?: number;
+  keyword?: string;
+  location?: string;
+  archived?: boolean;
+}
+
+export function createItem(req: ToolItemReq): Promise<number> {
+  return api.post<number>('/app/tool/item', req);
+}
+
+export function updateItem(id: string, req: ToolItemReq): Promise<void> {
+  return api.put<void>(`/app/tool/item/${id}`, req);
+}
+
+export function changeItemQuantity(id: string, delta: number): Promise<void> {
+  return api.post<void>(`/app/tool/item/${id}/quantity?delta=${delta}`);
+}
+
+export function toggleItemArchive(id: string): Promise<void> {
+  return api.post<void>(`/app/tool/item/${id}/archive`);
+}
+
+export function deleteItem(id: string): Promise<void> {
+  return api.delete<void>(`/app/tool/item/${id}`);
+}
+
+export function fetchItems(query: ToolItemQuery = {}): Promise<ToolItemPage> {
+  const params = new URLSearchParams();
+  params.set('page', String(query.page ?? 1));
+  params.set('size', String(query.size ?? 20));
+  if (query.keyword) params.set('keyword', query.keyword);
+  if (query.location) params.set('location', query.location);
+  if (query.archived) params.set('archived', 'true');
+  return api.get<ToolItemPage>(`/app/tool/item/list?${params.toString()}`);
 }
