@@ -11,7 +11,7 @@ import { Icon } from '@/components/ui/icon';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { SectionCard } from '@/components/business/feedback';
-import { generatePassword, passwordStrength, STRENGTH_LABELS } from '@/lib/calc/password';
+import { generatePassword, hasSecureRandom, passwordStrength, STRENGTH_LABELS } from '@/lib/calc/password';
 import { clipboard } from '@/lib/capabilities';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { token } from '@/constants/Colors';
@@ -38,8 +38,15 @@ export default function PasswordScreen() {
 
   const generate = useCallback(() => {
     const result = generatePassword(options);
-    if (result) setPassword(result);
-  }, [options]);
+    if (result) {
+      setPassword(result);
+      return;
+    }
+    toast(
+      hasSecureRandom() ? '请至少选择一种字符类型' : '当前环境缺少安全随机源,已停止生成',
+      'error',
+    );
+  }, [options, toast]);
 
   const copy = useCallback(async () => {
     const result = await clipboard.copy(password);

@@ -16,12 +16,20 @@ import {
 
 function resolve(): { driver: KvDriver; kind: string } {
   const secure = getSecureDriver();
-  return secure
-    ? { driver: secure, kind: 'secure-keychain' }
-    : { driver: getCurrentDriver(), kind: 'kv-app-storage' };
+  if (secure) return { driver: secure, kind: 'secure-keychain' };
+  const driver = getCurrentDriver();
+  // 内存驱动不持久,诊断标签如实反映,避免把本次运行会话误报成已落盘。
+  return { driver, kind: driver.persistent ? 'kv-app-storage' : `kv-${driver.name}` };
 }
 
-export const tokenStore: TokenStore = createTokenStore(resolve, 'kv-app-storage');
+const base = createTokenStore(resolve, 'kv-app-storage');
+
+export const tokenStore: TokenStore = {
+  ...base,
+  get kind() {
+    return resolve().kind;
+  },
+};
 
 export type { TokenStore, StoredSession } from './token-core';
 export {

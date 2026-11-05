@@ -1,7 +1,7 @@
 /**
  * 密码/心率/折扣 纯函数单测。
  */
-import { generatePassword, passwordStrength, STRENGTH_LABELS } from '../password';
+import { generatePassword, hasSecureRandom, passwordStrength } from '../password';
 import { heartRateZones, maxHeartRate, zoneForHr } from '../fitness';
 import { compareUnitPrices, discountedPrice } from '../shopping';
 
@@ -22,6 +22,18 @@ describe('密码生成', () => {
 
   it('长度不合法返回 null', () => {
     expect(generatePassword({ length: 3, uppercase: true, lowercase: true, digits: true, symbols: false, excludeAmbiguous: false })).toBeNull();
+  });
+
+  it('无安全随机源时拒绝生成,不降级 Math.random', () => {
+    const original = Object.getOwnPropertyDescriptor(globalThis, 'crypto');
+    Object.defineProperty(globalThis, 'crypto', { value: undefined, configurable: true });
+    try {
+      expect(hasSecureRandom()).toBe(false);
+      expect(generatePassword({ length: 16, uppercase: true, lowercase: true, digits: true, symbols: true, excludeAmbiguous: false })).toBeNull();
+    } finally {
+      if (original) Object.defineProperty(globalThis, 'crypto', original);
+      else delete (globalThis as { crypto?: unknown }).crypto;
+    }
   });
 
   it('强度评分', () => {

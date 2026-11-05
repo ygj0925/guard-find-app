@@ -2,15 +2,18 @@
  * 键值存储(一期只存非凭据:草稿副本、搜索历史、常驻地缓存)。
  *
  * 为什么是"驱动 + 内存兜底":`@react-native-async-storage/async-storage` 属原生依赖,
- * 必须走 `pnpm dlx expo-harmony-cli install` 才有鸿蒙适配,一期未安装。为了不出现
+ * 必须走 `pnpm dlx expo-harmony-cli install` 才有鸿蒙适配,当前尚未安装。为了不出现
  * "包没装但 bundle 直接解析失败"的情况,这里不静态 import 任何原生包,而是暴露
  * `registerKvDriver`;装好之后在应用入口注册原生驱动即可,业务代码零改动。
+ * 未注册原生驱动时,`isKvPersistent()` 为 false,不得对外宣称数据已持久化。
  *
  * 任何驱动异常都被吞掉并降级为内存态,读取失败按"没有该键"处理(spec: 存储不可用时降级)。
  */
 
 export interface KvDriver {
   readonly name: string;
+  /** 是否能在进程重启后保留数据;内存驱动为 false。 */
+  readonly persistent: boolean;
   getItem(key: string): Promise<string | null>;
   setItem(key: string, value: string): Promise<void>;
   removeItem(key: string): Promise<void>;
@@ -21,6 +24,7 @@ const memory = new Map<string, string>();
 /** 进程内驱动:冷启动不持久,但保证任何平台上都不会崩。 */
 export const memoryDriver: KvDriver = {
   name: 'memory',
+  persistent: false,
   async getItem(key) {
     return memory.has(key) ? (memory.get(key) as string) : null;
   },
@@ -53,6 +57,7 @@ const webDriver: KvDriver | null = (() => {
     store.removeItem(probe);
     return {
       name: 'web-localStorage',
+      persistent: true,
       async getItem(key) {
         return store.getItem(key);
       },
@@ -75,6 +80,7 @@ let lastError: string | null = null;
 
 export function registerKvDriver(next: KvDriver): void {
   driver = next;
+  lastError = null;
 }
 
 /** 当前生效的键值驱动(token 存储与诊断页都要读它)。 */
@@ -84,6 +90,11 @@ export function getCurrentDriver(): KvDriver {
 
 export function getKvDriverName(): string {
   return driver.name;
+}
+
+/** 当前驱动是否能跨进程重启保留数据;false 时不应向用户宣称已持久化。 */
+export function isKvPersistent(): boolean {
+  return driver.persistent;
 }
 
 export function getKvLastError(): string | null {
