@@ -167,7 +167,7 @@ export default function LedgerScreen() {
   if (!signedIn) {
     return (
       <SafeAreaView edges={['left', 'right']} className="flex-1 bg-background">
-        <EmptyState
+        <EmptyState illustration="signin"
           title="登录后开始记账"
           description="账单跟随账号云端同步,换设备不丢数据"
           actionLabel="去登录"
@@ -267,7 +267,7 @@ export default function LedgerScreen() {
           ) : feed.phase === 'error' && feed.error ? (
             <ErrorState error={feed.error} onRetry={() => void feed.reload()} />
           ) : (
-            <EmptyState
+            <EmptyState illustration="money"
               title="这个月还没有记录"
               description="点击右下角「记一笔」,3 秒完成记账"
               actionLabel="记一笔"

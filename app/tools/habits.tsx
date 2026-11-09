@@ -140,7 +140,7 @@ export default function HabitsScreen() {
   if (!signedIn) {
     return (
       <SafeAreaView edges={['left', 'right']} className="flex-1 bg-background">
-        <EmptyState
+        <EmptyState illustration="signin"
           title="登录后使用习惯打卡"
           description="打卡记录云端同步,连续天数不丢"
           actionLabel="去登录"
@@ -179,7 +179,7 @@ export default function HabitsScreen() {
           ) : query.error ? (
             <ErrorState error={query.error} onRetry={() => void query.reload()} />
           ) : (
-            <EmptyState
+            <EmptyState illustration="calendar"
               title="还没有习惯"
               description="点右上角 + 建一个,比如「每天喝够 8 杯水」"
               actionLabel="新建习惯"

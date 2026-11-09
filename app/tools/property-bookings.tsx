@@ -101,7 +101,7 @@ export default function PropertyBookingsScreen() {
           ) : query.error ? (
             <ErrorState error={query.error} onRetry={() => void query.reload()} />
           ) : (
-            <EmptyState
+            <EmptyState illustration="calendar"
               title={role === 'guest' ? '还没有预约' : '还没有收到的预约'}
               description={role === 'guest' ? '在房源详情页点「预约看房」即可预约' : '有人预约你的房源时会出现在这里'}
             />

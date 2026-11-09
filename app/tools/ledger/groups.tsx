@@ -101,7 +101,7 @@ export default function LedgerGroupsScreen() {
   if (!signedIn) {
     return (
       <SafeAreaView edges={['left', 'right']} className="flex-1 bg-background">
-        <EmptyState
+        <EmptyState illustration="signin"
           title="登录后使用家庭记账"
           description="和家人共享一个账本,总花销一目了然"
           actionLabel="去登录"

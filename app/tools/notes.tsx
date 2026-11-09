@@ -303,7 +303,7 @@ export default function NotesScreen() {
   if (!signedIn) {
     return (
       <SafeAreaView edges={['left', 'right']} className="flex-1 bg-background">
-        <EmptyState
+        <EmptyState illustration="signin"
           title="登录后使用灵感便笺"
           description="随手记录,云端同步,换设备不丢"
           actionLabel="去登录"
@@ -395,7 +395,7 @@ export default function NotesScreen() {
           ) : error ? (
             <ErrorState error={error} onRetry={reload} />
           ) : (
-            <EmptyState
+            <EmptyState illustration="list"
               title={archived ? '归档是空的' : keyword ? '没有匹配的便笺' : '还没有便笺'}
               description={archived ? '归档的便笺会出现在这里' : '点右下角开始记录灵感'}
             />

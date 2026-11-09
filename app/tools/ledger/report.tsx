@@ -196,7 +196,7 @@ export default function LedgerReportScreen() {
         ) : summary.error ? (
           <ErrorState error={summary.error} onRetry={() => void reload()} />
         ) : (
-          <EmptyState title="暂无数据" description="先去记一笔,报表立刻就有内容" />
+          <EmptyState illustration="money" title="暂无数据" description="先去记一笔,报表立刻就有内容" />
         )}
       </ScrollView>
     </SafeAreaView>

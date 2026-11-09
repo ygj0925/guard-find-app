@@ -228,7 +228,7 @@ export default function TodoScreen() {
   if (!signedIn) {
     return (
       <SafeAreaView edges={['left', 'right']} className="flex-1 bg-background">
-        <EmptyState
+        <EmptyState illustration="signin"
           title="登录后使用待办清单"
           description="待办云端同步,换设备不丢"
           actionLabel="去登录"
@@ -259,7 +259,7 @@ export default function TodoScreen() {
           ) : query.error ? (
             <ErrorState error={query.error} onRetry={() => void query.reload()} />
           ) : (
-            <EmptyState title="清单是空的" description="在下方输入框写下第一件事" />
+            <EmptyState illustration="list" title="清单是空的" description="在下方输入框写下第一件事" />
           )
         }
         ListFooterComponent={

@@ -64,7 +64,7 @@ export default function ReportDetailScreen() {
               填报状态({activity.submittedCount}/{activity.reporterCount})
             </Text>
             {(activity.reporters ?? []).length === 0 ? (
-              <EmptyState title="还没有填报人" description="发起时指定填报人,或联系发起人添加" />
+              <EmptyState illustration="list" title="还没有填报人" description="发起时指定填报人,或联系发起人添加" />
             ) : (
               (activity.reporters ?? []).map((reporter) => (
                 <Pressable

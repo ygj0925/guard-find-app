@@ -196,7 +196,7 @@ export default function GoalsScreen() {
   if (!signedIn) {
     return (
       <SafeAreaView edges={['left', 'right']} className="flex-1 bg-background">
-        <EmptyState
+        <EmptyState illustration="signin"
           title="登录后使用目标管理"
           description="个人 OKR:定目标,拆 KR,量化进度"
           actionLabel="去登录"
@@ -262,7 +262,7 @@ export default function GoalsScreen() {
         ) : query.error ? (
           <ErrorState error={query.error} onRetry={() => void query.reload()} />
         ) : goals.length === 0 ? (
-          <EmptyState
+          <EmptyState illustration="list"
             title="还没有目标"
             description="比如「Q4 养成规律运动」,再拆成可量化的 KR"
             actionLabel="新建目标"

@@ -3,8 +3,9 @@
  * 我的档案里反复出现,统一在这里出,避免每页各写一套文案。
  */
 import React from 'react';
-import { ActivityIndicator, Pressable, RefreshControl, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, Image, Pressable, RefreshControl, StyleSheet, View } from 'react-native';
 import { Text } from '@/components/ui/text';
+import { useColorScheme } from '@/hooks/useColorScheme';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { toUserMessage } from '@/lib/api/error';
@@ -69,19 +70,43 @@ const TONE_CLASS: Record<'info' | 'warn' | 'danger' | 'success', string> = {
   success: 'border-found/40 bg-found/10 text-foreground',
 };
 
+const EMPTY_ILLUSTRATIONS = {
+  signin: require('@/assets/images/empty/signin.png'),
+  list: require('@/assets/images/empty/list.png'),
+  money: require('@/assets/images/empty/money.png'),
+  calendar: require('@/assets/images/empty/calendar.png'),
+  home: require('@/assets/images/empty/home.png'),
+  chat: require('@/assets/images/empty/chat.png'),
+} as const;
+
+export type EmptyIllustration = keyof typeof EMPTY_ILLUSTRATIONS;
+
 export function EmptyState({
   title,
   description,
   actionLabel,
   onAction,
+  illustration,
 }: {
   title: string;
   description?: string;
   actionLabel?: string;
   onAction?: () => void;
+  illustration?: EmptyIllustration;
 }) {
+  const scheme = useColorScheme() ?? 'light';
   return (
     <View className="items-center px-8 py-14">
+      {illustration ? (
+        <View className="bg-muted mb-4 size-28 overflow-hidden rounded-full">
+          <Image
+            source={EMPTY_ILLUSTRATIONS[illustration]}
+            style={[styles.illustration, scheme === 'dark' && styles.illustrationDim]}
+            resizeMode="cover"
+            accessibilityIgnoresInvertColors
+          />
+        </View>
+      ) : null}
       <Text className="text-center text-base font-semibold">{title}</Text>
       {description ? (
         <Text className="text-muted-foreground mt-2 text-center text-sm leading-5">
@@ -196,6 +221,8 @@ export function InlineRow({
 }
 
 const styles = StyleSheet.create({
+  illustration: { width: '100%', height: '100%' },
+  illustrationDim: { opacity: 0.72 },
   row: {
     flexDirection: 'row',
     paddingVertical: 6,

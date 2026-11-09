@@ -56,7 +56,7 @@ export default function BudgetScreen() {
   if (!signedIn) {
     return (
       <SafeAreaView edges={['left', 'right']} className="flex-1 bg-background">
-        <EmptyState title="登录后设置预算" description="控制每月花销,超支预警"
+        <EmptyState illustration="signin" title="登录后设置预算" description="控制每月花销,超支预警"
           actionLabel="去登录" onAction={() => router.push(loginHref({ href: '/tools/budget', from: 'budget' }))} />
       </SafeAreaView>
     );

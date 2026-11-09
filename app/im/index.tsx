@@ -89,7 +89,7 @@ export default function ImListScreen() {
   if (!signedIn) {
     return (
       <SafeAreaView edges={['left', 'right']} className="flex-1 bg-background">
-        <EmptyState title="登录后使用私信" description="和关注的人实时聊天"
+        <EmptyState illustration="signin" title="登录后使用私信" description="和关注的人实时聊天"
           actionLabel="去登录" onAction={() => router.push(loginHref({ href: '/im', from: 'im' }))} />
       </SafeAreaView>
     );
@@ -127,7 +127,7 @@ export default function ImListScreen() {
           ) : query.error ? (
             <ErrorState error={query.error} onRetry={() => void query.reload()} />
           ) : (
-            <EmptyState title="还没有会话" description="从社区找人聊天吧" />
+            <EmptyState illustration="chat" title="还没有会话" description="从社区找人聊天吧" />
           )
         }
         renderItem={({ item }) => (

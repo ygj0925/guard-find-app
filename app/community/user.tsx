@@ -132,7 +132,7 @@ export default function SocialUserScreen() {
           ) : postsQuery.error ? (
             <ErrorState error={postsQuery.error} onRetry={() => void postsQuery.reload()} />
           ) : (
-            <EmptyState title="还没有发布过动态" />
+            <EmptyState illustration="chat" title="还没有发布过动态" />
           )
         }
         ListFooterComponent={

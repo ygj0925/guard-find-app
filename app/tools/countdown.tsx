@@ -129,7 +129,7 @@ export default function CountdownScreen() {
   if (!signedIn) {
     return (
       <SafeAreaView edges={['left', 'right']} className="flex-1 bg-background">
-        <EmptyState
+        <EmptyState illustration="signin"
           title="登录后使用倒数日"
           description="重要日子云端同步,换设备不丢"
           actionLabel="去登录"
@@ -168,7 +168,7 @@ export default function CountdownScreen() {
           ) : query.error ? (
             <ErrorState error={query.error} onRetry={() => void query.reload()} />
           ) : (
-            <EmptyState
+            <EmptyState illustration="calendar"
               title="还没有倒数日"
               description="点右上角 + 添加一个重要的日子"
               actionLabel="添加"

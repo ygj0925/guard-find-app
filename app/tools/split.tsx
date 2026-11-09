@@ -123,7 +123,7 @@ export default function SplitScreen() {
   if (!signedIn) {
     return (
       <SafeAreaView edges={['left', 'right']} className="flex-1 bg-background">
-        <EmptyState
+        <EmptyState illustration="signin"
           title="登录后使用 AA 分账"
           description="分账历史云端同步,可一键写回记账"
           actionLabel="去登录"
@@ -152,7 +152,7 @@ export default function SplitScreen() {
           ) : query.error ? (
             <ErrorState error={query.error} onRetry={() => void query.reload()} />
           ) : (
-            <EmptyState title="还没有分账记录" description="在上面算一笔,保存后这里会留档" />
+            <EmptyState illustration="money" title="还没有分账记录" description="在上面算一笔,保存后这里会留档" />
           )
         }
         renderItem={({ item }) => (

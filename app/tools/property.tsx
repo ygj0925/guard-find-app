@@ -86,7 +86,7 @@ export default function PropertyScreen() {
   if (!signedIn && tab === 'mine') {
     return (
       <SafeAreaView edges={['left', 'right']} className="flex-1 bg-background">
-        <EmptyState title="登录后管理房源" description="发布房源,管理上架/下架"
+        <EmptyState illustration="signin" title="登录后管理房源" description="发布房源,管理上架/下架"
           actionLabel="去登录" onAction={() => router.push(loginHref({ href: '/tools/property', from: 'property' }))} />
       </SafeAreaView>
     );
@@ -200,7 +200,7 @@ export default function PropertyScreen() {
           ) : query.error ? (
             <ErrorState error={query.error} onRetry={() => void query.reload()} />
           ) : (
-            <EmptyState title={tab === 'mine' ? '还没有发布房源' : '暂无房源'}
+            <EmptyState illustration="home" title={tab === 'mine' ? '还没有发布房源' : '暂无房源'}
               description={tab === 'mine' ? '点右上角 + 发布第一套房源' : '稍后再来看看'} />
           )
         }

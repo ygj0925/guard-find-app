@@ -48,7 +48,7 @@ export default function WeeklyReportScreen() {
   if (!signedIn) {
     return (
       <SafeAreaView edges={['left', 'right']} className="flex-1 bg-background">
-        <EmptyState
+        <EmptyState illustration="signin"
           title="登录后生成 AI 周报"
           description="周报会汇总你本周的记账、待办与打卡数据"
           actionLabel="去登录"

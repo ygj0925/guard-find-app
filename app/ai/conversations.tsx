@@ -105,7 +105,7 @@ export default function AiConversationsScreen() {
   if (!signedIn) {
     return (
       <SafeAreaView edges={['left', 'right']} className="flex-1 bg-background">
-        <EmptyState
+        <EmptyState illustration="signin"
           title="登录后使用 AI 对话"
           description="会话历史跟随账号云端同步"
           actionLabel="去登录"
@@ -144,7 +144,7 @@ export default function AiConversationsScreen() {
           ) : query.error ? (
             <ErrorState error={query.error} onRetry={() => void query.reload()} />
           ) : (
-            <EmptyState
+            <EmptyState illustration="chat"
               title="还没有会话"
               description="点右上角 + 开始第一段对话"
               actionLabel="新建对话"

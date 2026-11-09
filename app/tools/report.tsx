@@ -116,7 +116,7 @@ export default function ReportScreen() {
   if (!signedIn) {
     return (
       <SafeAreaView edges={['left', 'right']} className="flex-1 bg-background">
-        <EmptyState
+        <EmptyState illustration="signin"
           title="登录后使用工作汇报"
           description="发起月度汇报,成员填报,全员可读可评"
           actionLabel="去登录"
@@ -148,7 +148,7 @@ export default function ReportScreen() {
         ) : query.error ? (
           <ErrorState error={query.error} onRetry={() => void query.reload()} />
         ) : activities.length === 0 ? (
-          <EmptyState
+          <EmptyState illustration="list"
             title="还没有汇报"
             description="点右上角 + 发起月度汇报,指定填报人"
             actionLabel="发起汇报"

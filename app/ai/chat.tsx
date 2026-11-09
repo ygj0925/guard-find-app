@@ -89,7 +89,7 @@ export default function AiChatScreen() {
               <ErrorState error={query.error} onRetry={() => void query.reload()} />
             ) : messages?.length === 0 ? (
               <View className="mb-3">
-                <EmptyState
+                <EmptyState illustration="chat"
                   title="开始对话吧"
                   description="试试下面的快捷指令,或直接输入问题"
                 />

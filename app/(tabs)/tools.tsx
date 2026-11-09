@@ -110,7 +110,7 @@ export default function ToolsScreen() {
             <ErrorState error={summary.error} onRetry={() => void summary.reload()} />
           ) : null
         ) : (
-          <EmptyState
+          <EmptyState illustration="signin"
             title="登录后同步你的数据"
             description="记账、AI 对话等工具的数据会跟随账号云端同步"
           />

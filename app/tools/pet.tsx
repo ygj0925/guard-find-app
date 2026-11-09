@@ -120,7 +120,7 @@ export default function PetScreen() {
   if (!signedIn) {
     return (
       <SafeAreaView edges={['left', 'right']} className="flex-1 bg-background">
-        <EmptyState title="登录后记录宠物成长" description="体重曲线 · 疫苗记录 · 成长里程碑"
+        <EmptyState illustration="signin" title="登录后记录宠物成长" description="体重曲线 · 疫苗记录 · 成长里程碑"
           actionLabel="去登录" onAction={() => router.push(loginHref({ href: '/tools/pet', from: 'pet' }))} />
       </SafeAreaView>
     );

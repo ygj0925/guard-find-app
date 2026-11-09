@@ -197,14 +197,14 @@ export default function CommunityScreen() {
           ) : query.error ? (
             <ErrorState error={query.error} onRetry={() => void query.reload()} />
           ) : scope === 'mine' && !signedIn ? (
-            <EmptyState
+            <EmptyState illustration="signin"
               title="登录后查看我的动态"
               description="登录后即可管理你发布的所有内容"
               actionLabel="去登录"
               onAction={() => router.push(loginHref({ href: '/community/detail?scope=mine', from: 'community' }) as never)}
             />
           ) : scope === 'mine' ? (
-            <EmptyState
+            <EmptyState illustration="chat"
               title="你还没有发过动态"
               description="点右下角 + 记录第一刻"
               actionLabel={signedIn ? '发布动态' : '去登录'}
@@ -213,7 +213,7 @@ export default function CommunityScreen() {
               }
             />
           ) : (
-            <EmptyState title="还没有动态" description="来发第一条,让大家看到你的生活" />
+            <EmptyState illustration="chat" title="还没有动态" description="来发第一条,让大家看到你的生活" />
           )
         }
         ListFooterComponent={

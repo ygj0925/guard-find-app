@@ -348,7 +348,7 @@ export default function ItemsScreen() {
   if (!signedIn) {
     return (
       <SafeAreaView edges={['left', 'right']} className="flex-1 bg-background">
-        <EmptyState
+        <EmptyState illustration="signin"
           title="登录后使用物品收纳"
           description="记下东西放在哪,云端同步,换设备也能找"
           actionLabel="去登录"
@@ -440,7 +440,7 @@ export default function ItemsScreen() {
           ) : error ? (
             <ErrorState error={error} onRetry={reload} />
           ) : (
-            <EmptyState
+            <EmptyState illustration="list"
               title={archived ? '归档是空的' : keyword ? '没有匹配的物品' : '还没有物品'}
               description={archived ? '归档的物品会出现在这里' : '点右下角记下第一件物品'}
             />

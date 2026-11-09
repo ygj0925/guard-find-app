@@ -100,7 +100,7 @@ export default function CheckinScreen() {
   if (!signedIn) {
     return (
       <SafeAreaView edges={['left', 'right']} className="flex-1 bg-background">
-        <EmptyState
+        <EmptyState illustration="signin"
           title="登录后使用在线签到"
           description="发起签到,家人/同学扫码或输码签到"
           actionLabel="去登录"
@@ -132,7 +132,7 @@ export default function CheckinScreen() {
         ) : query.error ? (
           <ErrorState error={query.error} onRetry={() => void query.reload()} />
         ) : activities.length === 0 ? (
-          <EmptyState
+          <EmptyState illustration="list"
             title="还没有发起过签到"
             description="点右上角 + 发起一个,大屏展示动态码让大家输码签到"
             actionLabel="发起签到"

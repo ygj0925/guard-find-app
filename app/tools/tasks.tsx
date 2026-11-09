@@ -158,7 +158,7 @@ export default function TasksScreen() {
   if (!signedIn) {
     return (
       <SafeAreaView edges={['left', 'right']} className="flex-1 bg-background">
-        <EmptyState
+        <EmptyState illustration="signin"
           title="登录后使用任务分派"
           description="和家人互派任务,进度共享"
           actionLabel="去登录"
@@ -244,7 +244,7 @@ export default function TasksScreen() {
               onAction={() => router.push('/tools/ledger/groups')}
             />
           ) : (
-            <EmptyState title="没有任务" description="点右上角 + 给家人派个任务" />
+            <EmptyState illustration="list" title="没有任务" description="点右上角 + 给家人派个任务" />
           )
         }
         renderItem={({ item }) => {
