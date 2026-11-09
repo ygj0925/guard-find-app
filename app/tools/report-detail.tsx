@@ -16,8 +16,6 @@ import { fetchReportDetail, type ToolReport } from '@/lib/api/endpoints/report';
 import { useRequest } from '@/hooks/useRequest';
 import { useSession } from '@/store/session';
 import { useColorScheme } from '@/hooks/useColorScheme';
-import { token } from '@/constants/Colors';
-import { useToast } from '@/providers/ToastProvider';
 
 const STATUS_LABEL: Record<number, string> = { 0: '未开始', 1: '草稿', 2: '已提交' };
 
@@ -25,7 +23,6 @@ export default function ReportDetailScreen() {
   const params = useLocalSearchParams<{ id: string }>();
   const activityId = params.id ?? '';
   const router = useRouter();
-  const { toast } = useToast();
   const scheme = useColorScheme() ?? 'light';
   const signedIn = useSession((state) => state.phase === 'authenticated');
   const myUserId = useSession((state) => state.user?.id ?? null);

@@ -3,7 +3,7 @@
  * 填报人/接收人从「我的关注」列表选人(一期边界,文档 12.4)。
  */
 import React, { useCallback, useState } from 'react';
-import { Alert, Modal, Pressable, ScrollView, TextInput, View } from 'react-native';
+import { Alert, Modal, Pressable, ScrollView, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { FileText, Plus } from 'lucide-react-native';
@@ -14,7 +14,7 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Field } from '@/components/form/fields';
-import { EmptyState, ErrorState, RefreshingControl, SectionCard } from '@/components/business/feedback';
+import { EmptyState, ErrorState, SectionCard } from '@/components/business/feedback';
 import { PressableScale } from '@/components/ui/pressable-scale';
 import {
   createReport,

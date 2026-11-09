@@ -6,7 +6,7 @@
 import React, { useCallback, useMemo, useState } from 'react';
 import { Pressable, ScrollView, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
+import { Stack, useLocalSearchParams } from 'expo-router';
 
 import { Text } from '@/components/ui/text';
 import { Card } from '@/components/ui/card';
@@ -31,7 +31,6 @@ export default function ReportEntryScreen() {
   const params = useLocalSearchParams<{ id: string; userId: string }>();
   const activityId = params.id ?? '';
   const entryUserId = params.userId ?? '';
-  const router = useRouter();
   const { toast } = useToast();
   const scheme = useColorScheme() ?? 'light';
   const signedIn = useSession((state) => state.phase === 'authenticated');
@@ -207,7 +206,9 @@ export default function ReportEntryScreen() {
           )}
           {comments.length === 0 ? (
             <Text className="text-muted-foreground px-4 pb-2 text-xs">还没有评论</Text>
-          ) : null}
+          ) : (
+            comments.map((item) => <React.Fragment key={item.id}>{renderComment({ item })}</React.Fragment>)
+          )}
         </View>
       </ScrollView>
 

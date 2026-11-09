@@ -377,7 +377,6 @@ export default function LoginScreen() {
 /** 三方登录圆标按钮(暂未配置凭证,点击提示即将开放)。 */
 function ThirdPartyButton({ provider, label, color }: { provider: string; label: string; color: string }) {
   const { toast } = useToast();
-  const scheme = useColorScheme() ?? 'light';
   return (
     <Pressable
       accessibilityRole="button"

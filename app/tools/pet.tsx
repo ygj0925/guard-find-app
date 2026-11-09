@@ -2,8 +2,8 @@
  * 宠物成长记录:宠物列表 + 成长时间线 + 添加日志。
  * 一页搞定:顶部宠物卡横滑选择,下方成长日志时间线。
  */
-import React, { useCallback, useMemo, useState } from 'react';
-import { Alert, Modal, Pressable, ScrollView, TextInput, View } from 'react-native';
+import React, { useCallback, useState } from 'react';
+import { Alert, Modal, Pressable, ScrollView, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Cat, Dog, PawPrint, Plus, Trash2 } from 'lucide-react-native';
@@ -14,7 +14,7 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Field } from '@/components/form/fields';
-import { EmptyState, ErrorState, RefreshingControl, SectionCard } from '@/components/business/feedback';
+import { EmptyState, ErrorState, SectionCard } from '@/components/business/feedback';
 import {
   addPetLog,
   createPet,
@@ -22,7 +22,6 @@ import {
   deletePetLog,
   fetchPetLogs,
   fetchPets,
-  type ToolPet,
   type ToolPetLog,
   type PetLogType,
 } from '@/lib/api/endpoints/pet';
@@ -216,7 +215,7 @@ export default function PetScreen() {
                       <Text className="text-foreground mt-1 text-sm leading-4">{log.content}</Text>
                     </View>
                     <Pressable accessibilityRole="button" accessibilityLabel="删除记录"
-                      onPress={() => { void (async () => { try { await deletePetLog(selectedPet.id, log.id); toast('已删除'); await logsQuery.reload(); } catch { toast('删除失败', 'error'); } })(); }}
+                      onPress={() => confirmDeleteLog(log)}
                       className="ml-2 p-1">
                       <Icon as={Trash2} size={13} className="text-muted-foreground" />
                     </Pressable>
