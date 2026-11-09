@@ -1,4 +1,5 @@
 import { buttonTextVariants, buttonVariants } from '@/components/ui/button';
+import { ELEVATION } from '@/components/ui/elevation';
 import { NativeOnlyAnimatedView } from '@/components/ui/native-only-animated-view';
 import { TextClassContext } from '@/components/ui/text';
 import { cn } from '@/lib/utils';
@@ -49,6 +50,7 @@ function AlertDialogOverlay({
 function AlertDialogContent({
   className,
   portalHost,
+  style,
   ...props
 }: React.ComponentProps<typeof AlertDialogPrimitive.Content> & {
     portalHost?: string;
@@ -64,6 +66,7 @@ function AlertDialogContent({
             }),
             className
           )}
+          style={[ELEVATION.dialog, style]}
           {...props}
         />
       </AlertDialogOverlay>

@@ -1,8 +1,9 @@
+import { ELEVATION } from '@/components/ui/elevation';
 import { Text, TextClassContext } from '@/components/ui/text';
 import { cn } from '@/lib/utils';
 import { View } from 'react-native';
 
-function Card({ className, ...props }: React.ComponentProps<typeof View> & React.RefAttributes<View>) {
+function Card({ className, style, ...props }: React.ComponentProps<typeof View> & React.RefAttributes<View>) {
   return (
     <TextClassContext.Provider value="text-card-foreground">
       <View
@@ -10,6 +11,7 @@ function Card({ className, ...props }: React.ComponentProps<typeof View> & React
           'bg-card border-border flex flex-col gap-6 rounded-xl border py-6 shadow-sm shadow-black/5',
           className
         )}
+        style={[ELEVATION.card, style]}
         {...props}
       />
     </TextClassContext.Provider>

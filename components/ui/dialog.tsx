@@ -1,3 +1,4 @@
+import { ELEVATION } from '@/components/ui/elevation';
 import { Icon } from '@/components/ui/icon';
 import { NativeOnlyAnimatedView } from '@/components/ui/native-only-animated-view';
 import { cn } from '@/lib/utils';
@@ -66,6 +67,7 @@ function DialogContent({
   className,
   portalHost,
   children,
+  style,
   ...props
 }: React.ComponentProps<typeof DialogPrimitive.Content> & {
   portalHost?: string;
@@ -81,6 +83,7 @@ function DialogContent({
             }),
             className
           )}
+          style={[ELEVATION.dialog, style]}
           {...props}>
           <>{children}</>
           <DialogPrimitive.Close
