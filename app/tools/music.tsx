@@ -162,12 +162,11 @@ export default function MusicScreen() {
   }, [current, progress, scheme, skip, state, togglePlay, tracks.length]);
 
   return (
-    <SafeAreaView edges={['top']} className="flex-1 bg-background">
+    <SafeAreaView edges={['left', 'right']} className="flex-1 bg-background">
       <View className="flex-1 px-4">
         <View className="mb-3 mt-2 flex-row items-center justify-between">
           <View>
-            <Text className="text-2xl font-bold">音乐</Text>
-            <Text className="text-muted-foreground mt-1 text-sm">播放本地音频 · {tracks.length} 首歌单</Text>
+            <Text className="text-muted-foreground text-sm">播放本地音频 · {tracks.length} 首歌单</Text>
           </View>
           <Button onPress={() => void addTracks()}>
             <Text>添加音频</Text>

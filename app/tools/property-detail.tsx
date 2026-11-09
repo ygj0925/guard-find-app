@@ -94,7 +94,7 @@ export default function PropertyDetailScreen() {
 
   if (query.error) {
     return (
-      <SafeAreaView edges={['top']} className="flex-1 bg-background">
+      <SafeAreaView edges={['left', 'right']} className="flex-1 bg-background">
         <ErrorState error={query.error} onRetry={() => void query.reload()} />
       </SafeAreaView>
     );
@@ -102,7 +102,7 @@ export default function PropertyDetailScreen() {
 
   if (!property) {
     return (
-      <SafeAreaView edges={['top']} className="flex-1 bg-background">
+      <SafeAreaView edges={['left', 'right']} className="flex-1 bg-background">
         <SkeletonList rows={5} />
       </SafeAreaView>
     );
@@ -111,7 +111,7 @@ export default function PropertyDetailScreen() {
   const isMine = property.userId === myUserId;
 
   return (
-    <SafeAreaView edges={['top']} className="flex-1 bg-background">
+    <SafeAreaView edges={['left', 'right']} className="flex-1 bg-background">
       <ScrollView className="flex-1 px-4" contentContainerStyle={{ paddingBottom: 104 }}>
         {/* 图片列表 */}
         {property.images.length > 0 ? (

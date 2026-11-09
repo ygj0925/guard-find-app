@@ -6,7 +6,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { Alert, Pressable, ScrollView, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 
 import { Text } from '@/components/ui/text';
 import { Card } from '@/components/ui/card';
@@ -88,7 +88,7 @@ export default function CheckinDetailScreen() {
 
   if (!activityId || detailFailed(query.error)) {
     return (
-      <SafeAreaView edges={['top']} className="flex-1 bg-background">
+      <SafeAreaView edges={['left', 'right']} className="flex-1 bg-background">
         {query.error ? (
           <ErrorState error={query.error} onRetry={() => void query.reload()} />
         ) : (
@@ -99,10 +99,10 @@ export default function CheckinDetailScreen() {
   }
 
   return (
-    <SafeAreaView edges={['top']} className="flex-1 bg-background">
+    <SafeAreaView edges={['left', 'right']} className="flex-1 bg-background">
       <ScrollView className="flex-1 px-4" contentContainerStyle={{ paddingBottom: 104 }}>
         <View className="mb-3 mt-2">
-          <Text className="text-2xl font-bold">{activity?.title ?? '签到'}</Text>
+          <Stack.Screen options={{ title: activity?.title ?? '签到' }} />
           {activity?.locationName ? (
             <Text className="text-primary mt-1 text-sm">地点:{activity.locationName}</Text>
           ) : null}

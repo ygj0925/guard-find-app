@@ -5,7 +5,7 @@
 import React, { useCallback, useState } from 'react';
 import { Alert, FlatList, Pressable, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { Copy, Crown, RefreshCw, UserMinus } from 'lucide-react-native';
 
 import { Text } from '@/components/ui/text';
@@ -137,14 +137,14 @@ export default function GroupDetailScreen() {
 
   if (!signedIn || !groupId) {
     return (
-      <SafeAreaView edges={['top']} className="flex-1 bg-background">
+      <SafeAreaView edges={['left', 'right']} className="flex-1 bg-background">
         <ErrorState error={{ message: '会话已失效' } as never} onRetry={() => undefined} />
       </SafeAreaView>
     );
   }
 
   return (
-    <SafeAreaView edges={['top']} className="flex-1 bg-background">
+    <SafeAreaView edges={['left', 'right']} className="flex-1 bg-background">
       <FlatList
         data={members}
         keyExtractor={(item) => item.userId}
@@ -152,8 +152,8 @@ export default function GroupDetailScreen() {
         contentContainerStyle={{ paddingBottom: 104 }}
         ListHeaderComponent={
           <View className="mb-4 mt-2">
-            <Text className="text-2xl font-bold">{group?.name ?? '家庭组'}</Text>
-            <Text className="text-muted-foreground mt-1 text-sm">
+            <Stack.Screen options={{ title: group?.name ?? '家庭组' }} />
+            <Text className="text-muted-foreground text-sm">
               {members.length} 名成员 · {isOwner ? '我是组长' : '成员'}
             </Text>
           </View>

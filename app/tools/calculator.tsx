@@ -149,11 +149,10 @@ export default function CalculatorScreen() {
     key === '=' ? 'text-primary-foreground' : ['÷', '×', '-', '+'].includes(key) ? 'text-accent-foreground' : 'text-foreground';
 
   return (
-    <SafeAreaView edges={['top']} className="flex-1 bg-background">
+    <SafeAreaView edges={['left', 'right']} className="flex-1 bg-background">
       <ScrollView contentContainerStyle={{ paddingBottom: 104, paddingHorizontal: 16 }}>
         <View className="mb-3 mt-2">
-          <Text className="text-2xl font-bold">计算器</Text>
-          <Text className="text-muted-foreground mt-1 text-sm">基础四则 · 离线可用</Text>
+          <Text className="text-muted-foreground text-sm">基础四则 · 离线可用</Text>
         </View>
 
         <Card className="mb-3 p-4">

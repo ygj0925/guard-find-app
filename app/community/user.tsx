@@ -81,7 +81,7 @@ export default function SocialUserScreen() {
   }, [items.length, total, page, load]);
 
   return (
-    <SafeAreaView edges={['top']} className="flex-1 bg-background">
+    <SafeAreaView edges={['left', 'right']} className="flex-1 bg-background">
       <FlatList
         data={items}
         keyExtractor={(item) => item.id}

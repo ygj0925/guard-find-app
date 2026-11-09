@@ -29,11 +29,10 @@ export default function ClockScreen() {
   const danger = token('urgent', scheme);
 
   return (
-    <SafeAreaView edges={['top']} className="flex-1 bg-background">
+    <SafeAreaView edges={['left', 'right']} className="flex-1 bg-background">
       <ScrollView className="flex-1 px-4" contentContainerStyle={{ paddingBottom: 104 }}>
         <View className="mb-3 mt-2">
-          <Text className="text-2xl font-bold">时钟</Text>
-          <Text className="text-muted-foreground mt-1 text-sm">时钟 · 秒表 · 计时器 · 闹钟 · 番茄钟 · 离线可用</Text>
+          <Text className="text-muted-foreground text-sm">时钟 · 秒表 · 计时器 · 闹钟 · 番茄钟 · 离线可用</Text>
         </View>
 
         <ScrollView horizontal showsHorizontalScrollIndicator={false} className="mb-3">

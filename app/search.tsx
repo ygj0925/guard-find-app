@@ -249,7 +249,7 @@ export default function SearchScreen() {
   );
 
   return (
-    <SafeAreaView edges={['top']} className="flex-1 bg-background">
+    <SafeAreaView edges={['left', 'right']} className="flex-1 bg-background">
       <View className="flex-row items-center gap-2 px-4 pb-2 pt-2">
         <Input
           testID="search-input"

@@ -75,7 +75,7 @@ export default function AiChatScreen() {
   const messages = query.data;
 
   return (
-    <SafeAreaView edges={['top']} className="flex-1 bg-background">
+    <SafeAreaView edges={['left', 'right']} className="flex-1 bg-background">
       <KeyboardAvoidingView className="flex-1" behavior="height">
         <FlatList
           data={listData}

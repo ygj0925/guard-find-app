@@ -60,11 +60,10 @@ export default function TextToolkitScreen() {
   const inputStyle = { color: token('foreground', scheme), borderColor: token('border', scheme) } as const;
 
   return (
-    <SafeAreaView edges={['top']} className="flex-1 bg-background">
+    <SafeAreaView edges={['left', 'right']} className="flex-1 bg-background">
       <ScrollView className="flex-1 px-4" contentContainerStyle={{ paddingBottom: 104 }}>
         <View className="mb-4 mt-2">
-          <Text className="text-2xl font-bold">文本工具箱</Text>
-          <Text className="text-muted-foreground mt-1 text-sm">字数 · 时间戳 · 进制 · JSON · 离线可用</Text>
+          <Text className="text-muted-foreground text-sm">字数 · 时间戳 · 进制 · JSON · 离线可用</Text>
         </View>
 
         <View className="mb-3 flex-row flex-wrap" style={{ gap: 8 }}>

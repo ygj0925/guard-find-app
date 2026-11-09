@@ -166,7 +166,7 @@ export default function LedgerScreen() {
 
   if (!signedIn) {
     return (
-      <SafeAreaView edges={['top']} className="flex-1 bg-background">
+      <SafeAreaView edges={['left', 'right']} className="flex-1 bg-background">
         <EmptyState
           title="登录后开始记账"
           description="账单跟随账号云端同步,换设备不丢数据"
@@ -178,7 +178,7 @@ export default function LedgerScreen() {
   }
 
   return (
-    <SafeAreaView edges={['top']} className="flex-1 bg-background">
+    <SafeAreaView edges={['left', 'right']} className="flex-1 bg-background">
       <FlatList
         data={rows}
         keyExtractor={(row) => row.key}

@@ -100,7 +100,7 @@ export default function LedgerGroupsScreen() {
 
   if (!signedIn) {
     return (
-      <SafeAreaView edges={['top']} className="flex-1 bg-background">
+      <SafeAreaView edges={['left', 'right']} className="flex-1 bg-background">
         <EmptyState
           title="登录后使用家庭记账"
           description="和家人共享一个账本,总花销一目了然"
@@ -112,12 +112,11 @@ export default function LedgerGroupsScreen() {
   }
 
   return (
-    <SafeAreaView edges={['top']} className="flex-1 bg-background">
+    <SafeAreaView edges={['left', 'right']} className="flex-1 bg-background">
       <ScrollView className="flex-1 px-4" contentContainerStyle={{ paddingBottom: 104 }}>
         <View className="mb-4 mt-2 flex-row items-center justify-between">
           <View>
-            <Text className="text-2xl font-bold">账本管理</Text>
-            <Text className="text-muted-foreground mt-1 text-sm">点选切换,新账单记入选中的账本</Text>
+            <Text className="text-muted-foreground text-sm">点选切换,新账单记入选中的账本</Text>
           </View>
         </View>
 

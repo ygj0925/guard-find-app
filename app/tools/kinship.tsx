@@ -26,11 +26,10 @@ export default function KinshipScreen() {
   }, [path]);
 
   return (
-    <SafeAreaView edges={['top']} className="flex-1 bg-background">
+    <SafeAreaView edges={['left', 'right']} className="flex-1 bg-background">
       <ScrollView className="flex-1 px-4" contentContainerStyle={{ paddingBottom: 104 }}>
         <View className="mb-3 mt-2">
-          <Text className="text-2xl font-bold">亲戚称呼</Text>
-          <Text className="text-muted-foreground mt-1 text-sm">逐步选择关系路径,称呼实时计算</Text>
+          <Text className="text-muted-foreground text-sm">逐步选择关系路径,称呼实时计算</Text>
         </View>
 
         <Card className="mb-3 items-center p-6">

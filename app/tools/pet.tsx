@@ -120,7 +120,7 @@ export default function PetScreen() {
 
   if (!signedIn) {
     return (
-      <SafeAreaView edges={['top']} className="flex-1 bg-background">
+      <SafeAreaView edges={['left', 'right']} className="flex-1 bg-background">
         <EmptyState title="登录后记录宠物成长" description="体重曲线 · 疫苗记录 · 成长里程碑"
           actionLabel="去登录" onAction={() => router.push(loginHref({ href: '/tools/pet', from: 'pet' }))} />
       </SafeAreaView>
@@ -128,12 +128,11 @@ export default function PetScreen() {
   }
 
   return (
-    <SafeAreaView edges={['top']} className="flex-1 bg-background">
+    <SafeAreaView edges={['left', 'right']} className="flex-1 bg-background">
       <ScrollView className="flex-1 px-4" contentContainerStyle={{ paddingBottom: 104 }}>
         <View className="mb-3 mt-2 flex-row items-center justify-between">
           <View>
-            <Text className="text-2xl font-bold">宠物成长</Text>
-            <Text className="text-muted-foreground mt-1 text-sm">体重曲线 · 疫苗 · 里程碑</Text>
+            <Text className="text-muted-foreground text-sm">体重曲线 · 疫苗 · 里程碑</Text>
           </View>
           <Pressable accessibilityRole="button" accessibilityLabel="添加宠物"
             onPress={() => setCreateOpen(true)}

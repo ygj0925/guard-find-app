@@ -6,7 +6,7 @@
 import React, { useCallback, useMemo, useState } from 'react';
 import { Pressable, ScrollView, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 
 import { Text } from '@/components/ui/text';
 import { Card } from '@/components/ui/card';
@@ -128,19 +128,19 @@ export default function ReportEntryScreen() {
 
   if (query.error) {
     return (
-      <SafeAreaView edges={['top']} className="flex-1 bg-background">
+      <SafeAreaView edges={['left', 'right']} className="flex-1 bg-background">
         <ErrorState error={query.error} onRetry={() => void query.reload()} />
       </SafeAreaView>
     );
   }
 
   return (
-    <SafeAreaView edges={['top']} className="flex-1 bg-background">
+    <SafeAreaView edges={['left', 'right']} className="flex-1 bg-background">
       <ScrollView className="flex-1" contentContainerStyle={{ paddingBottom: 96 }}>
         <View className="px-4">
           <View className="mb-3 mt-2 flex-row items-center justify-between">
             <View className="flex-1">
-              <Text className="text-2xl font-bold">{entry?.nickname ?? '月报'}</Text>
+              <Stack.Screen options={{ title: entry?.nickname ?? '月报' }} />
               <Text className="text-muted-foreground mt-1 text-xs">
                 {entry?.activityTitle} · {entry?.period}
                 {entry?.late ? ' · 迟交' : ''}

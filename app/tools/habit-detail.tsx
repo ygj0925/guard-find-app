@@ -5,7 +5,7 @@
 import React, { useCallback, useMemo, useState } from 'react';
 import { Pressable, ScrollView, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useLocalSearchParams } from 'expo-router';
+import { Stack, useLocalSearchParams } from 'expo-router';
 import { ChevronLeft, ChevronRight } from 'lucide-react-native';
 
 import { Text } from '@/components/ui/text';
@@ -40,18 +40,16 @@ export default function HabitDetailScreen() {
 
   if (!habitId) {
     return (
-      <SafeAreaView edges={['top']} className="flex-1 bg-background">
+      <SafeAreaView edges={['left', 'right']} className="flex-1 bg-background">
         <ErrorState error={{ message: '缺少习惯 ID' } as never} onRetry={() => undefined} />
       </SafeAreaView>
     );
   }
 
   return (
-    <SafeAreaView edges={['top']} className="flex-1 bg-background">
-      <ScrollView className="flex-1 px-4" contentContainerStyle={{ paddingBottom: 104 }}>
-        <View className="mb-4 mt-2">
-          <Text className="text-xl font-bold">{params.title ?? '打卡日历'}</Text>
-        </View>
+    <SafeAreaView edges={['left', 'right']} className="flex-1 bg-background">
+      <ScrollView className="flex-1 px-4" contentContainerStyle={{ paddingTop: 8, paddingBottom: 104 }}>
+        <Stack.Screen options={{ title: params.title ?? '打卡日历' }} />
 
         <Card className="mb-3 p-4">
           <View className="mb-3 flex-row items-center justify-between">

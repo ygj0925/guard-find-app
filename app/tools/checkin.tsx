@@ -99,7 +99,7 @@ export default function CheckinScreen() {
 
   if (!signedIn) {
     return (
-      <SafeAreaView edges={['top']} className="flex-1 bg-background">
+      <SafeAreaView edges={['left', 'right']} className="flex-1 bg-background">
         <EmptyState
           title="登录后使用在线签到"
           description="发起签到,家人/同学扫码或输码签到"
@@ -111,12 +111,11 @@ export default function CheckinScreen() {
   }
 
   return (
-    <SafeAreaView edges={['top']} className="flex-1 bg-background">
+    <SafeAreaView edges={['left', 'right']} className="flex-1 bg-background">
       <ScrollView className="flex-1 px-4" contentContainerStyle={{ paddingBottom: 104 }}>
         <View className="mb-3 mt-2 flex-row items-center justify-between">
           <View>
-            <Text className="text-2xl font-bold">签到</Text>
-            <Text className="text-muted-foreground mt-1 text-sm">动态码防代签 · 时间窗 · 地点校验</Text>
+            <Text className="text-muted-foreground text-sm">动态码防代签 · 时间窗 · 地点校验</Text>
           </View>
           <Pressable
             accessibilityRole="button"

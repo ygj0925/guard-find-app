@@ -20,7 +20,6 @@ import {
   ArchiveRestore,
   MapPin,
   Minus,
-  Package,
   Plus,
   Search,
   Trash2,
@@ -348,7 +347,7 @@ export default function ItemsScreen() {
 
   if (!signedIn) {
     return (
-      <SafeAreaView edges={['top']} className="flex-1 bg-background">
+      <SafeAreaView edges={['left', 'right']} className="flex-1 bg-background">
         <EmptyState
           title="登录后使用物品收纳"
           description="记下东西放在哪,云端同步,换设备也能找"
@@ -360,7 +359,7 @@ export default function ItemsScreen() {
   }
 
   return (
-    <SafeAreaView edges={['top']} className="flex-1 bg-background">
+    <SafeAreaView edges={['left', 'right']} className="flex-1 bg-background">
       <FlatList
         data={items}
         keyExtractor={(item) => item.id}
@@ -380,11 +379,7 @@ export default function ItemsScreen() {
         onEndReachedThreshold={0.4}
         ListHeaderComponent={
           <View className="mb-1 mt-2">
-            <View className="flex-row items-center" style={{ gap: 8 }}>
-              <Icon as={Package} size={22} className="text-primary" />
-              <Text className="text-2xl font-bold">物品收纳</Text>
-            </View>
-            <Text className="text-muted-foreground mt-1 text-sm">
+            <Text className="text-muted-foreground text-sm">
               {archived ? `归档 ${total} 件` : `${total} 件物品 · 按位置归类`}
             </Text>
 

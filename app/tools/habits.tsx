@@ -139,7 +139,7 @@ export default function HabitsScreen() {
 
   if (!signedIn) {
     return (
-      <SafeAreaView edges={['top']} className="flex-1 bg-background">
+      <SafeAreaView edges={['left', 'right']} className="flex-1 bg-background">
         <EmptyState
           title="登录后使用习惯打卡"
           description="打卡记录云端同步,连续天数不丢"
@@ -151,7 +151,7 @@ export default function HabitsScreen() {
   }
 
   return (
-    <SafeAreaView edges={['top']} className="flex-1 bg-background">
+    <SafeAreaView edges={['left', 'right']} className="flex-1 bg-background">
       <FlatList
         data={records}
         keyExtractor={(item) => item.id}
@@ -161,8 +161,7 @@ export default function HabitsScreen() {
         ListHeaderComponent={
           <View className="mb-4 mt-2 flex-row items-center justify-between">
             <View>
-              <Text className="text-2xl font-bold">习惯打卡</Text>
-              <Text className="text-muted-foreground mt-1 text-sm">每天一点点,连续看得见</Text>
+              <Text className="text-muted-foreground text-sm">每天一点点,连续看得见</Text>
             </View>
             <Pressable
               accessibilityRole="button"

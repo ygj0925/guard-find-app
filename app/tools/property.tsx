@@ -85,7 +85,7 @@ export default function PropertyScreen() {
 
   if (!signedIn && tab === 'mine') {
     return (
-      <SafeAreaView edges={['top']} className="flex-1 bg-background">
+      <SafeAreaView edges={['left', 'right']} className="flex-1 bg-background">
         <EmptyState title="登录后管理房源" description="发布房源,管理上架/下架"
           actionLabel="去登录" onAction={() => router.push(loginHref({ href: '/tools/property', from: 'property' }))} />
       </SafeAreaView>
@@ -93,7 +93,7 @@ export default function PropertyScreen() {
   }
 
   return (
-    <SafeAreaView edges={['top']} className="flex-1 bg-background">
+    <SafeAreaView edges={['left', 'right']} className="flex-1 bg-background">
       <FlatList
         data={items}
         keyExtractor={(item) => item.id}
@@ -106,8 +106,7 @@ export default function PropertyScreen() {
           <View className="mb-3 mt-2">
             <View className="flex-row items-center justify-between">
               <View>
-                <Text className="text-2xl font-bold">房产</Text>
-                <Text className="text-muted-foreground mt-1 text-sm">找房 · 发房源 · 上架下架</Text>
+                <Text className="text-muted-foreground text-sm">找房 · 发房源 · 上架下架</Text>
               </View>
               {signedIn ? (
                 <Pressable accessibilityRole="button" accessibilityLabel="发布房源"

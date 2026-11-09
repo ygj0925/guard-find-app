@@ -55,7 +55,7 @@ export default function BudgetScreen() {
 
   if (!signedIn) {
     return (
-      <SafeAreaView edges={['top']} className="flex-1 bg-background">
+      <SafeAreaView edges={['left', 'right']} className="flex-1 bg-background">
         <EmptyState title="登录后设置预算" description="控制每月花销,超支预警"
           actionLabel="去登录" onAction={() => router.push(loginHref({ href: '/tools/budget', from: 'budget' }))} />
       </SafeAreaView>
@@ -63,11 +63,10 @@ export default function BudgetScreen() {
   }
 
   return (
-    <SafeAreaView edges={['top']} className="flex-1 bg-background">
+    <SafeAreaView edges={['left', 'right']} className="flex-1 bg-background">
       <ScrollView className="flex-1 px-4" contentContainerStyle={{ paddingBottom: 104 }}>
         <View className="mb-3 mt-2">
-          <Text className="text-2xl font-bold">预算管理</Text>
-          <Text className="text-muted-foreground mt-1 text-sm">{period} · 超 80% 预警 · 超 100% 标超支</Text>
+          <Text className="text-muted-foreground text-sm">{period} · 超 80% 预警 · 超 100% 标超支</Text>
         </View>
 
         {summary.isInitialLoading ? (

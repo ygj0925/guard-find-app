@@ -104,7 +104,7 @@ export default function AiConversationsScreen() {
 
   if (!signedIn) {
     return (
-      <SafeAreaView edges={['top']} className="flex-1 bg-background">
+      <SafeAreaView edges={['left', 'right']} className="flex-1 bg-background">
         <EmptyState
           title="登录后使用 AI 对话"
           description="会话历史跟随账号云端同步"
@@ -116,7 +116,7 @@ export default function AiConversationsScreen() {
   }
 
   return (
-    <SafeAreaView edges={['top']} className="flex-1 bg-background">
+    <SafeAreaView edges={['left', 'right']} className="flex-1 bg-background">
       <FlatList
         data={items}
         keyExtractor={(item) => item.id}
@@ -126,8 +126,7 @@ export default function AiConversationsScreen() {
         ListHeaderComponent={
           <View className="mb-4 mt-2 flex-row items-center justify-between">
             <View>
-              <Text className="text-2xl font-bold">AI 对话</Text>
-              <Text className="text-muted-foreground mt-1 text-sm">翻译 · 写作 · 总结 · 随便聊聊</Text>
+              <Text className="text-muted-foreground text-sm">翻译 · 写作 · 总结 · 随便聊聊</Text>
             </View>
             <Pressable
               accessibilityRole="button"

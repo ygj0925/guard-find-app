@@ -47,7 +47,7 @@ export default function WeeklyReportScreen() {
 
   if (!signedIn) {
     return (
-      <SafeAreaView edges={['top']} className="flex-1 bg-background">
+      <SafeAreaView edges={['left', 'right']} className="flex-1 bg-background">
         <EmptyState
           title="登录后生成 AI 周报"
           description="周报会汇总你本周的记账、待办与打卡数据"
@@ -59,11 +59,10 @@ export default function WeeklyReportScreen() {
   }
 
   return (
-    <SafeAreaView edges={['top']} className="flex-1 bg-background">
+    <SafeAreaView edges={['left', 'right']} className="flex-1 bg-background">
       <ScrollView className="flex-1 px-4" contentContainerStyle={{ paddingBottom: 104 }}>
         <View className="mb-4 mt-2">
-          <Text className="text-2xl font-bold">AI 周报</Text>
-          <Text className="text-muted-foreground mt-1 text-sm">
+          <Text className="text-muted-foreground text-sm">
             汇总本周记账 · 待办 · 打卡,只读事实不编造
           </Text>
         </View>

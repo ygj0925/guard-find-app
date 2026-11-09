@@ -71,10 +71,9 @@ export default function PropertyBookingsScreen() {
   }, [items.length, total, page, load]);
 
   return (
-    <SafeAreaView edges={['top']} className="flex-1 bg-background">
+    <SafeAreaView edges={['left', 'right']} className="flex-1 bg-background">
       <View className="px-4 pb-2 pt-2">
-        <Text className="text-2xl font-bold">看房预约</Text>
-        <View className="mt-3 flex-row rounded-full bg-muted p-1">
+        <View className="flex-row rounded-full bg-muted p-1">
           {(['guest', 'owner'] as const).map((key) => (
             <Pressable key={key} accessibilityRole="button"
               accessibilityLabel={key === 'guest' ? '我预约的' : '我收到的'}

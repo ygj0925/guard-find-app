@@ -112,14 +112,14 @@ export default function PostDetailScreen() {
 
   if (detail.error) {
     return (
-      <SafeAreaView edges={['top']} className="flex-1 bg-background">
+      <SafeAreaView edges={['left', 'right']} className="flex-1 bg-background">
         <ErrorState error={detail.error} onRetry={() => void detail.reload()} />
       </SafeAreaView>
     );
   }
 
   return (
-    <SafeAreaView edges={['top']} className="flex-1 bg-background">
+    <SafeAreaView edges={['left', 'right']} className="flex-1 bg-background">
       <FlatList
         data={comments}
         keyExtractor={(item) => item.id}

@@ -88,7 +88,7 @@ export default function ImListScreen() {
 
   if (!signedIn) {
     return (
-      <SafeAreaView edges={['top']} className="flex-1 bg-background">
+      <SafeAreaView edges={['left', 'right']} className="flex-1 bg-background">
         <EmptyState title="登录后使用私信" description="和关注的人实时聊天"
           actionLabel="去登录" onAction={() => router.push(loginHref({ href: '/im', from: 'im' }))} />
       </SafeAreaView>
@@ -96,7 +96,7 @@ export default function ImListScreen() {
   }
 
   return (
-    <SafeAreaView edges={['top']} className="flex-1 bg-background">
+    <SafeAreaView edges={['left', 'right']} className="flex-1 bg-background">
       <FlatList
         data={conversations}
         keyExtractor={(item) => item.id}
@@ -105,7 +105,6 @@ export default function ImListScreen() {
         refreshControl={RefreshingControl(query.status === 'loading', () => void query.reload())}
         ListHeaderComponent={
           <View className="mb-3 mt-2">
-            <Text className="text-2xl font-bold">消息</Text>
             {/* 官方客服固定入口 */}
             <Pressable accessibilityRole="button" accessibilityLabel="联系官方客服"
               onPress={() => router.push('/im/chat?mode=support&peerName=%E5%AE%98%E6%96%B9%E5%AE%A2%E6%9C%8D' as never)}

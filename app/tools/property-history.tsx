@@ -3,7 +3,6 @@
  */
 import React from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Text, View } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
 
 import { PropertyMiniList } from '@/components/business/property-mini-list';
@@ -12,10 +11,7 @@ import { fetchViewHistory } from '@/lib/api/endpoints/property';
 export default function PropertyHistoryScreen() {
   const params = useLocalSearchParams<{ refresh?: string }>();
   return (
-    <SafeAreaView edges={['top']} className="flex-1 bg-background">
-      <View className="px-4 pb-2 pt-2">
-        <Text className="text-2xl font-bold">浏览足迹</Text>
-      </View>
+    <SafeAreaView edges={['left', 'right']} className="flex-1 bg-background">
       <PropertyMiniList
         fetcher={fetchViewHistory}
         emptyTitle="暂无浏览记录"

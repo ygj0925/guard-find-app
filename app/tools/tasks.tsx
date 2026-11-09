@@ -157,7 +157,7 @@ export default function TasksScreen() {
 
   if (!signedIn) {
     return (
-      <SafeAreaView edges={['top']} className="flex-1 bg-background">
+      <SafeAreaView edges={['left', 'right']} className="flex-1 bg-background">
         <EmptyState
           title="登录后使用任务分派"
           description="和家人互派任务,进度共享"
@@ -169,7 +169,7 @@ export default function TasksScreen() {
   }
 
   return (
-    <SafeAreaView edges={['top']} className="flex-1 bg-background">
+    <SafeAreaView edges={['left', 'right']} className="flex-1 bg-background">
       <FlatList
         data={tasks}
         keyExtractor={(item) => item.id}
@@ -179,7 +179,6 @@ export default function TasksScreen() {
         ListHeaderComponent={
           <View className="mb-3 mt-2">
             <View className="flex-row items-center justify-between">
-              <Text className="text-2xl font-bold">任务分派</Text>
               <Pressable
                 accessibilityRole="button"
                 accessibilityLabel="新建任务"

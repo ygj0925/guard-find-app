@@ -80,7 +80,7 @@ export default function RootLayout() {
                       <Stack.Screen name="tools/ledger" options={{ title: '记账' }} />
                       <Stack.Screen
                         name="tools/ledger/add"
-                        options={{ title: '记一笔', presentation: 'modal' }}
+                        options={{ title: '记一笔', presentation: 'modal', headerShown: false }}
                       />
                       <Stack.Screen name="tools/ledger/report" options={{ title: '收支报表' }} />
                       <Stack.Screen name="tools/ledger/groups" options={{ title: '账本管理' }} />
@@ -114,10 +114,23 @@ export default function RootLayout() {
                       <Stack.Screen name="tools/property" options={{ title: '房产' }} />
                       <Stack.Screen name="tools/budget" options={{ title: '预算管理' }} />
                       <Stack.Screen name="tools/property-detail" options={{ title: '房源详情' }} />
-                      <Stack.Screen name="tools/property-publish" options={{ title: '发布房源', presentation: 'modal' }} />
+                      <Stack.Screen
+                        name="tools/property-publish"
+                        options={{ title: '发布房源', presentation: 'modal', headerShown: false }}
+                      />
                       <Stack.Screen name="tools/discount" options={{ title: '折扣比较' }} />
                       <Stack.Screen name="tools/pet" options={{ title: '宠物成长' }} />
-                      <Stack.Screen name="community/publish" options={{ title: '发布动态', presentation: 'modal' }} />
+                      <Stack.Screen name="tools/notes" options={{ title: '灵感便笺' }} />
+                      <Stack.Screen name="tools/items" options={{ title: '物品收纳' }} />
+                      <Stack.Screen name="tools/property-favorites" options={{ title: '我的收藏' }} />
+                      <Stack.Screen name="tools/property-history" options={{ title: '浏览足迹' }} />
+                      <Stack.Screen name="tools/property-bookings" options={{ title: '看房预约' }} />
+                      <Stack.Screen name="im/index" options={{ title: '消息' }} />
+                      <Stack.Screen name="im/chat" options={{ title: '私信' }} />
+                      <Stack.Screen
+                        name="community/publish"
+                        options={{ title: '发布动态', presentation: 'modal', headerShown: false }}
+                      />
                       <Stack.Screen name="community/detail" options={{ title: '动态详情' }} />
                       <Stack.Screen name="community/user" options={{ title: '个人主页' }} />
                       <Stack.Screen name="me/profile-edit" options={{ title: '编辑资料' }} />

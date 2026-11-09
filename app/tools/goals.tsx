@@ -195,7 +195,7 @@ export default function GoalsScreen() {
 
   if (!signedIn) {
     return (
-      <SafeAreaView edges={['top']} className="flex-1 bg-background">
+      <SafeAreaView edges={['left', 'right']} className="flex-1 bg-background">
         <EmptyState
           title="登录后使用目标管理"
           description="个人 OKR:定目标,拆 KR,量化进度"
@@ -207,12 +207,11 @@ export default function GoalsScreen() {
   }
 
   return (
-    <SafeAreaView edges={['top']} className="flex-1 bg-background">
+    <SafeAreaView edges={['left', 'right']} className="flex-1 bg-background">
       <ScrollView className="flex-1 px-4" contentContainerStyle={{ paddingBottom: 104 }}>
         <View className="mb-3 mt-2 flex-row items-center justify-between">
           <View>
-            <Text className="text-2xl font-bold">目标 OKR</Text>
-            <Text className="text-muted-foreground mt-1 text-sm">定目标 · 拆 KR · 量化进度</Text>
+            <Text className="text-muted-foreground text-sm">定目标 · 拆 KR · 量化进度</Text>
           </View>
           <Pressable
             accessibilityRole="button"

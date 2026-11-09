@@ -227,7 +227,7 @@ export default function TodoScreen() {
 
   if (!signedIn) {
     return (
-      <SafeAreaView edges={['top']} className="flex-1 bg-background">
+      <SafeAreaView edges={['left', 'right']} className="flex-1 bg-background">
         <EmptyState
           title="登录后使用待办清单"
           description="待办云端同步,换设备不丢"
@@ -239,7 +239,7 @@ export default function TodoScreen() {
   }
 
   return (
-    <SafeAreaView edges={['top']} className="flex-1 bg-background">
+    <SafeAreaView edges={['left', 'right']} className="flex-1 bg-background">
       <FlatList
         data={[...pending, ...(doneExpanded ? finished : [])]}
         keyExtractor={(item) => item.id}
@@ -248,8 +248,7 @@ export default function TodoScreen() {
         refreshControl={RefreshingControl(query.status === 'loading', () => void query.reload())}
         ListHeaderComponent={
           <View className="mb-4 mt-2">
-            <Text className="text-2xl font-bold">待办清单</Text>
-            <Text className="text-muted-foreground mt-1 text-sm">
+            <Text className="text-muted-foreground text-sm">
               {pending.length} 项待办 · {finished.length} 项已完成
             </Text>
           </View>

@@ -71,11 +71,10 @@ export default function LedgerReportScreen() {
   }, [summary]);
 
   return (
-    <SafeAreaView edges={['top']} className="flex-1 bg-background">
+    <SafeAreaView edges={['left', 'right']} className="flex-1 bg-background">
       <ScrollView className="flex-1 px-4" contentContainerStyle={{ paddingBottom: 104 }}>
         <View className="mb-4 mt-2">
-          <Text className="text-xl font-bold">收支报表</Text>
-          <Text className="text-muted-foreground mt-1 text-sm">当前账本:{scopeName ?? '个人账本'}</Text>
+          <Text className="text-muted-foreground text-sm">当前账本:{scopeName ?? '个人账本'}</Text>
         </View>
 
         <View className="mb-3 flex-row rounded-full bg-muted p-1">

@@ -22,7 +22,6 @@ import {
   PinOff,
   Plus,
   Search,
-  StickyNote,
   Trash2,
   X,
 } from 'lucide-react-native';
@@ -303,7 +302,7 @@ export default function NotesScreen() {
 
   if (!signedIn) {
     return (
-      <SafeAreaView edges={['top']} className="flex-1 bg-background">
+      <SafeAreaView edges={['left', 'right']} className="flex-1 bg-background">
         <EmptyState
           title="登录后使用灵感便笺"
           description="随手记录,云端同步,换设备不丢"
@@ -315,7 +314,7 @@ export default function NotesScreen() {
   }
 
   return (
-    <SafeAreaView edges={['top']} className="flex-1 bg-background">
+    <SafeAreaView edges={['left', 'right']} className="flex-1 bg-background">
       <FlatList
         data={items}
         keyExtractor={(item) => item.id}
@@ -335,11 +334,7 @@ export default function NotesScreen() {
         onEndReachedThreshold={0.4}
         ListHeaderComponent={
           <View className="mb-3 mt-2">
-            <View className="flex-row items-center" style={{ gap: 8 }}>
-              <Icon as={StickyNote} size={22} className="text-primary" />
-              <Text className="text-2xl font-bold">灵感便笺</Text>
-            </View>
-            <Text className="text-muted-foreground mt-1 text-sm">
+            <Text className="text-muted-foreground text-sm">
               {archived ? `归档 ${total} 条` : `${total} 条便笺 · 置顶优先`}
             </Text>
 

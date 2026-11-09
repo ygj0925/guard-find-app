@@ -8,7 +8,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { AppState, FlatList, KeyboardAvoidingView, Pressable, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useFocusEffect, useLocalSearchParams } from 'expo-router';
+import { Stack, useFocusEffect, useLocalSearchParams } from 'expo-router';
 
 import { Text } from '@/components/ui/text';
 import {
@@ -190,7 +190,8 @@ export default function ImChatScreen() {
   }, [myUserId, scheme]);
 
   return (
-    <SafeAreaView edges={['top']} className="flex-1 bg-background">
+    <SafeAreaView edges={['left', 'right']} className="flex-1 bg-background">
+      <Stack.Screen options={{ title: peerName }} />
       <KeyboardAvoidingView className="flex-1" behavior="height">
         <FlatList
           data={messages}

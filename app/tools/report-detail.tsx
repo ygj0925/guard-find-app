@@ -5,7 +5,7 @@
 import React from 'react';
 import { Pressable, ScrollView, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 
 import { Text } from '@/components/ui/text';
 import { Card } from '@/components/ui/card';
@@ -39,18 +39,18 @@ export default function ReportDetailScreen() {
 
   if (query.error) {
     return (
-      <SafeAreaView edges={['top']} className="flex-1 bg-background">
+      <SafeAreaView edges={['left', 'right']} className="flex-1 bg-background">
         <ErrorState error={query.error} onRetry={() => void query.reload()} />
       </SafeAreaView>
     );
   }
 
   return (
-    <SafeAreaView edges={['top']} className="flex-1 bg-background">
+    <SafeAreaView edges={['left', 'right']} className="flex-1 bg-background">
       <ScrollView className="flex-1 px-4" contentContainerStyle={{ paddingBottom: 104 }}>
         <View className="mb-4 mt-2">
-          <Text className="text-2xl font-bold">{activity?.title ?? '汇报'}</Text>
-          <Text className="text-muted-foreground mt-1 text-sm">
+          <Stack.Screen options={{ title: activity?.title ?? '汇报' }} />
+          <Text className="text-muted-foreground text-sm">
             周期 {activity?.period}
             {activity?.dueDate ? ` · 截止 ${activity.dueDate.slice(5, 16)}` : ''}
           </Text>

@@ -122,7 +122,7 @@ export default function SplitScreen() {
 
   if (!signedIn) {
     return (
-      <SafeAreaView edges={['top']} className="flex-1 bg-background">
+      <SafeAreaView edges={['left', 'right']} className="flex-1 bg-background">
         <EmptyState
           title="登录后使用 AA 分账"
           description="分账历史云端同步,可一键写回记账"
@@ -134,7 +134,7 @@ export default function SplitScreen() {
   }
 
   return (
-    <SafeAreaView edges={['top']} className="flex-1 bg-background">
+    <SafeAreaView edges={['left', 'right']} className="flex-1 bg-background">
       <FlatList
         data={history}
         keyExtractor={(item) => item.id}
@@ -143,8 +143,7 @@ export default function SplitScreen() {
         refreshControl={RefreshingControl(query.status === 'loading', () => void query.reload())}
         ListHeaderComponent={
           <View className="mb-4 mt-2">
-            <Text className="text-2xl font-bold">AA 分账</Text>
-            <Text className="text-muted-foreground mt-1 text-sm">算完一键记进账本,余数自动分配</Text>
+            <Text className="text-muted-foreground text-sm">算完一键记进账本,余数自动分配</Text>
           </View>
         }
         ListEmptyComponent={

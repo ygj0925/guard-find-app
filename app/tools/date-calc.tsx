@@ -39,11 +39,10 @@ export default function DateCalcScreen() {
   const inputStyle = { color: token('foreground', scheme), borderColor: token('border', scheme) } as const;
 
   return (
-    <SafeAreaView edges={['top']} className="flex-1 bg-background">
+    <SafeAreaView edges={['left', 'right']} className="flex-1 bg-background">
       <ScrollView className="flex-1 px-4" contentContainerStyle={{ paddingBottom: 104 }}>
         <View className="mb-3 mt-2">
-          <Text className="text-2xl font-bold">日期计算器</Text>
-          <Text className="text-muted-foreground mt-1 text-sm">间隔天数 · N 天后 · 当年进度 · 离线可用</Text>
+          <Text className="text-muted-foreground text-sm">间隔天数 · N 天后 · 当年进度 · 离线可用</Text>
         </View>
 
         <SectionCard title="两日期间隔" description="格式 yyyy-MM-dd">

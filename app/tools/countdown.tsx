@@ -128,7 +128,7 @@ export default function CountdownScreen() {
 
   if (!signedIn) {
     return (
-      <SafeAreaView edges={['top']} className="flex-1 bg-background">
+      <SafeAreaView edges={['left', 'right']} className="flex-1 bg-background">
         <EmptyState
           title="登录后使用倒数日"
           description="重要日子云端同步,换设备不丢"
@@ -140,7 +140,7 @@ export default function CountdownScreen() {
   }
 
   return (
-    <SafeAreaView edges={['top']} className="flex-1 bg-background">
+    <SafeAreaView edges={['left', 'right']} className="flex-1 bg-background">
       <FlatList
         data={records}
         keyExtractor={(item) => item.id}
@@ -150,8 +150,7 @@ export default function CountdownScreen() {
         ListHeaderComponent={
           <View className="mb-4 mt-2 flex-row items-center justify-between">
             <View>
-              <Text className="text-2xl font-bold">倒数日</Text>
-              <Text className="text-muted-foreground mt-1 text-sm">考试 · 纪念日 · 还款日</Text>
+              <Text className="text-muted-foreground text-sm">考试 · 纪念日 · 还款日</Text>
             </View>
             <Pressable
               accessibilityRole="button"
