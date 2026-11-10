@@ -31,6 +31,7 @@ import { CheckboxField, TextField } from '@/components/form/fields';
 import { NoticeBar, SectionCard } from '@/components/business/feedback';
 import { AgreementLinks } from '@/components/business/compliance';
 import { authApi, type EraseAccountResp } from '@/lib/api/endpoints/auth';
+import { canStartErase, canSubmitErase } from '@/lib/auth/login-rules';
 import { toUserMessage } from '@/lib/api/error';
 import { REAL_NAME_STATUS_LABEL, formatDateTime } from '@/lib/format';
 import { env } from '@/lib/env';
@@ -102,6 +103,7 @@ export default function SecurityScreen() {
   }, [router, signOut, toast]);
 
   const submitErase = useCallback(async () => {
+    if (!canSubmitErase(eraseReason, eraseAck)) return;
     setEraseConfirmOpen(false);
     setEraseAck(false);
     try {
@@ -112,7 +114,7 @@ export default function SecurityScreen() {
     } catch (error) {
       toast(toUserMessage(error), 'error');
     }
-  }, [eraseReason, signOut, toast]);
+  }, [eraseAck, eraseReason, signOut, toast]);
 
   if (eraseResult) {
     return (
@@ -264,7 +266,7 @@ export default function SecurityScreen() {
           <Button
             testID="security-erase-start"
             variant="destructive"
-            disabled={eraseReason.trim().length === 0}
+            disabled={!canStartErase(eraseReason)}
             onPress={() => setEraseConfirmOpen(true)}
           >
             <Text>下一步:二次确认</Text>
@@ -302,7 +304,7 @@ export default function SecurityScreen() {
             </AlertDialogCancel>
             <Button
               variant="destructive"
-              disabled={!eraseAck || eraseReason.trim().length === 0}
+              disabled={!canSubmitErase(eraseReason, eraseAck)}
               onPress={() => void submitErase()}
             >
               <Text>提交注销申请</Text>

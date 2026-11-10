@@ -26,21 +26,27 @@ import { Field, TextField } from '@/components/form/fields';
 import { NoticeBar } from '@/components/business/feedback';
 import { useCountdown, resendCooldownSeconds } from '@/hooks/useCountdown';
 import { authApi, type LoginResp, type SmsScene } from '@/lib/api/endpoints/auth';
-import { ApiCode, ApiError, parseRetrySeconds, toUserMessage } from '@/lib/api/error';
-import { formatCountdown, formatDuration } from '@/lib/format';
+import { ApiCode, ApiError } from '@/lib/api/error';
+import {
+  CAPTCHA_AFTER_FAILURES,
+  CODE_PATTERN,
+  DEFAULT_RESEND_SECONDS,
+  PHONE_PATTERN,
+  checkLoginInput,
+  createSingleFlight,
+  describeAuthError,
+  nextFailureCount,
+  requiresCaptcha,
+  resolveLoginReturn,
+  type LoginMode,
+} from '@/lib/auth/login-rules';
+import { formatCountdown } from '@/lib/format';
 import { peekPendingAction, requireLogin, redirectFromParams } from '@/lib/nav';
 import { notifyAuthenticated } from '@/lib/api/client';
 import { useSession } from '@/store/session';
 import { useToast } from '@/providers/ToastProvider';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { token } from '@/constants/Colors';
-
-const PHONE_PATTERN = /^1[3-9]\d{9}$/;
-const CODE_PATTERN = /^\d{6}$/;
-const CAPTCHA_AFTER_FAILURES = 3;
-const DEFAULT_RESEND_SECONDS = 60;
-
-type Mode = 'PHONE' | 'ACCOUNT';
 
 export default function LoginScreen() {
   const router = useRouter();
@@ -49,7 +55,7 @@ export default function LoginScreen() {
   const { toast } = useToast();
 
   const scheme = useColorScheme() ?? 'light';
-  const [mode, setMode] = useState<Mode>('PHONE');
+  const [mode, setMode] = useState<LoginMode>('PHONE');
   const [phone, setPhone] = useState('');
   const [code, setCode] = useState('');
   const [account, setAccount] = useState('');
@@ -67,7 +73,8 @@ export default function LoginScreen() {
   const [resetOpen, setResetOpen] = useState(false);
 
   const cooldown = useCountdown();
-  const requireCaptcha = failures >= CAPTCHA_AFTER_FAILURES && !captchaDisabled;
+  const [sendGate] = useState(createSingleFlight);
+  const requireCaptcha = requiresCaptcha(failures, captchaDisabled);
 
   const loadCaptcha = useCallback(async () => {
     setCaptchaLoading(true);
@@ -100,54 +107,50 @@ export default function LoginScreen() {
     return true;
   }, []);
 
-  /** 发送验证码:冷却中直接返回,不发起请求(spec 场景「重复点击不发起请求」)。 */
+  /** 发送验证码:冷却中或上一次请求未返回时直接返回,不发起请求(spec 场景「重复点击不发起请求」)。 */
   const sendCode = useCallback(
     async (scene: SmsScene) => {
-      if (cooldown.running || sending) return;
+      if (cooldown.running || sendGate.busy) return;
       setErrors({});
       setFormError(null);
       if (!validatePhone(phone)) return;
-      setSending(true);
-      try {
-        const resp = await authApi.sendSmsCode({ phone, scene });
-        cooldown.start(resendCooldownSeconds(resp?.expireSeconds, DEFAULT_RESEND_SECONDS));
-        toast('验证码已发送,请注意查收', 'success');
-      } catch (error) {
-        setFormError(describeAuthError(error));
-        // 限流有明确的重试秒数时直接进入冷却,避免用户连点。
-        if (error instanceof ApiError && error.retryAfterSeconds) {
-          cooldown.start(error.retryAfterSeconds);
+      await sendGate.run(async () => {
+        setSending(true);
+        try {
+          const resp = await authApi.sendSmsCode({ phone, scene });
+          cooldown.start(resendCooldownSeconds(resp?.expireSeconds, DEFAULT_RESEND_SECONDS));
+          toast('验证码已发送,请注意查收', 'success');
+        } catch (error) {
+          setFormError(describeAuthError(error));
+          // 限流有明确的重试秒数时直接进入冷却,避免用户连点。
+          if (error instanceof ApiError && error.retryAfterSeconds) {
+            cooldown.start(error.retryAfterSeconds);
+          }
+        } finally {
+          setSending(false);
         }
-      } finally {
-        setSending(false);
-      }
+      });
     },
-    [cooldown, phone, sending, toast, validatePhone],
+    [cooldown, phone, sendGate, toast, validatePhone],
   );
 
   const handleSubmit = useCallback(async () => {
     setErrors({});
     setFormError(null);
-    if (!agreed) {
-      setFormError('请先阅读并同意《用户协议》与《隐私政策》要点');
-      return;
-    }
-    if (mode === 'PHONE') {
-      if (!validatePhone(phone)) return;
-      if (!CODE_PATTERN.test(code)) {
-        setErrors((current) => ({ ...current, code: '请输入 6 位数字验证码' }));
-        return;
-      }
-      if (requireCaptcha && !captcha) {
-        setErrors((current) => ({ ...current, captcha: '图形验证码未加载,请点击图片区域刷新' }));
-        return;
-      }
-      if (requireCaptcha && captchaValue.trim().length < 4) {
-        setErrors((current) => ({ ...current, captcha: '请输入图中字符' }));
-        return;
-      }
-    } else if (!account.trim() || !password) {
-      setErrors({ account: account.trim() ? '' : '请输入账号', password: password ? '' : '请输入密码' });
+    const check = checkLoginInput({
+      mode,
+      agreed,
+      phone,
+      code,
+      account,
+      password,
+      requireCaptcha,
+      captchaLoaded: captcha !== null,
+      captchaValue,
+    });
+    if (check) {
+      setErrors(check.errors);
+      setFormError(check.formError);
       return;
     }
 
@@ -165,13 +168,7 @@ export default function LoginScreen() {
           : { authType: 'ACCOUNT' as const, account: account.trim(), password };
 
       // 先把回跳目标交还给 nav,由 SessionProvider 在登录成功后统一导航。
-      const pending = await peekPendingAction();
-      const target = redirect ?? pending?.href ?? '/(tabs)/plaza';
-      await requireLogin({
-        href: target,
-        run: pending?.run,
-        from: pending?.from ?? 'login',
-      });
+      await requireLogin(resolveLoginReturn(redirect, await peekPendingAction()));
 
       const resp: LoginResp = await authApi.login(req);
       notifyAuthenticated();
@@ -186,17 +183,8 @@ export default function LoginScreen() {
       if (apiError?.code === ApiCode.VALIDATE_FAILED && apiError.fieldErrors) {
         setErrors((current) => ({ ...current, ...apiError.fieldErrors }));
       }
-      // 服务端按手机号累计短信验证码错误;重进本页时本地计数归零,所以以服务端"要求图形验证码"为准直接跳到阈值。
-      const counted =
-        mode === 'PHONE' &&
-        apiError !== null &&
-        apiError.code !== ApiCode.ACCOUNT_LOCKED &&
-        !apiError.isNetwork &&
-        !apiError.isTimeout;
-      if (counted) {
-        const next = (apiError.msg ?? '').includes('图形验证码')
-          ? Math.max(failures + 1, CAPTCHA_AFTER_FAILURES)
-          : failures + 1;
+      const next = nextFailureCount(error, mode, failures);
+      if (next !== null) {
         setFailures(next);
         if (next >= CAPTCHA_AFTER_FAILURES) void loadCaptcha();
       }
@@ -218,7 +206,6 @@ export default function LoginScreen() {
     redirect,
     requireCaptcha,
     toast,
-    validatePhone,
   ]);
 
   return (
@@ -607,31 +594,4 @@ function ResetPasswordPanel({
       </Button>
     </View>
   );
-}
-
-/**
- * 登录类错误的用户文案。
- * 4006 锁定要给出剩余时间(契约错误码表),4290 要给出重试等待秒数。
- */
-export function describeAuthError(error: unknown): string {
-  if (error instanceof ApiError) {
-    if (error.code === ApiCode.ACCOUNT_LOCKED) {
-      const seconds = parseRetrySeconds(error.msg) ?? firstNumberInData(error.data);
-      return seconds
-        ? `账号已锁定,请在 ${formatDuration(seconds)} 后重试`
-        : error.msg || '账号已锁定,请稍后重试';
-    }
-    if (error.code === ApiCode.RATE_LIMITED) {
-      const seconds = error.retryAfterSeconds ?? parseRetrySeconds(error.msg);
-      return seconds ? `操作过于频繁,请 ${seconds} 秒后再试` : error.msg;
-    }
-    return toUserMessage(error);
-  }
-  return toUserMessage(error);
-}
-
-/** 契约未规定 4006 的 data 结构,不猜字段名:只在"单个数字"时用它当剩余秒数。 */
-function firstNumberInData(data: unknown): number | undefined {
-  if (typeof data === 'number' && Number.isFinite(data) && data > 0) return data;
-  return undefined;
 }
