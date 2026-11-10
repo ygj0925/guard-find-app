@@ -62,7 +62,7 @@ export default function TabLayout() {
         name="community"
         options={{
           title: '社区',
-          tabBarIcon: ({ color }) => <TabIcon as={BookOpen} color={color} label="社区(待开放)" />,
+          tabBarIcon: ({ color }) => <TabIcon as={BookOpen} color={color} label="社区" />,
         }}
       />
       <Tabs.Screen
@@ -76,7 +76,7 @@ export default function TabLayout() {
         name="message"
         options={{
           title: '消息',
-          tabBarBadge: signedIn && unread > 0 ? unread : undefined,
+          tabBarBadge: signedIn && unread > 0 ? unreadLabel(unread) : undefined,
           // 角标超过 3 位数会撑破布局,与系统一致截成 99+。
           tabBarBadgeStyle: { backgroundColor: palette.urgent, fontSize: 10 },
           tabBarIcon: ({ color }) => <TabIcon as={MessageSquare} color={color} label="消息中心" />,

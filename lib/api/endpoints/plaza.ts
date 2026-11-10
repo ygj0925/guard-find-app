@@ -81,17 +81,6 @@ export interface SearchQuery extends CursorQuery {
   urgencyLevel?: UrgencyLevel;
 }
 
-/** 兜底字典读取,首选仍是 /app/plaza/filters。 */
-export interface DictItem {
-  value: string;
-  label: string;
-  order?: number;
-}
-
-export interface DictResp {
-  codes: Record<string, DictItem[]>;
-}
-
 export const plazaApi = {
   feed: (query: PlazaFeedQuery) =>
     api.get<FeedResp<CasePublic>>('/app/plaza/feed', { ...query }, { anonymous: true }),
@@ -101,8 +90,6 @@ export const plazaApi = {
   search: (query: SearchQuery) =>
     api.get<FeedResp<CasePublic>>('/app/search', { ...query }, { anonymous: true }),
   clearSearchHistory: () => api.post<null>('/app/search/history/clear'),
-  dict: (codes: string[]) =>
-    api.get<DictResp>('/app/common/dict', { codes: codes.join(',') }, { anonymous: true }),
 };
 
 /**

@@ -51,7 +51,8 @@ function toApiError(caught: unknown): ApiError {
 /**
  * @param slotKey 流身份(如 `urgent|130400|female`)。变化即切换 slot。
  * @param fetcher 传入游标(首屏为 null)返回一页。
- * @param deps    额外依赖:变化后当前 slot 视为过期,重新拉第一页。
+ * @param deps    额外依赖:变化时若当前 slot 尚未加载过才拉第一页;要让查询条件换一份数据,
+ *                就把条件编进 slotKey。
  */
 export function useFeed<T extends { id: string }>(
   slotKey: string,

@@ -48,8 +48,9 @@ const APP_VERSION = '1.0.0';
 
 /** 手机号(含 +86 / 空格分隔)、身份证样式、token 头。 */
 const PATTERNS: { re: RegExp; to: string }[] = [
-  { re: /(\+?86[-\s]?)?(1[3-9]\d)[-\s]?(\d{4})[-s]?(\d{4})/g, to: '$1$2****$4' },
+  // 身份证须先于手机号:否则 18 位串中段会先被当成手机号部分打码
   { re: /(?<!\d)(\d{6})(\d{8})(\d{3}[0-9Xx])(?!\d)/g, to: '$1********$3' },
+  { re: /(\+?86[-\s]?)?(1[3-9]\d)[-\s]?(\d{4})[-\s]?(\d{4})/g, to: '$1$2****$4' },
   { re: /((?:Bearer|Authorization)\s*[:=]\s*)([A-Za-z0-9._-]{6})[A-Za-z0-9._-]*/gi, to: '$1$2****' },
   { re: /("(?:token|password|oldPassword|newPassword|contactValue|idCard)"\s*:\s*")[^"]*(")/gi, to: '$1****$2' },
 ];

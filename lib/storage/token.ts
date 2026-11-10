@@ -1,5 +1,6 @@
 /**
- * iOS / Android 侧的会话存储实现(默认那份;Metro 在打包 harmony 时改用 token.harmony.ts)。
+ * 会话存储实现(iOS / Android / 鸿蒙共用;目前没有 token.harmony.ts 分派)。
+ * 原生端尚未注册持久化 kv 驱动,实际落在内存驱动上:冷启动会丢登录态,诊断标签如实显示 `kv-memory`。
  *
  * 强度说明(spec D4 的风险条目):
  *   首选驱动 = 通过 `registerSecureDriver` 登记的系统安全存储(Keychain / Keystore)。

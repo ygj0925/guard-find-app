@@ -1,6 +1,6 @@
 /**
- * token 存储的共用实现。`token.ts`(iOS/Android)与 `token.harmony.ts`(鸿蒙)各绑一个
- * 强度不同的驱动,对上层暴露同一组 API,业务代码对差异无感知(spec D4)。
+ * token 存储的共用实现。三端目前共用 `token.ts` 一份绑定(尚无 `token.harmony.ts`):
+ * 优先已登记的安全驱动,否则落 kv;对上层暴露同一组 API(spec D4)。
  *
  * 载荷:契约 1.2 的 `{ token, tokenName, expiresIn }` 加本地写入时间,
  * 冷启动时可先做一次"必然过期"的快速判断,省掉一次 401 往返。

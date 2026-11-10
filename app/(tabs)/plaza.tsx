@@ -87,8 +87,9 @@ export default function PlazaScreen() {
     : '';
 
   // slot 身份必须由 useMemo 出:切流/切城市/改筛选各自保留 items 与游标。
+  // 四条流的请求都带 cityCode,城市必须进 key,否则换城后旧城的列表会被当成已加载。
   const slotKey = useMemo(
-    () => buildSlotKey(sort, sort === 'nearby' ? activeCity?.cityCode : null, filters),
+    () => buildSlotKey(sort, activeCity?.cityCode, filters),
     [sort, activeCity?.cityCode, filters],
   );
 
