@@ -130,3 +130,51 @@ describe('API 信封解包(契约 0 节:code 为字符串)', () => {
     expect((error as ApiError).bizCode).toBeTruthy();
   });
 });
+
+function hangingFetch() {
+  return jest.fn(
+    (_url: string, init: { signal: AbortSignal }) =>
+      new Promise((_resolve, reject) => {
+        init.signal.addEventListener('abort', () => {
+          const abortError = new Error('aborted');
+          abortError.name = 'AbortError';
+          reject(abortError);
+        });
+      }),
+  ) as never;
+}
+
+describe('超时 / 网络 / 主动取消三类错误可区分', () => {
+  beforeEach(() => {
+    __resetUnauthorizedGate();
+    configureClient({
+      getToken: () => null,
+      getTokenName: () => 'Authorization',
+      onUnauthorized: jest.fn(),
+    });
+  });
+
+  it('超过 timeoutMs 未响应抛 TIMEOUT 且可重试', async () => {
+    global.fetch = hangingFetch();
+    const error = (await request('/app/plaza/feed', { timeoutMs: 20 }).catch((e: unknown) => e)) as ApiError;
+    expect(error).toBeInstanceOf(ApiError);
+    expect(error.isTimeout).toBe(true);
+    expect(error.isRetryable).toBe(true);
+  });
+
+  it('调用方 signal 取消抛 ABORTED,不算超时', async () => {
+    global.fetch = hangingFetch();
+    const controller = new AbortController();
+    const pending = request('/app/plaza/feed', { signal: controller.signal }).catch((e: unknown) => e);
+    controller.abort();
+    const error = (await pending) as ApiError;
+    expect(error.bizCode).toBe('ABORTED');
+    expect(error.isTimeout).toBe(false);
+  });
+
+  it('fetch 直接失败归为 NETWORK', async () => {
+    global.fetch = jest.fn().mockRejectedValue(new TypeError('Network request failed')) as never;
+    const error = (await request('/app/plaza/feed').catch((e: unknown) => e)) as ApiError;
+    expect(error.isNetwork).toBe(true);
+  });
+});
