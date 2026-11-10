@@ -34,6 +34,7 @@ import type { FeedResp } from '@/lib/api/endpoints/common';
 import { MESSAGE_CATEGORY_LABEL, MESSAGE_TYPE_LABEL, formatRelative } from '@/lib/format';
 import { toUserMessage } from '@/lib/api/error';
 import { onRealtimeMessage, onRealtimeStatus, type RealtimeStatus } from '@/lib/realtime';
+import { markAllMessagesRead, markMessageRead, messageTarget } from '@/lib/message/read-sync';
 import { syncUnreadCount, useSession } from '@/store/session';
 import { useBreakpoint, contentWidthStyle } from '@/hooks/useBreakpoint';
 import { useSessionGuard } from '@/providers/SessionProvider';
@@ -73,8 +74,6 @@ export default function MessageTabScreen() {
   const { guard, signedIn } = useSessionGuard();
 
   const unread = useSession((state) => state.unreadCount);
-  const setUnreadCount = useSession((state) => state.setUnreadCount);
-  const bumpUnread = useSession((state) => state.bumpUnread);
 
   const [category, setCategory] = useState<MessageCategory | ''>('');
   const [onlyUnread, setOnlyUnread] = useState(false);
@@ -157,19 +156,13 @@ export default function MessageTabScreen() {
   const openMessage = useCallback(
     async (message: Message) => {
       setActionError(null);
-      if (!message.readStatus) {
-        try {
-          await messageApi.markRead(message.id);
-          // 只改这一条:spec 要求"打开详情即标记已读且角标同步",但不允许整页刷新。
-          feed.patchItem(message.id, { readStatus: true });
-          bumpUnread(-1);
-        } catch (error) {
-          setActionError(toUserMessage(error));
-        }
+      try {
+        // 只改这一条:spec 要求"打开详情即标记已读且角标同步",但不允许整页刷新。
+        await markMessageRead(message, feed.patchItem);
+      } catch (error) {
+        setActionError(toUserMessage(error));
       }
-      const target =
-        message.path ??
-        (message.bizType === 'FIND_CASE' && message.bizId ? `/case/${message.bizId}` : null);
+      const target = messageTarget(message);
       if (!target) {
         toast('这条消息没有可跳转的内容,请按正文说明操作');
         return;
@@ -177,25 +170,20 @@ export default function MessageTabScreen() {
       // target 为消息中心跳转目标(运行时字符串)
       router.push(target as never);
     },
-    [bumpUnread, feed, router, toast],
+    [feed, router, toast],
   );
 
   const markAllRead = useCallback(async () => {
     setActionError(null);
     setMarking(true);
     try {
-      await messageApi.markAllRead();
-      for (const message of items) {
-        if (!message.readStatus) feed.patchItem(message.id, { readStatus: true });
-      }
-      setUnreadCount(0);
-      void syncUnreadCount();
+      await markAllMessagesRead(items, feed.patchItem);
     } catch (error) {
       setActionError(toUserMessage(error));
     } finally {
       setMarking(false);
     }
-  }, [feed, items, setUnreadCount]);
+  }, [feed, items]);
 
   if (!signedIn) {
     return (

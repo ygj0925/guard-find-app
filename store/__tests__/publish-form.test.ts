@@ -1,6 +1,7 @@
 import type { CaseDetail, CaseDraftReq } from '@/lib/api/endpoints/case';
 import { emptyPublishValues } from '@/lib/publish/schema';
-import { usePublishForm } from '../publish-form';
+import { kvGetJson, kvSetJson } from '@/lib/storage/kv';
+import { DRAFT_KEY, usePublishForm } from '../publish-form';
 
 const mockDetailFull = jest.fn();
 const mockCreate = jest.fn();
@@ -147,5 +148,55 @@ describe('提交审核', () => {
     expect(mockCreate).toHaveBeenCalledWith(req);
     expect(mockSubmit).not.toHaveBeenCalled();
     expect(usePublishForm.getState().caseId).toBe('n1');
+  });
+});
+
+describe('分步前进后退与离线续填', () => {
+  beforeEach(async () => {
+    jest.useFakeTimers();
+    (kvSetJson as jest.Mock).mockClear();
+    await usePublishForm.getState().reset();
+  });
+  afterEach(() => {
+    jest.useRealTimers();
+  });
+
+  it('校验不过不前进并把错误定位到字段', () => {
+    usePublishForm.getState().patch({ name: '张' });
+    expect(usePublishForm.getState().next()).toBe(false);
+    const state = usePublishForm.getState();
+    expect(state.step).toBe(0);
+    expect(state.errors.name).toBe('姓名至少 2 个字');
+  });
+
+  it('退回上一步只清错误,不重置已填内容', () => {
+    usePublishForm.setState({ step: 2 });
+    usePublishForm.getState().patch({ name: '张小宝', features: '左眉有疤' });
+    usePublishForm.setState({ errors: { features: 'x' } });
+
+    usePublishForm.getState().back();
+
+    const state = usePublishForm.getState();
+    expect(state.step).toBe(1);
+    expect(state.errors).toEqual({});
+    expect(state.values.name).toBe('张小宝');
+    expect(state.values.features).toBe('左眉有疤');
+  });
+
+  it('改动防抖写入本地,重启后从本地恢复到原步骤并标记待同步', async () => {
+    usePublishForm.setState({ step: 3 });
+    usePublishForm.getState().patch({ name: '离线填写' });
+    jest.advanceTimersByTime(1000);
+    const [key, saved] = (kvSetJson as jest.Mock).mock.calls.at(-1) as [string, unknown];
+    expect(key).toBe(DRAFT_KEY);
+
+    usePublishForm.setState({ hydrated: false, values: emptyPublishValues(), step: 0 });
+    (kvGetJson as jest.Mock).mockResolvedValueOnce(saved);
+    await usePublishForm.getState().hydrate();
+
+    const state = usePublishForm.getState();
+    expect(state.values.name).toBe('离线填写');
+    expect(state.step).toBe(3);
+    expect(state.pendingSync).toBe(true);
   });
 });
