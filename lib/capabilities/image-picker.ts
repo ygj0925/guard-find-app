@@ -1,14 +1,11 @@
 /**
  * 图片选取能力分派(spec: 媒体选取与压缩 / 平台能力分派层)。
  *
- * 一期不引 `expo-image-picker`(它需要 `pnpm dlx expo-harmony-cli install` 安装并实机验证)。
- * 在装好之前,本模块返回可识别的 `unsupported`,发布流程降级为"先填文字、稍后在草稿箱补图",
- * MUST NOT 崩溃、MUST NOT 静默失败。装好后按下面的 TODO 换实现即可,调用方零改动。
- *
- * TODO(接入步骤):
- *   1) pnpm dlx expo-harmony-cli install expo-image-picker
- *   2) grep -rl requireNativeModule node_modules/expo-image-picker/build 做顶层审计
- *   3) 若顶层 require 原生模块,则本文件保留 lazy import,并让 image-picker.harmony.ts 继续返回 unsupported
+ * iOS / Android:`expo-image-picker`(经 expo-harmony-cli 安装)。它的 `ExponentImagePicker.js`
+ * 顶层 `requireNativeModule`,原生壳未重建时会抛错,所以这里 try/require 懒加载,失败退回
+ * `unsupported`,发布流程降级为"先填文字、稍后在草稿箱补图",MUST NOT 崩溃、MUST NOT 静默失败。
+ * Web:浏览器文件控件。鸿蒙:`image-picker.harmony.ts`(CLI 补丁已转发到
+ * `@react-native-ohos/react-native-image-picker`,但未实机验证,且补丁把插件错误映射成"取消",暂不启用)。
  */
 import { type CapabilityResult, cancelled, failed, ok, unsupported } from './result';
 import { UNAVAILABLE_MESSAGE } from './constants';
@@ -48,8 +45,78 @@ class UnsupportedImagePicker implements ImagePickerApi {
     return unsupported<PickedImage[]>(
       UNAVAILABLE_MESSAGE,
       this.kind,
-      '缺少 expo-image-picker:请执行 pnpm dlx expo-harmony-cli install expo-image-picker',
+      '未加载到 expo-image-picker 原生模块:安装后需重新构建原生壳(pnpm expo run:android / run:ios)',
     );
+  }
+}
+
+interface ExpoPickerAsset {
+  uri: string;
+  fileName?: string | null;
+  mimeType?: string | null;
+  fileSize?: number | null;
+  width?: number;
+  height?: number;
+}
+
+interface ExpoImagePickerModule {
+  launchImageLibraryAsync(options: {
+    mediaTypes: string[];
+    allowsMultipleSelection: boolean;
+    selectionLimit: number;
+    quality: number;
+  }): Promise<{ canceled: boolean; assets: ExpoPickerAsset[] | null }>;
+}
+
+function loadExpoImagePicker(): ExpoImagePickerModule | null {
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const mod = require('expo-image-picker') as Partial<ExpoImagePickerModule>;
+    return typeof mod.launchImageLibraryAsync === 'function' ? (mod as ExpoImagePickerModule) : null;
+  } catch {
+    return null;
+  }
+}
+
+class ExpoImagePicker implements ImagePickerApi {
+  readonly kind = 'image-picker:expo';
+
+  constructor(private readonly picker: ExpoImagePickerModule) {}
+
+  isAvailable(): boolean {
+    return true;
+  }
+
+  async pickImages(max: number): Promise<CapabilityResult<PickedImage[]>> {
+    const limit = Math.max(1, max);
+    try {
+      const result = await this.picker.launchImageLibraryAsync({
+        mediaTypes: ['images'],
+        allowsMultipleSelection: limit > 1,
+        selectionLimit: limit,
+        // 压缩交给 image-compress 统一处理,这里拿原图。
+        quality: 1,
+      });
+      const assets = result.canceled ? [] : (result.assets ?? []);
+      if (!assets.length) return cancelled<PickedImage[]>(this.kind);
+      return ok<PickedImage[]>(
+        assets.slice(0, limit).map((asset) => ({
+          uri: asset.uri,
+          fileName: asset.fileName ?? undefined,
+          mimeType: asset.mimeType ?? undefined,
+          size: asset.fileSize ?? undefined,
+          width: asset.width,
+          height: asset.height,
+        })),
+        this.kind,
+      );
+    } catch (error) {
+      return failed<PickedImage[]>(
+        '打开相册失败,请检查相册权限后重试。',
+        this.kind,
+        error instanceof Error ? error.message : String(error),
+      );
+    }
   }
 }
 
@@ -175,8 +242,12 @@ function createObjectUrl(file: WebFile): string {
   }
 }
 
-export const imagePicker: ImagePickerApi = hasDocument()
-  ? new WebInputImagePicker()
-  : new UnsupportedImagePicker();
+function createImagePicker(): ImagePickerApi {
+  if (hasDocument()) return new WebInputImagePicker();
+  const expo = loadExpoImagePicker();
+  return expo ? new ExpoImagePicker(expo) : new UnsupportedImagePicker();
+}
+
+export const imagePicker: ImagePickerApi = createImagePicker();
 
 export { UNAVAILABLE_MESSAGE };

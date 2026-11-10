@@ -1,9 +1,10 @@
 /**
- * HarmonyOS 侧图片选取(RNOH 0.77.71 现状:无已验证适配,一期不引 expo-image-picker)。
+ * HarmonyOS 侧图片选取:暂不启用。
  *
- * Metro 在打包 harmony 平台时用本文件替换 `image-picker.ts`,所以发布表单在鸿蒙上
- * 拿到的一定是 reason='unsupported' 的结果,展示降级文案而不是崩溃 ——
- * 这正是 spec「鸿蒙上图片选取失败可识别」的验收点。
+ * expo-image-picker 已经 expo-harmony-cli 安装,补丁会在鸿蒙上转发到
+ * `@react-native-ohos/react-native-image-picker`。但两点未过:一是没有实机验证;
+ * 二是补丁把插件 errorCode 映射成 `canceled`,失败会被吞成"用户取消",违反 MUST NOT 静默失败。
+ * 实机验证并能区分失败与取消后,再把本文件换成 expo 实现。
  */
 import { type CapabilityResult, unsupported } from './result';
 import { UNAVAILABLE_MESSAGE } from './constants';
@@ -21,7 +22,7 @@ class HarmonyImagePicker implements ImagePickerApi {
       unsupported<PickedImage[]>(
         '当前设备暂不支持选择图片,可先填写文字,稍后在草稿箱继续补图。',
         this.kind,
-        '鸿蒙侧 expo-image-picker 未实机验证;验证通过后经 expo-harmony-cli 安装并替换本文件。',
+        '鸿蒙图片选取适配未实机验证,且补丁会把插件错误当作取消;验证并修正错误映射后再启用。',
       ),
     );
   }

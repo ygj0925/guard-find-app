@@ -1,14 +1,14 @@
 /**
  * 键值存储(一期只存非凭据:草稿副本、搜索历史、常驻地缓存)。
  *
- * 为什么是"驱动 + 内存兜底":`@react-native-async-storage/async-storage` 属原生依赖,
- * 必须走 `pnpm dlx expo-harmony-cli install` 才有鸿蒙适配,当前尚未安装。为了不出现
- * "包没装但 bundle 直接解析失败"的情况,这里不静态 import 任何原生包,而是暴露
- * `registerKvDriver`;装好之后在应用入口注册原生驱动即可,业务代码零改动。
- * 未注册原生驱动时,`isKvPersistent()` 为 false,不得对外宣称数据已持久化。
+ * 驱动优先级:Web localStorage → 原生 async-storage(`native-kv-driver`,鸿蒙变体返回 null)→ 内存。
+ * 原生包不在本文件静态 import:模块缺失时它顶层抛错,这里只拿到 null 并落回内存态。
+ * 落到内存驱动时 `isKvPersistent()` 为 false,不得对外宣称数据已持久化。
  *
  * 任何驱动异常都被吞掉并降级为内存态,读取失败按"没有该键"处理(spec: 存储不可用时降级)。
  */
+
+import { loadNativeKvDriver } from './native-kv-driver';
 
 export interface KvDriver {
   readonly name: string;
@@ -73,7 +73,12 @@ const webDriver: KvDriver | null = (() => {
   }
 })();
 
-let driver: KvDriver = webDriver ?? memoryDriver;
+// localStorage 存在但自测失败(隐私模式)时不再尝试 async-storage:Web 版同样依赖 localStorage。
+const hasWebStorage = typeof (globalThis as Record<string, unknown>).localStorage !== 'undefined';
+const defaultDriver: KvDriver =
+  webDriver ?? (hasWebStorage ? null : loadNativeKvDriver()) ?? memoryDriver;
+
+let driver: KvDriver = defaultDriver;
 
 /** 记录最后一次驱动异常,供"我的-诊断"与 monitor 上报。 */
 let lastError: string | null = null;
@@ -151,5 +156,5 @@ export async function kvSetJson(key: string, value: unknown): Promise<void> {
 export function __resetKvForTests(): void {
   memory.clear();
   lastError = null;
-  driver = webDriver ?? memoryDriver;
+  driver = defaultDriver;
 }
