@@ -27,9 +27,17 @@ export interface LoginByPhoneReq {
   authType: 'PHONE';
   phone: string;
   code: string;
-  /** 连续 3 次错误后必填。 */
+  /** 同一手机号连续 3 次短信验证码错误后必填:captchaId 为 /captcha/image 下发的 uuid。 */
   captchaId?: string | null;
   captchaValue?: string | null;
+}
+
+/** 复用后台公开取图接口;后台关闭登录验证码时 isEnabled=false 且不下发图片,服务端也不再强制。 */
+export interface ImageCaptchaResp {
+  uuid?: string | null;
+  img?: string | null;
+  expireTime?: number | null;
+  isEnabled: boolean;
 }
 
 export interface LoginByAccountReq {
@@ -101,6 +109,8 @@ export const authApi = {
   sendSmsCode: (req: SendSmsCodeReq) =>
     api.post<SendSmsCodeResp | null>('/app/auth/sms-code', req, { anonymous: true }),
   login: (req: LoginReq) => api.post<LoginResp>('/app/auth/login', req, { anonymous: true }),
+  imageCaptcha: () =>
+    api.get<ImageCaptchaResp>('/captcha/image', undefined, { anonymous: true }),
   logout: () => api.post<null>('/app/auth/logout'),
   me: () => api.get<AppUser>('/app/auth/me'),
   updateProfile: (req: AppProfileReq) => api.put<AppUser>('/app/auth/profile', req),

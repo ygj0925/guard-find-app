@@ -4,7 +4,8 @@
  * 要点:
  *   - 手机号 + 6 位验证码是默认路径,账号密码折叠在下方;
  *   - 60 秒重发冷却由 `useCountdown` 持有,期间重复点击不发请求;
- *   - 同一手机号连续 3 次验证码错误后要求图形验证码(契约 1.2 的 captchaId/captchaValue);
+ *   - 同一手机号连续 3 次验证码错误后要求图形验证码:图从 /captcha/image 取,uuid 作 captchaId;
+ *     服务端每次校验都会消费掉该图,所以每次失败后重新取图;
  *   - 明示"未注册手机号验证通过即自动创建账号";
  *   - 回跳目标:URL 的 `redirect` 优先,其次登录前 guard 记下的 pending action。
  *
@@ -12,7 +13,7 @@
  * 本页只负责把目标写回去,避免两处各推一次栈。
  */
 import React, { useCallback, useMemo, useState } from 'react';
-import { KeyboardAvoidingView, Pressable, ScrollView, View } from 'react-native';
+import { Image, KeyboardAvoidingView, Pressable, ScrollView, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { ChevronDown, ChevronRight } from 'lucide-react-native';
@@ -54,6 +55,9 @@ export default function LoginScreen() {
   const [account, setAccount] = useState('');
   const [password, setPassword] = useState('');
   const [captchaValue, setCaptchaValue] = useState('');
+  const [captcha, setCaptcha] = useState<{ id: string; img: string } | null>(null);
+  const [captchaDisabled, setCaptchaDisabled] = useState(false);
+  const [captchaLoading, setCaptchaLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [formError, setFormError] = useState<string | null>(null);
   const [failures, setFailures] = useState(0);
@@ -63,7 +67,28 @@ export default function LoginScreen() {
   const [resetOpen, setResetOpen] = useState(false);
 
   const cooldown = useCountdown();
-  const requireCaptcha = failures >= CAPTCHA_AFTER_FAILURES;
+  const requireCaptcha = failures >= CAPTCHA_AFTER_FAILURES && !captchaDisabled;
+
+  const loadCaptcha = useCallback(async () => {
+    setCaptchaLoading(true);
+    setCaptchaValue('');
+    setErrors((current) => ({ ...current, captcha: '' }));
+    try {
+      const resp = await authApi.imageCaptcha();
+      if (resp?.isEnabled === false) {
+        setCaptchaDisabled(true);
+        setCaptcha(null);
+      } else if (resp?.uuid && resp.img) {
+        setCaptchaDisabled(false);
+        setCaptcha({ id: resp.uuid, img: resp.img });
+      }
+    } catch (error) {
+      setCaptcha(null);
+      setErrors((current) => ({ ...current, captcha: describeAuthError(error) }));
+    } finally {
+      setCaptchaLoading(false);
+    }
+  }, []);
 
   const redirect = useMemo(() => redirectFromParams(params), [params]);
 
@@ -113,8 +138,12 @@ export default function LoginScreen() {
         setErrors((current) => ({ ...current, code: '请输入 6 位数字验证码' }));
         return;
       }
+      if (requireCaptcha && !captcha) {
+        setErrors((current) => ({ ...current, captcha: '图形验证码未加载,请点击图片区域刷新' }));
+        return;
+      }
       if (requireCaptcha && captchaValue.trim().length < 4) {
-        setErrors((current) => ({ ...current, captcha: '连续错误后需完成图形验证码' }));
+        setErrors((current) => ({ ...current, captcha: '请输入图中字符' }));
         return;
       }
     } else if (!account.trim() || !password) {
@@ -130,8 +159,7 @@ export default function LoginScreen() {
               authType: 'PHONE' as const,
               phone,
               code,
-              // 契约 1.2:图形验证码只在连续 3 次错误后必填。
-              captchaId: requireCaptcha ? captchaValue.trim() : null,
+              captchaId: requireCaptcha ? (captcha?.id ?? null) : null,
               captchaValue: requireCaptcha ? captchaValue.trim() : null,
             }
           : { authType: 'ACCOUNT' as const, account: account.trim(), password };
@@ -154,20 +182,23 @@ export default function LoginScreen() {
       }
     } catch (error) {
       const apiError = error instanceof ApiError ? error : null;
-      if (apiError && apiError.code === ApiCode.ACCOUNT_LOCKED) {
-        setFormError(describeAuthError(error));
-      } else if (apiError && apiError.code === ApiCode.VALIDATE_FAILED) {
-        setFailures((current) => current + 1);
-        setFormError(describeAuthError(error));
-        if (apiError.fieldErrors) {
-          setErrors((current) => ({ ...current, ...apiError.fieldErrors }));
-        }
-      } else {
-        setFormError(describeAuthError(error));
-        // 验证码错误同样走这条分支:只要不是网络问题就累计一次。
-        if (apiError && !apiError.isNetwork && !apiError.isTimeout) {
-          setFailures((current) => current + 1);
-        }
+      setFormError(describeAuthError(error));
+      if (apiError?.code === ApiCode.VALIDATE_FAILED && apiError.fieldErrors) {
+        setErrors((current) => ({ ...current, ...apiError.fieldErrors }));
+      }
+      // 服务端按手机号累计短信验证码错误;重进本页时本地计数归零,所以以服务端"要求图形验证码"为准直接跳到阈值。
+      const counted =
+        mode === 'PHONE' &&
+        apiError !== null &&
+        apiError.code !== ApiCode.ACCOUNT_LOCKED &&
+        !apiError.isNetwork &&
+        !apiError.isTimeout;
+      if (counted) {
+        const next = (apiError.msg ?? '').includes('图形验证码')
+          ? Math.max(failures + 1, CAPTCHA_AFTER_FAILURES)
+          : failures + 1;
+        setFailures(next);
+        if (next >= CAPTCHA_AFTER_FAILURES) void loadCaptcha();
       }
     } finally {
       setSubmitting(false);
@@ -176,8 +207,11 @@ export default function LoginScreen() {
     account,
     agreed,
     applyLogin,
+    captcha,
     captchaValue,
     code,
+    failures,
+    loadCaptcha,
     mode,
     password,
     phone,
@@ -263,22 +297,40 @@ export default function LoginScreen() {
                 <NoticeBar
                   tone="warn"
                   title={`已连续 ${failures} 次验证失败,请填写图形验证码`}
-                  lines={[
-                    '契约 v1 未提供图形验证码取图接口,请把短信/页面下发的验证码串填在这里。',
-                    '若确实拿不到验证码,可改用账号密码登录或稍后重试。',
-                  ]}
+                  lines={['看不清可点击图片换一张;若仍无法通过,可改用账号密码登录。']}
                 />
               ) : null}
               {requireCaptcha ? (
-                <TextField
-                  label="图形验证码"
-                  required
-                  testID="login-captcha"
-                  value={captchaValue}
-                  error={errors.captcha}
-                  placeholder="请输入验证串"
-                  onChangeText={setCaptchaValue}
-                />
+                <View className="flex-row items-end gap-2">
+                  <View className="flex-1">
+                    <TextField
+                      label="图形验证码"
+                      required
+                      testID="login-captcha"
+                      value={captchaValue}
+                      error={errors.captcha}
+                      maxLength={8}
+                      placeholder="请输入图中字符"
+                      onChangeText={setCaptchaValue}
+                    />
+                  </View>
+                  <Pressable
+                    testID="login-captcha-image"
+                    accessibilityRole="button"
+                    accessibilityLabel="刷新图形验证码"
+                    disabled={captchaLoading}
+                    onPress={() => void loadCaptcha()}
+                    className="border-border mb-4 h-10 w-28 items-center justify-center overflow-hidden rounded-md border"
+                  >
+                    {captcha && !captchaLoading ? (
+                      <Image source={{ uri: captcha.img }} style={{ width: 112, height: 40 }} resizeMode="contain" />
+                    ) : (
+                      <Text className="text-muted-foreground text-xs">
+                        {captchaLoading ? '加载中' : '点击获取'}
+                      </Text>
+                    )}
+                  </Pressable>
+                </View>
               ) : null}
 
               <View className="mt-1 flex-row items-start gap-2">
