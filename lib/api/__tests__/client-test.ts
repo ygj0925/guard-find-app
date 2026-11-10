@@ -105,6 +105,16 @@ describe('API 信封解包(契约 0 节:code 为字符串)', () => {
     expect((limited as ApiError).retryAfterSeconds).toBe(30);
   });
 
+  it('"403" 归一为 FORBIDDEN 且不触发会话清理', async () => {
+    global.fetch = jest
+      .fn()
+      .mockResolvedValue(jsonResponse({ code: '403', msg: '没有访问权限', data: null })) as never;
+
+    const error = await request('/app/find/case/1/leads').catch((e: unknown) => e);
+    expect((error as ApiError).isForbidden).toBe(true);
+    expect(unauthorized).not.toHaveBeenCalled();
+  });
+
   it('参数校验失败码 "400" 不再被当成未知错误', async () => {
     global.fetch = jest
       .fn()

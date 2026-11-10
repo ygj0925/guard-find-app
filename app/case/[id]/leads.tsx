@@ -1,7 +1,7 @@
 /**
  * 家属侧线索列表(spec: 家属侧线索列表与处置 / 契约 4 节)。
  *
- * 权限:接口只放行"档案所有人 / 志愿者",越权时服务端回 403 ——
+ * 权限:接口只放行"档案所有人 / 志愿者",越权时服务端回 4003(或网关层 403)——
  * 页面必须显示无权限态且 NOT 渲染任何线索内容(包括缓存)。
  *
  * 高风险线索(`highRisk`)排在其群组内并给"待核实"三字徽标 + 防骗提示,
@@ -24,7 +24,8 @@ import { HighRiskBadge, LeadStatusBadge } from '@/components/business/status-bad
 import { EmptyState, ErrorState, InlineRow, ListFooter, NoticeBar } from '@/components/business/feedback';
 import { useRequest } from '@/hooks/useRequest';
 import { leadApi, type Lead, type LeadStatus } from '@/lib/api/endpoints/lead';
-import { ApiError, toUserMessage } from '@/lib/api/error';
+import { toUserMessage } from '@/lib/api/error';
+import { isLeadAccessDenied } from '@/lib/lead/access';
 import { formatDateTime, formatRelative, leadHighRiskText, toServerTime } from '@/lib/format';
 import { useToast } from '@/providers/ToastProvider';
 
@@ -73,7 +74,7 @@ export default function CaseLeadsScreen() {
     },
   );
 
-  const forbidden = request.error instanceof ApiError && request.error.code === 403;
+  const forbidden = isLeadAccessDenied(request.error);
   const ordered = useMemo(
     () =>
       [...items].sort((a, b) => {
