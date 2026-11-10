@@ -47,13 +47,13 @@ import { useBreakpoint, contentWidthStyle } from '@/hooks/useBreakpoint';
 import { useToolsOrder, pinTools } from '@/store/tools-order';
 import { DEFAULT_QUICK_KEYS, getTool } from '@/lib/tools/registry';
 import { useFilters } from '@/providers/FiltersProvider';
-import { favoriteRunId, useSessionGuard } from '@/providers/SessionProvider';
+import { useSessionGuard } from '@/providers/SessionProvider';
 import { useToast } from '@/providers/ToastProvider';
 import { PressableScale } from '@/components/ui/pressable-scale';
 import { useCircularReveal } from '@/components/ui/circular-reveal';
 import { token } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
-import { requireLogin } from '@/lib/nav';
+import { favoriteRunId, requireLogin } from '@/lib/nav';
 import { trackCaseClick } from '@/lib/track';
 import type { CasePublic } from '@/lib/api/endpoints/case';
 

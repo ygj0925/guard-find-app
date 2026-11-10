@@ -34,11 +34,6 @@ export function useSessionGuard(): SessionApi {
   return useContext(SessionContext);
 }
 
-/** 收藏等"登录后自动补做"的动作约定:`favorite:<caseId>`。 */
-export function favoriteRunId(caseId: string): string {
-  return `favorite:${caseId}`;
-}
-
 /** 最后一次可见的路径,401 回来时用它当回跳目标。 */
 let lastHref = '/(tabs)/plaza';
 

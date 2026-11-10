@@ -22,6 +22,11 @@ export interface PendingAction {
 
 let memory: PendingAction | null = null;
 
+/** 收藏等"登录后自动补做"的动作约定:`favorite:<caseId>`。 */
+export function favoriteRunId(caseId: string): string {
+  return `favorite:${caseId}`;
+}
+
 export async function requireLogin(action: Omit<PendingAction, 'at'>): Promise<void> {
   memory = { ...action, at: Date.now() };
   await kvSetJson(PENDING_KEY, memory);

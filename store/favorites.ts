@@ -7,6 +7,7 @@
  */
 import { create } from 'zustand';
 import { kvGetJson, kvSetJson } from '@/lib/storage/kv';
+import { favoriteRunId } from '@/lib/nav';
 import type { CasePublic } from '@/lib/api/endpoints/case';
 
 const FAVORITES_KEY = 'guardfind.favorites.v1';
@@ -17,6 +18,7 @@ interface FavoritesState {
   byId: Record<string, CasePublic>;
   load: () => Promise<void>;
   toggle: (item: CasePublic) => Promise<boolean>;
+  add: (item: CasePublic) => Promise<boolean>;
   remove: (id: string) => Promise<void>;
   has: (id: string) => boolean;
   list: () => CasePublic[];
@@ -48,6 +50,15 @@ export const useFavorites = create<FavoritesState>((set, get) => ({
     return added;
   },
 
+  async add(item) {
+    await get().load();
+    if (get().byId[item.id]) return false;
+    const next = { ...get().byId, [item.id]: item };
+    set({ byId: next });
+    await persist(next);
+    return true;
+  },
+
   async remove(id) {
     const next = { ...get().byId };
     delete next[id];
@@ -67,3 +78,15 @@ export const useFavorites = create<FavoritesState>((set, get) => ({
 }));
 
 export { FAVORITES_KEY };
+
+/**
+ * 登录后补做被拦下的那一次收藏。用户的意图是"收藏",所以本机已收藏时保持不变,
+ * 不能走 toggle 反向取消;run 不属于本档案时不消费。
+ */
+export async function replayPendingFavorite(
+  run: string | null,
+  item: CasePublic,
+): Promise<'added' | 'already' | null> {
+  if (run !== favoriteRunId(item.id)) return null;
+  return (await useFavorites.getState().add(item)) ? 'added' : 'already';
+}

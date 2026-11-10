@@ -40,10 +40,11 @@ import {
 } from '@/lib/format';
 import { shareCase } from '@/lib/share/case-share';
 import { trackCaseExpose } from '@/lib/track';
+import { favoriteRunId } from '@/lib/nav';
 import { useFilters } from '@/providers/FiltersProvider';
-import { favoriteRunId, useSessionGuard } from '@/providers/SessionProvider';
+import { useSessionGuard } from '@/providers/SessionProvider';
 import { useToast } from '@/providers/ToastProvider';
-import { useFavorites } from '@/store/favorites';
+import { replayPendingFavorite, useFavorites } from '@/store/favorites';
 import { useSession } from '@/store/session';
 
 export default function CaseDetailScreen() {
@@ -100,9 +101,9 @@ export default function CaseDetailScreen() {
   useEffect(() => {
     if (!signedIn || !favoritesLoaded || !item) return;
     const run = takePendingRun();
-    if (run !== favoriteRunId(item.id)) return;
-    void useFavorites.getState().toggle(item).then((added) => {
-      toast(added ? '已加入收藏(仅本机)' : '已取消收藏', 'success');
+    void replayPendingFavorite(run, item).then((outcome) => {
+      if (outcome === 'added') toast('已加入收藏(仅本机)', 'success');
+      else if (outcome === 'already') toast('该档案已在你的收藏中', 'info');
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [signedIn, favoritesLoaded, item]);
