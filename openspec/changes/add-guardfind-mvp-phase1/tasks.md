@@ -40,7 +40,7 @@
 - [x] 3.2 `app/auth/`(login、profile-setup)、`app/case/[id]/`(index、lead、leads)、`app/publish/`(index、case、drafts)、`app/me/`(index、profile-edit、security、cases、leads、favorites、notification-pref)、`app/search.tsx`
   - 注:`publish/index` 与 `me/index` 落在 `app/(tabs)/` 下的同名 Tab 页。
 - [ ] 3.3 路由守卫与回跳:写操作未登录跳登录并携带目标,登录后恢复上下文(含已填表单内容)
-  - 注:`lib/nav.ts` 已实现 redirect 拼接与解析,表单内容保存在 store 里。缺回跳单测(归 4.5);另外鸿蒙端 kv 是内存驱动,杀进程后表单内容不保留(见 2.5)。
+  - 注:`lib/nav.ts` 已实现 redirect 拼接与解析,表单内容保存在 store 里;回跳上下文已有 `login-rules.test.ts` 覆盖(见 4.5)。残留:鸿蒙端 kv 是内存驱动,杀进程后表单内容不保留(见 2.5)。
 - [x] 3.4 社区 Tab 一期占位页:明示"后续版本开放",不做半成品列表
   - 注:已取代,不再执行(勾选只表示关闭本条,不代表做了占位页)。社区功能(`app/community`、`/app/post/*`)已经上线,Tab 文案改为"社区",不再是占位页。
 
@@ -80,7 +80,7 @@
 ## 6. 发布流程
 
 - [ ] 6.1 五步表单骨架与分步校验(zod schema + `form` 原语),错误定位到字段,上一步不重置
-  - 注:五步表单、zod 分步校验、上一步不重置都已实现。区划字段的错误原先只读 `cityCode`,已改为同时显示 `provinceCode`。缺分步校验单测(6.7)。
+  - 注:五步表单、zod 分步校验、上一步不重置都已实现。区划字段的错误原先只读 `cityCode`,已改为同时显示 `provinceCode`;分步校验、字段错误及前进后退已有单测(见 6.7)。残留:页面组件的字段错误展示及定位未实机走查。
 - [ ] 6.2 步骤内容:基本信息(含别名增删、至少 1 图)、时空(日期时间选择器禁未来、省市区三级)、体貌(至少一项硬校验)、情境联络、确认发布
   - 注:各步内容已实现;区划原先显示原始编码,已改为显示名称。没有实机走查。
 - [x] 6.3 第 5 步合规告知:两项强制勾选 + 协议链接 + `agreementVersion`,未勾选禁用提交
@@ -132,7 +132,7 @@
 - [x] 9.1 `pnpm typecheck` 与 `pnpm lint` 通过
   - 证据:2026-11-10 `tsc --noEmit` 0 error;`eslint . --max-warnings=0` 0 问题。
 - [x] 9.2 `pnpm test:ci` 通过并记录用例数
-  - 证据:2026-11-11 `jest --ci` 26 个套件、151 个用例,全部通过;同日 `tsc --noEmit` 与 `eslint . --max-warnings=0` 均通过。
+  - 证据:2026-11-11 `jest --ci` 32 个套件、202 个用例,全部通过;同日 `tsc --noEmit` 与 `eslint . --max-warnings=0` 均通过。
 - [x] 9.3 对照 `doc/天下无拐接口契约v1.md` 逐项核对路径与字段,差异以规格为准修正
   - 证据:2026-11-10 把 App 的 auth/case/plaza/search/lead/message/notification/report/file 共 40 条调用,与 `guard-find-server` 的 `/app/**` 控制器逐条对照,方法全部一致。登录、广场 feed、档案 create/update(38 个字段)、线索提交、标记找回的请求字段均一致。
   - 修正:`POST /app/client-log` 服务端缺失,导致 monitor 每次上报都失败。已按契约在 server 补上(服务端强制掩码、按 IP 限流、可选登录、转义换行防伪造)。`GET /app/common/dict` 服务端缺失,App 也没有调用方,已删除 App 侧的死代码。
