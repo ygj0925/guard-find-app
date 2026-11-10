@@ -6,7 +6,7 @@
  *   2. 能力不可用时按钮置灰并给出降级说明,而不是点了才报错(鸿蒙侧图片选择器未接入);
  *   3. 单张上传失败可单独重试,已成功的图不受影响。
  */
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Image, Pressable, Text as RNText, View } from 'react-native';
 import { ImagePlus, RefreshCw, X } from 'lucide-react-native';
 
@@ -53,11 +53,29 @@ export function MediaField({
   const available = mediaPickerAvailable();
   const full = items.length >= limit;
 
+  // 上传是异步回写:必须基于"此刻最新"的列表,而不是发起时闭包里的旧列表,否则新选的图会被覆盖掉。
+  const latestRef = useRef(items);
+  useEffect(() => {
+    latestRef.current = items;
+  }, [items]);
+  const commit = useCallback(
+    (next: MediaItem[]) => {
+      latestRef.current = next;
+      onChange(next);
+    },
+    [onChange],
+  );
+
   const runUpload = useCallback(
     async (item: MediaItem) => {
+      commit(
+        latestRef.current.map((current) =>
+          current.key === item.key ? { ...current, state: 'uploading' as const, message: undefined } : current,
+        ),
+      );
       const result = await uploadMediaItem(item, uploadPath);
-      onChange(
-        items.map((current) =>
+      commit(
+        latestRef.current.map((current) =>
           current.key === item.key
             ? result.ok
               ? { ...current, url: result.url, state: 'done' as const, message: result.note }
@@ -66,7 +84,7 @@ export function MediaField({
         ),
       );
     },
-    [items, onChange, uploadPath],
+    [commit, uploadPath],
   );
 
   const pick = useCallback(async () => {
@@ -83,11 +101,11 @@ export function MediaField({
     }
     const { accepted, rejected } = applyMediaLimits(items, result.value, limit);
     const added = accepted.filter((item) => !items.some((current) => current.key === item.key));
-    onChange(accepted);
+    commit(accepted);
     const summary = limitRejectSummary(rejected);
     if (summary) toast(summary, 'warn');
     added.forEach((item) => void runUpload(item));
-  }, [items, limit, onChange, runUpload, toast]);
+  }, [commit, items, limit, runUpload, toast]);
 
   return (
     <Field
@@ -102,7 +120,7 @@ export function MediaField({
           <MediaThumb
             key={item.key}
             item={item}
-            onRemove={() => onChange(items.filter((current) => current.key !== item.key))}
+            onRemove={() => commit(latestRef.current.filter((current) => current.key !== item.key))}
             onRetry={() => void runUpload(item)}
           />
         ))}

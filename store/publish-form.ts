@@ -99,8 +99,12 @@ function scheduleAutosave(get: () => PublishFormState): void {
   }, AUTOSAVE_DEBOUNCE_MS);
 }
 
-/** 云端 `CaseDetail` -> 表单值。别名与图片按契约结构还原。 */
+/**
+ * 云端 `CaseDetail` -> 表单值。契约 v1 的详情不回传 relationType 与省市区编码,
+ * 这几项只能沿用同一档案的本地值(`previous`);换档时调用方必须传空表单,避免串档。
+ */
 export function valuesFromCaseDetail(detail: CaseDetail, previous: PublishValues): PublishValues {
+  const kindOf = new Map(previous.aliases.map((alias) => [alias.name, alias.kind]));
   return {
     ...previous,
     relationType: previous.relationType,
@@ -108,6 +112,13 @@ export function valuesFromCaseDetail(detail: CaseDetail, previous: PublishValues
     gender: detail.gender ?? 'UNKNOWN',
     birthday: detail.birthday ?? null,
     ageAtMissing: detail.ageAtMissing ?? null,
+    aliases: (detail.aliases ?? []).map((name) => ({ name, kind: kindOf.get(name) ?? 'OTHER' })),
+    media: (detail.mediaUrls ?? []).map((url, index) => ({
+      key: `cloud-${index}-${url}`,
+      uri: url,
+      url,
+      state: 'done' as const,
+    })),
     missingTime: detail.missingTime ?? '',
     address: detail.address ?? null,
     height: detail.height ?? null,
@@ -278,13 +289,13 @@ export const usePublishForm = create<PublishFormState>((set, get) => ({
   },
 
   async loadCloudDraft(caseId) {
-    const local = snapshot(get());
+    const { caseId: localCaseId, updatedAt, syncedAt } = get();
     const detail = await caseApi.detailFull(caseId);
     const cloudUpdatedAt = Date.parse((detail.publishTime ?? '').replace(' ', 'T')) || detail.version;
-    if (local.caseId === caseId && local.updatedAt > cloudUpdatedAt && cloudUpdatedAt > 0) {
-      set({
-        conflict: { caseId, cloudUpdatedAt, localUpdatedAt: local.updatedAt },
-      });
+    // 只有"同一档案 + 本机有未同步的改动"才算冲突;此时不先覆盖,等用户选哪一方为准。
+    if (localCaseId === caseId && updatedAt > (syncedAt ?? 0)) {
+      set({ conflict: { caseId, cloudUpdatedAt, localUpdatedAt: updatedAt } });
+      return;
     }
     applyCloudDetail(set, get, detail);
   },
@@ -299,7 +310,7 @@ export const usePublishForm = create<PublishFormState>((set, get) => ({
     }
     const detail = await caseApi.detailFull(conflict.caseId);
     applyCloudDetail(set, get, detail);
-    set({ conflict: null, syncedAt: Date.now(), pendingSync: false });
+    set({ conflict: null });
   },
 
   prefillFromCase(detail) {
@@ -335,11 +346,17 @@ function applyCloudDetail(
   get: () => PublishFormState,
   detail: CaseDetail,
 ): void {
+  const base = get().caseId === detail.id ? get().values : emptyPublishValues();
+  const now = Date.now();
   set({
-    values: valuesFromCaseDetail(detail, get().values),
+    values: valuesFromCaseDetail(detail, base),
     caseId: detail.id,
     uploadedUrls: detail.mediaUrls ?? [],
-    updatedAt: Date.now(),
+    updatedAt: now,
+    syncedAt: now,
+    pendingSync: false,
+    errors: {},
+    formError: undefined,
   });
   scheduleAutosave(get);
 }

@@ -11,7 +11,7 @@
  *
  * 选图能力不可用时(鸿蒙一期)第一步的"至少 1 张近照"降级为提示,见 `softenMediaError`。
  */
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Pressable, ScrollView, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -41,7 +41,7 @@ import {
 import { EmptyState, InlineRow, NoticeBar, SectionCard } from '@/components/business/feedback';
 import { CaseCard } from '@/components/business/case-card';
 import { AgreementLinks, AGREEMENT_ITEMS, AntiFraudNotice } from '@/components/business/compliance';
-import { DateTimePicker, RegionPicker, type RegionSelection } from '@/components/business/pickers';
+import { DateTimePicker, RegionPicker, regionLabelOf, type RegionSelection } from '@/components/business/pickers';
 import {
   MediaField,
   hasFailedUpload,
@@ -100,7 +100,6 @@ export default function PublishCaseScreen() {
   const formError = usePublishForm((state) => state.formError);
   const hydrated = usePublishForm((state) => state.hydrated);
   const pendingSync = usePublishForm((state) => state.pendingSync);
-  const caseIdInStore = usePublishForm((state) => state.caseId);
   const conflict = usePublishForm((state) => state.conflict);
   const saving = usePublishForm((state) => state.saving);
   const submitting = usePublishForm((state) => state.submitting);
@@ -119,20 +118,28 @@ export default function PublishCaseScreen() {
   }, []);
 
   // 协议版本号在进入时写一次,提交时随 `CaseReq.agreementVersion` 上送(契约 2 节)。
+  // 它是元数据而非用户编辑:不走 patch,免得刷新 updatedAt 被误判为"本机有未同步改动"。
   useEffect(() => {
     if (hydrated && values.agreementVersion !== env.AGREEMENT_VERSION) {
-      usePublishForm.getState().patch({ agreementVersion: env.AGREEMENT_VERSION });
+      usePublishForm.setState((state) => ({
+        values: { ...state.values, agreementVersion: env.AGREEMENT_VERSION },
+      }));
     }
   }, [hydrated, values.agreementVersion]);
 
-  // 从"我的档案 / 草稿箱"带着云端草稿进来时拉全量并预填。
+  // 从"我的档案 / 草稿箱"带着云端草稿进来时拉全量并预填;同一档案的冲突由 store 判定。
+  const loadedCaseRef = useRef<string | null>(null);
   useEffect(() => {
-    if (!hydrated || !cloudCaseId || caseIdInStore === cloudCaseId) return;
+    if (!hydrated || !cloudCaseId || loadedCaseRef.current === cloudCaseId) return;
+    loadedCaseRef.current = cloudCaseId;
     void usePublishForm
       .getState()
       .loadCloudDraft(cloudCaseId)
-      .catch((error: unknown) => setLoadError(toUserMessage(error)));
-  }, [hydrated, cloudCaseId, caseIdInStore]);
+      .catch((error: unknown) => {
+        loadedCaseRef.current = null;
+        setLoadError(toUserMessage(error));
+      });
+  }, [hydrated, cloudCaseId]);
 
   const patch = useCallback<PatchFn>((next) => {
     usePublishForm.getState().patch(next);
@@ -620,6 +627,10 @@ function StepTimePlace({ values, errors, patch, onTime, onRegion, onHometown }: 
   onRegion: () => void;
   onHometown: () => void;
 }) {
+  const { filters } = useFilters();
+  const regionText = values.cityCode
+    ? regionLabelOf(filters?.regions, values.provinceCode, values.cityCode, values.districtCode) ?? '已选择(区划数据加载中)'
+    : '选择省 / 市 / 区县';
   return (
     <View className="pt-3">
       <SectionCard
@@ -637,10 +648,10 @@ function StepTimePlace({ values, errors, patch, onTime, onRegion, onHometown }: 
             <Text>{values.missingTime ? formatDateTime(values.missingTime) : '选择日期与时间'}</Text>
           </Button>
         </Field>
-        <Field label="失踪地区" required error={errors.cityCode} hint="公开信息只精确到市,详情可精确到区">
+        <Field label="失踪地区" required error={errors.provinceCode ?? errors.cityCode} hint="公开信息只精确到市,详情可精确到区">
           <Button variant="outline" onPress={onRegion}>
             <Icon as={MapPin} size={15} />
-            <Text>{values.cityCode ? `${values.provinceCode} ${values.cityCode} ${values.districtCode ?? ''}` : '选择省 / 市 / 区县'}</Text>
+            <Text>{regionText}</Text>
           </Button>
         </Field>
         <TextField

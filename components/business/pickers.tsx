@@ -24,6 +24,20 @@ function childrenOf(node: RegionNode | undefined): RegionNode[] {
   return node?.children ?? [];
 }
 
+/** 把省/市/区编码还原成名称;区划数据未到或编码不在树里时返回 null,由调用方给兜底文案。 */
+export function regionLabelOf(
+  regions: RegionNode[] | undefined,
+  provinceCode: string | null,
+  cityCode: string | null,
+  districtCode: string | null,
+): string | null {
+  const province = regions?.find((node) => node.code === provinceCode);
+  const city = childrenOf(province).find((node) => node.code === cityCode);
+  if (!province || !city) return null;
+  const district = districtCode ? childrenOf(city).find((node) => node.code === districtCode) : undefined;
+  return [province.name, city.name, district?.name].filter(Boolean).join(' ');
+}
+
 export function RegionPicker({
   visible,
   onClose,
