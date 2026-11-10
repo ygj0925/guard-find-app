@@ -71,8 +71,6 @@ interface PublishFormState {
   saveDraftCloud: (options?: { silent?: boolean }) => Promise<CaseDetail | null>;
   submitForReview: (req: CaseDraftReq) => Promise<CaseDetail>;
   loadCloudDraft: (caseId: string) => Promise<void>;
-  /** 驳回档案 -> 预填表单(spec: 修改后重新提交)。 */
-  prefillFromCase: (detail: CaseDetail) => void;
   resolveConflict: (side: 'local' | 'cloud') => Promise<void>;
   reset: () => Promise<void>;
 }
@@ -276,9 +274,15 @@ export const usePublishForm = create<PublishFormState>((set, get) => ({
     const { caseId } = get();
     set({ submitting: true });
     try {
-      const result = caseId
-        ? await caseApi.update(caseId, { ...req, submit: true })
-        : await caseApi.create(req);
+      // 已有档案(云端草稿 / 被驳回后修改):PUT 只保存内容不改状态(契约 2 节),
+      // 状态流转必须再走 `/submit`,否则档案停在 DRAFT/REJECTED。
+      let result: CaseDetail;
+      if (caseId) {
+        await caseApi.update(caseId, req);
+        result = await caseApi.submit(caseId, { forceSubmit: req.forceSubmit });
+      } else {
+        result = await caseApi.create(req);
+      }
       set({ submitting: false, syncedAt: Date.now(), pendingSync: false, caseId: result.id });
       await kvRemove(DRAFT_KEY);
       return result;
@@ -311,16 +315,6 @@ export const usePublishForm = create<PublishFormState>((set, get) => ({
     const detail = await caseApi.detailFull(conflict.caseId);
     applyCloudDetail(set, get, detail);
     set({ conflict: null });
-  },
-
-  prefillFromCase(detail) {
-    get().patch({ ...valuesFromCaseDetail(detail, emptyPublishValues()) });
-    set({
-      caseId: null, // 驳回后走"新建 + submit",服务端保留版本快照(spec 6.6)
-      uploadedUrls: detail.mediaUrls ?? [],
-      step: 0,
-    });
-    scheduleAutosave(get);
   },
 
   async reset() {

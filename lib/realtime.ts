@@ -8,6 +8,11 @@
  *   - 一期无厂商推送,通知偏好页必须明示"关闭 App 后可能收不到实时提醒"。
  *
  * 心跳:收到 `{type:'ping'}` 回 `{type:'pong'}`(部分实现反向,两种都处理)。
+ *
+ * 鉴权失败与普通断线分开处理:
+ *   - 连上后被服务端以 1008 关闭(登录态无法识别 / 会话数超限):不再重连 WS,立即改轮询;
+ *   - 握手被拒(HTTP 401)在客户端只表现为"没 open 就 close",连续 3 次即按鉴权失败处理。
+ *   轮询走 HTTP 客户端,token 真失效时由它统一触发 401 登出,这里不另做登出。
  */
 import { AppState } from 'react-native';
 import { env } from './env';
@@ -16,6 +21,9 @@ import { messageApi, type Message, type RealtimeFrame } from '@/lib/api/endpoint
 import { useSession } from '@/store/session';
 
 export type RealtimeStatus = 'idle' | 'connecting' | 'open' | 'polling' | 'closed';
+
+export const WS_CLOSE_POLICY_VIOLATION = 1008;
+const MAX_HANDSHAKE_FAILURES = 3;
 
 type StatusListener = (status: RealtimeStatus) => void;
 type MessageListener = (message: Message) => void;
@@ -27,6 +35,8 @@ let droppedAt: number | null = null;
 let pollTimer: ReturnType<typeof setInterval> | null = null;
 let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
 let appStateSubscription: { remove: () => void } | null = null;
+let handshakeFailures = 0;
+let authRejected = false;
 const statusListeners = new Set<StatusListener>();
 const messageListeners = new Set<MessageListener>();
 /** 已处理过的消息 id:WS 与轮询双通道不能重复提示。 */
@@ -118,11 +128,22 @@ function startPolling(): void {
 }
 
 function scheduleReconnect(): void {
-  if (reconnectTimer || !started) return;
+  if (reconnectTimer || !started || authRejected) return;
   reconnectTimer = setTimeout(() => {
     reconnectTimer = null;
     connect();
   }, env.UNREAD_POLL_INTERVAL_MS);
+}
+
+/** 鉴权类失败:停掉 WS 重连,只靠轮询;下次回前台或重新登录再试。 */
+function giveUpReconnect(detail: Record<string, unknown>): void {
+  authRejected = true;
+  if (reconnectTimer) {
+    clearTimeout(reconnectTimer);
+    reconnectTimer = null;
+  }
+  capture('WARN', '实时通道鉴权失败,停止重连并改用轮询', detail);
+  startPolling();
 }
 
 /** 断线满 10 秒才降级轮询 —— 短暂抖动不该打扰用户。 */
@@ -167,8 +188,11 @@ function connect(): void {
     return;
   }
   socket = ws;
+  let opened = false;
 
   ws.onopen = () => {
+    opened = true;
+    handshakeFailures = 0;
     droppedAt = null;
     fallbackAnnounced = false;
     stopPolling();
@@ -189,12 +213,20 @@ function connect(): void {
   };
 
   ws.onerror = () => markDropped();
-  ws.onclose = () => {
-    if (!started) {
-      emitStatus('closed');
+  ws.onclose = (event?: { code?: number; reason?: string }) => {
+    emitStatus('closed');
+    if (!started) return;
+    if (event?.code === WS_CLOSE_POLICY_VIOLATION) {
+      giveUpReconnect({ code: event.code, reason: event.reason ?? '' });
       return;
     }
-    emitStatus('closed');
+    if (!opened) {
+      handshakeFailures += 1;
+      if (handshakeFailures >= MAX_HANDSHAKE_FAILURES) {
+        giveUpReconnect({ code: event?.code ?? 0, handshakeFailures });
+        return;
+      }
+    }
     markDropped();
     scheduleReconnect();
   };
@@ -237,6 +269,8 @@ export function startRealtime(): void {
       return;
     }
     if (!started) return;
+    authRejected = false;
+    handshakeFailures = 0;
     void syncUnread();
     connect();
   });
@@ -244,6 +278,8 @@ export function startRealtime(): void {
 
 export function stopRealtime(): void {
   started = false;
+  authRejected = false;
+  handshakeFailures = 0;
   stopPolling();
   if (reconnectTimer) {
     clearTimeout(reconnectTimer);

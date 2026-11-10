@@ -34,7 +34,7 @@ export function FilterSheet({
         <View className="absolute inset-x-0 bottom-0 max-h-[80%] rounded-t-2xl bg-background p-4">
           <Text className="mb-1 text-base font-semibold">筛选条件</Text>
           <Text className="text-muted-foreground mb-3 text-xs">
-            选项由服务端字典提供;筛选生效后列表改走搜索接口。
+            选项由服务端字典提供;筛选在当前流(最新/紧急/就近/喜报)内叠加生效。
           </Text>
           <ScrollView>
             {loading && !filters ? (

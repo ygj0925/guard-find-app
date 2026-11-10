@@ -4,21 +4,24 @@
  * 四条必须可测的性质:
  *   1. 不重不漏:`records` 按 id 去重,重复返回的条目不会二次插入;
  *   2. `hasMore=false` 之后 MUST NOT 再发请求;
- *   3. 竞态丢弃:切流/切城市后,旧请求的响应不能覆盖新数据;
- *   4. 每条流(slot)保留自己的 items 与游标,切走再切回不重新从第 1 页加载。
+ *   3. 竞态丢弃:同一 slot 内后发请求胜出;切流后旧流的回包只写回旧流,不覆盖当前流;
+ *   4. 每条流(slot)保留自己的 items、游标、phase 与 error,切走再切回不重新从第 1 页加载,
+ *      也不会把另一条流的加载中/失败状态带过来。
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ApiError } from '@/lib/api/error';
 import type { FeedResp } from '@/lib/api/endpoints/common';
+
+export type FeedLoadPhase = 'idle' | 'loading' | 'refreshing' | 'loadingMore' | 'error';
 
 export interface FeedSlot<T> {
   items: T[];
   nextCursor: string | null;
   hasMore: boolean;
   loadedOnce: boolean;
+  phase: FeedLoadPhase;
+  error: ApiError | null;
 }
-
-export type FeedLoadPhase = 'idle' | 'loading' | 'refreshing' | 'loadingMore' | 'error';
 
 export interface UseFeedResult<T> {
   items: T[];
@@ -35,7 +38,7 @@ export interface UseFeedResult<T> {
 }
 
 function emptySlot<T>(): FeedSlot<T> {
-  return { items: [], nextCursor: null, hasMore: true, loadedOnce: false };
+  return { items: [], nextCursor: null, hasMore: true, loadedOnce: false, phase: 'idle', error: null };
 }
 
 function toApiError(caught: unknown): ApiError {
@@ -60,10 +63,8 @@ export function useFeed<T extends { id: string }>(
   deps: readonly unknown[] = [],
 ): UseFeedResult<T> {
   const [slots, setSlots] = useState<Record<string, FeedSlot<T>>>({});
-  const [phase, setPhase] = useState<FeedLoadPhase>('idle');
-  const [error, setError] = useState<ApiError | null>(null);
-  /** 每次发起请求自增;回包时序号不是最新就丢弃(竞态保护)。 */
-  const generationRef = useRef(0);
+  /** 每个 slot 各自的请求序号;回包时序号不是该 slot 最新就丢弃(竞态保护)。 */
+  const generationRef = useRef<Record<string, number>>({});
   const fetcherRef = useRef(fetcher);
   const slotsRef = useRef(slots);
   // 渲染期赋值 ref 被 react-hooks/refs 禁止;改为 effect 同步,声明顺序先于首拉 effect
@@ -88,11 +89,15 @@ export function useFeed<T extends { id: string }>(
     async (mode: 'refresh' | 'more', targetSlot: string) => {
       const current = slotsRef.current[targetSlot] ?? emptySlot<T>();
       if (mode === 'more' && (!current.hasMore || !current.nextCursor)) return;
-      const generation = ++generationRef.current;
-      setPhase(mode === 'refresh' ? (current.items.length ? 'refreshing' : 'loading') : 'loadingMore');
+      const generation = (generationRef.current[targetSlot] ?? 0) + 1;
+      generationRef.current[targetSlot] = generation;
+      const isStale = () => generation !== generationRef.current[targetSlot];
+      const phase: FeedLoadPhase =
+        mode === 'refresh' ? (current.items.length ? 'refreshing' : 'loading') : 'loadingMore';
+      writeSlot(targetSlot, (previous) => ({ ...previous, phase }));
       try {
         const resp = await fetcherRef.current(mode === 'refresh' ? null : current.nextCursor);
-        if (generation !== generationRef.current) return;
+        if (isStale()) return;
         const fresh = Array.isArray(resp?.records) ? resp.records : [];
         writeSlot(targetSlot, (previous) => {
           const base = mode === 'refresh' ? [] : previous.items;
@@ -108,20 +113,19 @@ export function useFeed<T extends { id: string }>(
             nextCursor: resp?.nextCursor ?? null,
             hasMore: Boolean(resp?.hasMore),
             loadedOnce: true,
+            phase: 'idle',
+            error: null,
           };
         });
-        setError(null);
-        setPhase('idle');
       } catch (caught) {
-        if (generation !== generationRef.current) return;
+        if (isStale()) return;
         const apiError = toApiError(caught);
         if (apiError.bizCode === 'ABORTED') {
-          setPhase('idle');
+          writeSlot(targetSlot, (previous) => ({ ...previous, phase: 'idle' }));
           return;
         }
         // 失败保留已有数据(spec: 失败重试保留数据)。
-        setError(apiError);
-        setPhase('error');
+        writeSlot(targetSlot, (previous) => ({ ...previous, phase: 'error', error: apiError }));
       }
     },
     [writeSlot],
@@ -154,16 +158,16 @@ export function useFeed<T extends { id: string }>(
   return useMemo(
     () => ({
       items: slot.items,
-      phase,
-      error,
+      phase: slot.phase,
+      error: slot.error,
       hasMore: slot.hasMore,
       loadedOnce: slot.loadedOnce,
       isEmpty: slot.loadedOnce && slot.items.length === 0,
-      showSkeleton: !slot.loadedOnce && phase !== 'error',
+      showSkeleton: !slot.loadedOnce && slot.phase !== 'error',
       refresh,
       loadMore,
       patchItem,
     }),
-    [slot, phase, error, refresh, loadMore, patchItem],
+    [slot, refresh, loadMore, patchItem],
   );
 }

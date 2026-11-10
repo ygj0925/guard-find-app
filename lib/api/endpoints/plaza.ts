@@ -17,13 +17,7 @@ export interface PlazaFeedQuery extends CursorQuery {
   keyword?: string;
 }
 
-/**
- * 广场筛选面板的选择结果。
- *
- * 契约约束:`/app/plaza/feed` 只接受 sort/provinceCode/cityCode/keyword,
- * 性别、年龄段、情形、血样、年份区间这些筛选位只在 `/app/search` 上有。
- * 因此一旦有筛选项,列表就改走 `/app/search`(见 components/business/filter-sheet.tsx 的说明)。
- */
+/** 广场筛选面板的选择结果;与 sort 一起提交给 `/app/plaza/feed`,在当前流内叠加过滤。 */
 export interface PlazaFilterSelection {
   gender?: string;
   ageGroup?: string;
@@ -82,7 +76,7 @@ export interface SearchQuery extends CursorQuery {
 }
 
 export const plazaApi = {
-  feed: (query: PlazaFeedQuery) =>
+  feed: (query: PlazaFeedQuery & PlazaFilterSelection) =>
     api.get<FeedResp<CasePublic>>('/app/plaza/feed', { ...query }, { anonymous: true }),
   filters: () => api.get<PlazaFilters>('/app/plaza/filters', undefined, { anonymous: true }),
   statistics: () => api.get<PlazaStatistics>('/app/plaza/statistics', undefined, { anonymous: true }),
@@ -93,29 +87,17 @@ export const plazaApi = {
 };
 
 /**
- * 广场列表取数:按"有没有筛选条件"选端点。
- *
- * 契约里 `/app/plaza/feed` 只有 sort + 城市 + keyword,而性别/年龄段/情形/血样/年份区间
- * 只在 `/app/search` 上;两边都不接受对方的参数,所以:
- *   无筛选  -> feed(保留四流语义,urgent/found 由服务端强制 status)
- *   有筛选  -> search(此时流内排序退化为服务端默认序,UI 明示"已按筛选条件搜索")
- * 这条限制已作为契约差异写入交付报告(spec 5.4 要求"筛选叠加流条件")。
+ * 广场列表取数:始终走 `/app/plaza/feed`,筛选位与 sort 一起提交(spec 5.4"筛选叠加流条件")。
+ * 不能借道 `/app/search`:搜索要求关键词非空,无关键词的筛选会被服务端拒绝,且会写搜索历史。
  */
 export async function fetchPlazaPage(
   query: PlazaFeedQuery & PlazaFilterSelection,
 ): Promise<FeedResp<CasePublic>> {
   const { sort, cursor, size, provinceCode, cityCode, keyword, ...filters } = query;
-  if (!hasPlazaFilters(filters as PlazaFilterSelection)) {
-    return plazaApi.feed({ sort, cursor, size, provinceCode, cityCode, keyword });
-  }
-  return plazaApi.search({
-    cursor,
-    size,
-    provinceCode,
-    cityCode,
-    keyword,
-    ...(filters as SearchQuery),
-  });
+  const active = Object.fromEntries(
+    Object.entries(filters).filter(([, value]) => value !== undefined && value !== null && value !== ''),
+  ) as PlazaFilterSelection;
+  return plazaApi.feed({ sort, cursor, size, provinceCode, cityCode, keyword, ...active });
 }
 
 /**

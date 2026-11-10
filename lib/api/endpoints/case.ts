@@ -194,8 +194,8 @@ export const caseApi = {
     api.get<CaseDetail>(`/app/find/case/${encodeURIComponent(id)}/full`),
   mine: (params: PageQuery & { status?: CaseStatus }) =>
     api.get<CaseMineResp>('/app/find/case/mine', { ...params }),
-  submit: (id: string) =>
-    api.post<CaseDetail>(`/app/find/case/${encodeURIComponent(id)}/submit`),
+  submit: (id: string, req?: { forceSubmit?: boolean }) =>
+    api.post<CaseDetail>(`/app/find/case/${encodeURIComponent(id)}/submit`, req),
   found: (id: string, req: FoundReq) =>
     api.post<CaseDetail>(`/app/find/case/${encodeURIComponent(id)}/found`, req),
   renew: (id: string) =>

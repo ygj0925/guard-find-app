@@ -6,7 +6,7 @@
  *      字段级原因(`4001` 的 `fieldErrors`)一并列出,不替换成"搜索失败";
  *   2. 历史记录是本机功能(契约只有 `POST /app/search/history/clear`,没有读取端点):
  *      列表存本地 kv,"清空"会同时清本地并在已登录时调用服务端端点;
- *   3. 从广场带过来的筛选条件继续生效(筛选位只在 /app/search 上),页面明示这一点。
+ *   3. 从广场带过来的筛选条件继续生效,页面明示这一点。
  */
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { FlatList, Pressable, RefreshControl, View } from 'react-native';
@@ -196,7 +196,7 @@ export default function SearchScreen() {
           tone="info"
           title="已叠加广场的筛选条件"
           lines={[
-            '性别、年龄段、情形、血样与年份区间这些筛选位只在 /app/search 上提供,列表结果由服务端排序。',
+            '性别、年龄段、情形、血样与年份区间与关键词一起提交,列表结果由服务端排序。',
           ]}
         />
       ) : null}

@@ -1,8 +1,11 @@
-import type { CaseDetail } from '@/lib/api/endpoints/case';
+import type { CaseDetail, CaseDraftReq } from '@/lib/api/endpoints/case';
 import { emptyPublishValues } from '@/lib/publish/schema';
 import { usePublishForm } from '../publish-form';
 
 const mockDetailFull = jest.fn();
+const mockCreate = jest.fn();
+const mockUpdate = jest.fn();
+const mockSubmit = jest.fn();
 
 jest.mock('@/lib/storage/kv', () => ({
   kvGetJson: jest.fn(async (_key: string, fallback: unknown) => fallback),
@@ -10,7 +13,12 @@ jest.mock('@/lib/storage/kv', () => ({
   kvRemove: jest.fn(async () => undefined),
 }));
 jest.mock('@/lib/api/endpoints/case', () => ({
-  caseApi: { detailFull: (...args: unknown[]) => mockDetailFull(...args) },
+  caseApi: {
+    detailFull: (...args: unknown[]) => mockDetailFull(...args),
+    create: (...args: unknown[]) => mockCreate(...args),
+    update: (...args: unknown[]) => mockUpdate(...args),
+    submit: (...args: unknown[]) => mockSubmit(...args),
+  },
 }));
 jest.mock('@/lib/monitor', () => ({ capture: jest.fn() }));
 
@@ -100,5 +108,44 @@ describe('发布草稿云端装载', () => {
     expect(state.conflict).toBeNull();
     expect(state.values.name).toBe('本地改过');
     expect(state.pendingSync).toBe(true);
+  });
+});
+
+describe('提交审核', () => {
+  const req = { submit: true, name: '张三', forceSubmit: true } as unknown as CaseDraftReq;
+
+  beforeEach(async () => {
+    jest.useFakeTimers();
+    mockCreate.mockReset();
+    mockUpdate.mockReset();
+    mockSubmit.mockReset();
+    await usePublishForm.getState().reset();
+  });
+  afterEach(() => {
+    jest.useRealTimers();
+  });
+
+  it('已有档案(驳回后修改)先保存内容再走 /submit 流转到待审核', async () => {
+    usePublishForm.setState({ caseId: 'c9' });
+    mockUpdate.mockResolvedValue(cloudDetail('c9', '张三'));
+    mockSubmit.mockResolvedValue({ ...cloudDetail('c9', '张三'), status: 'PENDING_REVIEW' });
+
+    const result = await usePublishForm.getState().submitForReview(req);
+
+    expect(mockUpdate).toHaveBeenCalledWith('c9', req);
+    expect(mockSubmit).toHaveBeenCalledWith('c9', { forceSubmit: true });
+    expect(mockUpdate.mock.invocationCallOrder[0]).toBeLessThan(mockSubmit.mock.invocationCallOrder[0]);
+    expect(mockCreate).not.toHaveBeenCalled();
+    expect(result.status).toBe('PENDING_REVIEW');
+  });
+
+  it('新档案直接创建,不再单独调 /submit', async () => {
+    mockCreate.mockResolvedValue(cloudDetail('n1', '张三'));
+
+    await usePublishForm.getState().submitForReview(req);
+
+    expect(mockCreate).toHaveBeenCalledWith(req);
+    expect(mockSubmit).not.toHaveBeenCalled();
+    expect(usePublishForm.getState().caseId).toBe('n1');
   });
 });

@@ -145,4 +145,35 @@ describe('useFeed 游标分页', () => {
     expect(result.current.error).not.toBeNull();
     expect(result.current.items.map((item) => item.id)).toEqual(['1']);
   });
+
+  it('phase/error 按 slot 隔离,旧流迟到的回包只写回旧流', async () => {
+    const slowLatest = deferred<FeedResp<{ id: string }>>();
+    const fetcher = jest
+      .fn()
+      .mockRejectedValueOnce(new Error('offline'))
+      .mockResolvedValueOnce(page(['u1'], false))
+      .mockReturnValueOnce(slowLatest.promise);
+    const { result, rerender } = await renderHook(({ slot }: { slot: string }) => useFeed(slot, fetcher), {
+      initialProps: { slot: 'found|all|' },
+    });
+    await waitFor(() => expect(result.current.phase).toBe('error'));
+
+    await rerender({ slot: 'urgent|all|' });
+    await waitFor(() => expect(result.current.items.map((item) => item.id)).toEqual(['u1']));
+    expect(result.current.phase).toBe('idle');
+    expect(result.current.error).toBeNull();
+
+    await rerender({ slot: 'latest|all|' });
+    await waitFor(() => expect(result.current.phase).toBe('loading'));
+    await rerender({ slot: 'urgent|all|' });
+    expect(result.current.phase).toBe('idle');
+    await act(async () => {
+      slowLatest.resolve(page(['l1'], false));
+    });
+    expect(result.current.items.map((item) => item.id)).toEqual(['u1']);
+
+    await rerender({ slot: 'latest|all|' });
+    expect(result.current.items.map((item) => item.id)).toEqual(['l1']);
+    expect(fetcher).toHaveBeenCalledTimes(3);
+  });
 });

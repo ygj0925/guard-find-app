@@ -4,8 +4,16 @@
  * 四条流各自独立 slot(useFeed 按 slotKey 缓存 items 与游标),切走再切回不重头加载;
  * "就近"用常驻地或城市选择器结果,一期不申请定位权限。
  */
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { Alert, FlatList, RefreshControl, ScrollView, View } from 'react-native';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import {
+  Alert,
+  FlatList,
+  RefreshControl,
+  ScrollView,
+  View,
+  type NativeScrollEvent,
+  type NativeSyntheticEvent,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Search } from 'lucide-react-native';
@@ -111,6 +119,19 @@ export default function PlazaScreen() {
 
   const feed = useFeed(slotKey, fetchPage, [slotKey]);
 
+  // 各流独立的滚动位置:滚动时记到当前 slot,切到某条流后恢复它上次的位置(没去过就回顶)。
+  const listRef = useRef<FlatList<CasePublic>>(null);
+  const offsetsRef = useRef<Record<string, number>>({});
+  const onScroll = useCallback(
+    (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+      offsetsRef.current[slotKey] = event.nativeEvent.contentOffset.y;
+    },
+    [slotKey],
+  );
+  useEffect(() => {
+    listRef.current?.scrollToOffset({ offset: offsetsRef.current[slotKey] ?? 0, animated: false });
+  }, [slotKey]);
+
   // 统计失败不影响列表,单独请求并忽略错误(useRequest 会把 error 交给我们自己处理)。
   const statistics = useRequest(() => plazaApi.statistics(), [], { keepDataOnError: true });
 
@@ -203,9 +224,9 @@ export default function PlazaScreen() {
 
       {filtered ? (
         <NoticeBar
-          tone="warn"
-          title="已按筛选条件搜索"
-          lines={['契约中筛选参数只在搜索接口上提供,故本列表改走搜索结果,排序由服务端决定。']}
+          tone="info"
+          title="已叠加筛选条件"
+          lines={['筛选在当前流内生效,排序仍按所选流(最新/紧急/就近/喜报)。']}
         />
       ) : null}
 
@@ -356,6 +377,9 @@ export default function PlazaScreen() {
       </ScrollView>
 
       <FlatList
+        ref={listRef}
+        onScroll={onScroll}
+        scrollEventThrottle={64}
         className="flex-1 px-4"
         contentContainerStyle={[{ paddingBottom: 104 }, contentWidthStyle(responsive)]}
         data={feed.items}
