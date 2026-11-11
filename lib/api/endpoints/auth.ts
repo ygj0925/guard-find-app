@@ -15,15 +15,19 @@ export interface SendSmsCodeReq {
   scene: SmsScene;
 }
 
-/**
- * 契约 1.1 的 data 在表头写 `null`、正文又要求 `data.expireSeconds` 供倒计时校准,
- * 两处不一致。这里按"可空对象"实现:字段缺失时客户端退回本地 60 秒。差异已记入交付报告。
- */
 export interface SendSmsCodeResp {
-  expireSeconds?: number | null;
+  expireSeconds: number;
 }
 
-export interface LoginByPhoneReq {
+export interface LoginDeviceReq {
+  deviceId?: string | null;
+  deviceName?: string | null;
+  platform?: string | null;
+  appVersion?: string | null;
+  osVersion?: string | null;
+}
+
+export interface LoginByPhoneReq extends LoginDeviceReq {
   authType: 'PHONE';
   phone: string;
   code: string;
@@ -40,7 +44,7 @@ export interface ImageCaptchaResp {
   isEnabled: boolean;
 }
 
-export interface LoginByAccountReq {
+export interface LoginByAccountReq extends LoginDeviceReq {
   authType: 'ACCOUNT';
   account: string;
   password: string;
@@ -72,25 +76,26 @@ export interface LoginResp {
   tokenName: string;
   expiresIn: number;
   isNewUser: boolean;
+  deactivationCancelled: boolean;
   user: AppUser;
 }
 
 /** 全部可选,PUT 时只提交改过的键。 */
 export interface AppProfileReq {
-  nickname?: string;
-  avatar?: string;
-  gender?: Gender;
-  identityType?: IdentityType;
-  provinceCode?: string;
-  cityCode?: string;
-  districtCode?: string;
+  nickname?: string | null;
+  avatar?: string | null;
+  gender?: Gender | null;
+  identityType?: IdentityType | null;
+  provinceCode?: string | null;
+  cityCode?: string | null;
+  districtCode?: string | null;
 }
 
 export interface ChangePasswordReq {
-  oldPassword?: string;
+  oldPassword?: string | null;
   newPassword: string;
-  phone?: string;
-  code?: string;
+  phone?: string | null;
+  code?: string | null;
 }
 
 export interface ResetPasswordReq {
@@ -107,7 +112,7 @@ export interface EraseAccountResp {
 
 export const authApi = {
   sendSmsCode: (req: SendSmsCodeReq) =>
-    api.post<SendSmsCodeResp | null>('/app/auth/sms-code', req, { anonymous: true }),
+    api.post<SendSmsCodeResp>('/app/auth/sms-code', req, { anonymous: true }),
   login: (req: LoginReq) => api.post<LoginResp>('/app/auth/login', req, { anonymous: true }),
   imageCaptcha: () =>
     api.get<ImageCaptchaResp>('/captcha/image', undefined, { anonymous: true }),

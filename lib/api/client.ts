@@ -71,6 +71,7 @@ export function configureClient(next: Partial<ClientHooks>): void {
 
 /** 401 去重:并发多个未授权响应只触发一次登出与跳转。 */
 let unauthorizedHandling = false;
+let authenticationGeneration = 0;
 
 export function __resetUnauthorizedGate(): void {
   unauthorizedHandling = false;
@@ -82,6 +83,7 @@ export function isHandlingUnauthorized(): boolean {
 
 /** 重新登录成功后调用,让下一次 401 仍能触发一次处理。 */
 export function notifyAuthenticated(): void {
+  authenticationGeneration += 1;
   unauthorizedHandling = false;
 }
 
@@ -116,10 +118,10 @@ export function buildQuery(params?: Record<string, unknown>): string {
 /** 剥掉服务端可能带的 `/app` 前缀重复,保证拼接结果与契约逐字一致。 */
 function normalizePath(path: string): string {
   const cleanPath = path.startsWith('/') ? path : `/${path}`;
-  if (!/^\/(app|system|file)\//.test(cleanPath)) {
+  if (cleanPath !== '/captcha/image' && !/^\/(app|system|file)\//.test(cleanPath)) {
     throw new ApiError({
       code: -1,
-      msg: `非法接口路径 "${path}":所有请求必须以契约中的 /app、/system 或 /file 开头。`,
+      msg: `非法接口路径 "${path}":请求必须使用契约中的接口路径。`,
       bizCode: ClientCode.BAD_ENVELOPE,
     });
   }
@@ -145,11 +147,12 @@ export async function request<T>(path: string, options: RequestOptions = {}): Pr
     });
   }
 
+  const requestSession = {
+    token: options.anonymous ? null : hooks.getToken(),
+    generation: authenticationGeneration,
+  };
   const headers: Record<string, string> = { Accept: 'application/json', ...options.headers };
-  if (!options.anonymous) {
-    const token = hooks.getToken();
-    if (token) headers[hooks.getTokenName()] = token;
-  }
+  if (requestSession.token) headers[hooks.getTokenName()] = requestSession.token;
   const isPlainBody =
     options.body !== undefined && options.body !== null && !options.rawBody;
   if (isPlainBody) headers['Content-Type'] = 'application/json';
@@ -208,7 +211,7 @@ export async function request<T>(path: string, options: RequestOptions = {}): Pr
       bizCode: response.status,
       httpStatus: response.status,
     });
-    return handleFailure(error, { path, method });
+    return handleFailure(error, { path, method }, requestSession);
   }
 
   if (envelope === null) {
@@ -218,7 +221,7 @@ export async function request<T>(path: string, options: RequestOptions = {}): Pr
       bizCode: ClientCode.BAD_ENVELOPE,
       httpStatus: response.status,
     });
-    return handleFailure(error, { path, method });
+    return handleFailure(error, { path, method }, requestSession);
   }
 
   if (code !== ApiCode.SUCCESS) {
@@ -232,7 +235,7 @@ export async function request<T>(path: string, options: RequestOptions = {}): Pr
       retryAfterSeconds: code === ApiCode.RATE_LIMITED ? parseRetrySeconds(msg) : undefined,
       fieldErrors: code === ApiCode.VALIDATE_FAILED ? parseFieldErrors(envelope.data) : undefined,
     });
-    return handleFailure(error, { path, method });
+    return handleFailure(error, { path, method }, requestSession);
   }
 
   return envelope.data as T;
@@ -246,14 +249,18 @@ async function readText(response: Response): Promise<string> {
   }
 }
 
-function handleFailure(error: ApiError, meta: { path: string; method: HttpMethod }): never {
-  if (error.code === ApiCode.UNAUTHORIZED) {
-    if (!unauthorizedHandling) {
-      unauthorizedHandling = true;
-      hooks.onUnauthorized(error);
-    }
-    hooks.onBusinessError?.(error, meta);
-    throw error;
+function handleFailure(
+  error: ApiError,
+  meta: { path: string; method: HttpMethod },
+  requestSession: { token: string | null; generation: number },
+): never {
+  if (error.code === ApiCode.UNAUTHORIZED
+    && requestSession.token !== null
+    && requestSession.token === hooks.getToken()
+    && requestSession.generation === authenticationGeneration
+    && !unauthorizedHandling) {
+    unauthorizedHandling = true;
+    hooks.onUnauthorized(error);
   }
   hooks.onBusinessError?.(error, meta);
   throw error;

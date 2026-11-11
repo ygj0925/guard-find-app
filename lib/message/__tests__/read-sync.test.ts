@@ -66,12 +66,12 @@ describe('消息已读同步(spec: 消息中心与未读角标)', () => {
     expect(mockBump).not.toHaveBeenCalled();
   });
 
-  it('全部已读:只补未读项、角标归零后再向服务端校准', async () => {
+  it('全部已读:只补未读项、角标向服务端校准而不盲目归零', async () => {
     const patch = jest.fn();
     await markAllMessagesRead([message({ id: 'a' }), message({ id: 'b', readStatus: true })], patch);
     expect(patch).toHaveBeenCalledTimes(1);
     expect(patch).toHaveBeenCalledWith('a', { readStatus: true });
-    expect(mockSetUnread).toHaveBeenCalledWith(0);
+    expect(mockSetUnread).not.toHaveBeenCalled();
     expect(mockSyncUnread).toHaveBeenCalledTimes(1);
   });
 

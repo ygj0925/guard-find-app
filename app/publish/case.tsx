@@ -39,7 +39,6 @@ import {
   TextField,
 } from '@/components/form/fields';
 import { EmptyState, InlineRow, NoticeBar, SectionCard } from '@/components/business/feedback';
-import { CaseCard } from '@/components/business/case-card';
 import { AgreementLinks, AGREEMENT_ITEMS, AntiFraudNotice } from '@/components/business/compliance';
 import { DateTimePicker, RegionPicker, regionLabelOf, type RegionSelection } from '@/components/business/pickers';
 import {
@@ -62,7 +61,6 @@ import {
   type PublishValues,
   type StepIndex,
 } from '@/lib/publish/schema';
-import type { CasePublic, SimilarCasesResp } from '@/lib/api/endpoints/case';
 import type { Option } from '@/lib/api/endpoints/common';
 import { formatDateTime, toServerTime } from '@/lib/format';
 import { buildReqFromValues, usePublishForm } from '@/store/publish-form';
@@ -108,7 +106,7 @@ export default function PublishCaseScreen() {
   const [birthdayOpen, setBirthdayOpen] = useState(false);
   const [regionOpen, setRegionOpen] = useState(false);
   const [hometownOpen, setHometownOpen] = useState(false);
-  const [duplicate, setDuplicate] = useState<CasePublic[] | null>(null);
+  const [duplicate, setDuplicate] = useState<string | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
 
   const mediaRequired = mediaPickerAvailable();
@@ -221,8 +219,7 @@ export default function PublishCaseScreen() {
         router.replace(`/case/${created.id}`);
       } catch (error) {
         if (error instanceof ApiError && error.code === 4005) {
-          const data = error.data as Partial<SimilarCasesResp> | undefined;
-          setDuplicate(data?.similarCases ?? []);
+          setDuplicate(error.msg);
           return;
         }
         setLoadError(toUserMessage(error));
@@ -408,16 +405,7 @@ export default function PublishCaseScreen() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <ScrollView style={{ maxHeight: 260 }}>
-            {(duplicate ?? []).map((item) => (
-              <CaseCard
-                key={item.id}
-                item={item}
-                onPress={() => {
-                  setDuplicate(null);
-                  router.push(`/case/${item.id}`);
-                }}
-              />
-            ))}
+            <Text className="text-sm text-muted-foreground">{duplicate}</Text>
           </ScrollView>
           <AlertDialogFooter>
             <AlertDialogCancel>

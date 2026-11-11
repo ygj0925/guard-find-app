@@ -6,7 +6,7 @@
  * 导致所有成功响应退化成 HTTP 状态码 200 被当成失败。这里把"字符串码"钉死。
  */
 import { ApiCode, ApiError } from '../error';
-import { __resetUnauthorizedGate, configureClient, request } from '../client';
+import { __resetUnauthorizedGate, configureClient, notifyAuthenticated, request } from '../client';
 
 jest.mock('../../env', () => ({
   env: {
@@ -55,6 +55,25 @@ describe('API 信封解包(契约 0 节:code 为字符串)', () => {
     await expect(request('/app/plaza/statistics')).resolves.toEqual({ totalCase: 0 });
   });
 
+  it('图形验证码公开入口不会被路径校验拦截,且不携带登录凭据', async () => {
+    global.fetch = jest.fn().mockResolvedValue(
+      jsonResponse({ code: '0', data: { uuid: 'captcha-id', img: 'image-data', isEnabled: true } }),
+    ) as never;
+
+    await expect(request('/captcha/image', { anonymous: true })).resolves.toMatchObject({
+      uuid: 'captcha-id', isEnabled: true,
+    });
+    expect(global.fetch).toHaveBeenCalledWith('http://api.test/captcha/image', expect.objectContaining({
+      method: 'GET', headers: { Accept: 'application/json' },
+    }));
+  });
+
+  it.each(['/captcha/image/extra', '/captcha/other', '/unlisted'])('未登记入口 %s 仍被拒绝且不发请求', async (path) => {
+    global.fetch = jest.fn() as never;
+    await expect(request(path)).rejects.toBeInstanceOf(ApiError);
+    expect(global.fetch).not.toHaveBeenCalled();
+  });
+
   it('数字 0 也兼容(不因服务端序列化方式变化而误判)', async () => {
     global.fetch = jest
       .fn()
@@ -88,6 +107,30 @@ describe('API 信封解包(契约 0 节:code 为字符串)', () => {
 
     expect(results.every((r) => r.status === 'rejected')).toBe(true);
     expect(unauthorized).toHaveBeenCalledTimes(1);
+  });
+
+  it.each(['switch', 'logout', 'reauthenticate'] as const)('%s 后旧请求的 401 不清除当前会话', async (action) => {
+    let token: string | null = 'old-token';
+    let resolve!: (response: Response) => void;
+    configureClient({ getToken: () => token });
+    global.fetch = jest.fn().mockReturnValueOnce(new Promise<Response>((done) => { resolve = done; })) as never;
+    const pending = request('/app/message/unread').catch((error: unknown) => error);
+    if (action === 'switch') token = 'new-token';
+    if (action === 'logout') token = null;
+    if (action === 'reauthenticate') notifyAuthenticated();
+    resolve(jsonResponse({ code: '401', data: null }));
+    expect((await pending as ApiError).code).toBe(ApiCode.UNAUTHORIZED);
+    expect(unauthorized).not.toHaveBeenCalled();
+    token = 'new-token';
+    global.fetch = jest.fn().mockResolvedValue(jsonResponse({ code: '401', data: null })) as never;
+    await expect(request('/app/auth/me')).rejects.toBeInstanceOf(ApiError);
+    expect(unauthorized).toHaveBeenCalledTimes(1);
+  });
+
+  it('匿名请求的 401 不清除已登录会话', async () => {
+    global.fetch = jest.fn().mockResolvedValue(jsonResponse({ code: '401', data: null })) as never;
+    await expect(request('/app/plaza/feed', { anonymous: true })).rejects.toBeInstanceOf(ApiError);
+    expect(unauthorized).not.toHaveBeenCalled();
   });
 
   it('业务层码 "4005" / "4290" 原样归一并可被识别', async () => {

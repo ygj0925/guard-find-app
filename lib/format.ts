@@ -77,7 +77,7 @@ export function formatMissingHours(hours: number | null | undefined): string {
 export const URGENCY_LABEL: Record<UrgencyLevel, string> = {
   NORMAL: '常规',
   URGENT: '紧急',
-  CRITICAL: '特急',
+  STANDING: '长期未破',
 };
 
 export const CASE_STATUS_LABEL: Record<CaseStatus, string> = {
@@ -155,7 +155,7 @@ export function caseAgeText(item: Pick<CasePublic, 'ageAtMissing' | 'ageGroup'>)
     '13_17': '13-17 岁',
     '18_PLUS': '18 岁以上',
   };
-  return map[item.ageGroup] ?? '年龄不详';
+  return (item.ageGroup ? map[item.ageGroup] : undefined) ?? '年龄不详';
 }
 
 export function leadHighRiskText(lead: Pick<Lead, 'highRisk'>): string | null {

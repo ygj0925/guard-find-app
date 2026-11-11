@@ -8,11 +8,11 @@ import type { ContactMode } from './case';
 export type LeadStatus = 'PENDING' | 'ACCEPTED' | 'REJECTED' | 'CONTACTED';
 
 export interface LeadReq {
-  occurTime: string;
-  occurAddress: string;
+  occurTime?: string | null;
+  occurAddress?: string | null;
   description: string;
-  mediaUrls?: string[];
-  contactMode: ContactMode;
+  mediaUrls?: string[] | null;
+  contactMode?: ContactMode | null;
   /** contactMode=PHONE 时必填;仅档案所有人可见明文。 */
   contactValue?: string | null;
 }
@@ -27,9 +27,9 @@ export interface LeadReply {
 export interface Lead {
   id: string;
   caseId: string;
-  caseName: string;
-  occurTime: string;
-  occurAddress: string;
+  caseName: string | null;
+  occurTime: string | null;
+  occurAddress: string | null;
   description: string;
   mediaUrls: string[];
   contactMode: ContactMode;
@@ -37,6 +37,7 @@ export interface Lead {
   submitterMasked: string;
   status: LeadStatus;
   highRisk: boolean;
+  handleRemark: string | null;
   replies: LeadReply[];
   createTime: string;
 }
@@ -49,12 +50,13 @@ export interface LeadStatusReq {
 export const leadApi = {
   submit: (caseId: string, req: LeadReq) =>
     api.post<Lead>(`/app/find/case/${encodeURIComponent(caseId)}/lead`, req),
-  /** 仅档案所有人 / 志愿者可见,越权时服务端回 403。 */
+  /** 仅档案所有人 / 志愿者可见,越权时服务端回 4003。 */
   byCase: (caseId: string, params: PageQuery) =>
     api.get<PageResp<Lead>>(`/app/find/case/${encodeURIComponent(caseId)}/leads`, { ...params }),
   updateStatus: (id: string, req: LeadStatusReq) =>
     api.patch<null>(`/app/lead/${encodeURIComponent(id)}/status`, req),
   reply: (id: string, content: string) =>
-    api.post<null>(`/app/lead/${encodeURIComponent(id)}/reply`, { content }),
-  mine: (params: PageQuery) => api.get<PageResp<Lead>>('/app/lead/mine', { ...params }),
+    api.post<LeadReply>(`/app/lead/${encodeURIComponent(id)}/reply`, { content }),
+  mine: (params: PageQuery & { status?: LeadStatus }) =>
+    api.get<PageResp<Lead>>('/app/lead/mine', { ...params }),
 };

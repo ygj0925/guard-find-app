@@ -52,7 +52,7 @@ export interface Preference {
   /** 审核结果类为 true:App 侧开关禁用,不发关闭请求。 */
   inboxForced: boolean;
   smsEnabled: boolean;
-  smsNote: string | null;
+  smsNote: string;
 }
 
 export interface PreferenceResp {
@@ -62,7 +62,7 @@ export interface PreferenceResp {
 export interface PreferenceItemReq {
   type: MessageType;
   inboxEnabled: boolean;
-  smsEnabled: boolean;
+  smsEnabled?: boolean | null;
 }
 
 /** 契约 5 节 WebSocket 帧。 */

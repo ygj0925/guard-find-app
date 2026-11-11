@@ -50,7 +50,8 @@ export function CaseStatusBadge({ status }: { status: CaseStatus }) {
 export function UrgencyBadge({ level }: { level: UrgencyLevel }) {
   if (level === 'NORMAL') return null;
   return (
-    <Badge variant="destructive" className="bg-urgent">
+    <Badge variant={level === 'URGENT' ? 'destructive' : 'secondary'}
+      className={level === 'URGENT' ? 'bg-urgent' : undefined}>
       <Text>{URGENCY_LABEL[level]}</Text>
     </Badge>
   );
@@ -82,7 +83,7 @@ export function MissingDuration({
  * 基准 = 挂载时刻(原实现的默认 fetchedAt=Date.now() 与此等价,两处调用方均未显式传值)。
  * 计时起点用 interval 回包写入 state,避免渲染期调用 Date.now()(react-hooks/purity)。
  */
-export function useElapsedHours(baseHours: number | null | undefined): number {
+export function useElapsedHours(baseHours: number | null | undefined): number | null {
   const [elapsedExtraHours, setElapsedExtraHours] = useState(0);
   useEffect(() => {
     if (baseHours === null || baseHours === undefined) return undefined;
@@ -92,7 +93,7 @@ export function useElapsedHours(baseHours: number | null | undefined): number {
     return () => clearInterval(timer);
   }, [baseHours]);
 
-  if (baseHours === null || baseHours === undefined) return 0;
+  if (baseHours === null || baseHours === undefined) return null;
   return Math.floor(baseHours + elapsedExtraHours);
 }
 

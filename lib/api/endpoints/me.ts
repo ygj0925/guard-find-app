@@ -21,7 +21,7 @@ export type ReportReasonType =
   | 'REPEAT'
   | 'OTHER';
 
-export type ReportStatus = 'PENDING' | 'ACCEPTED' | 'DISMISSED' | string;
+export type ReportStatus = 'PENDING' | 'APPROVED' | 'DISMISSED';
 
 export interface ReportReq {
   targetType: ReportTargetType;
@@ -36,9 +36,10 @@ export interface Report {
   id: string;
   targetType: ReportTargetType;
   targetId: string;
-  targetTitle: string | null;
+  targetName: string | null;
   reasonType: ReportReasonType;
   description: string | null;
+  mediaUrls: string[];
   /** 同人同目标去重累加。 */
   hitCount: number;
   status: ReportStatus;

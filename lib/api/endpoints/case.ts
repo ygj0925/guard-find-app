@@ -26,11 +26,11 @@ export type CaseStatus =
   | 'OFFLINE'
   | 'ERASED';
 
-export type UrgencyLevel = 'NORMAL' | 'URGENT' | 'CRITICAL';
+export type UrgencyLevel = 'NORMAL' | 'URGENT' | 'STANDING';
 export type AgeGroup = '0_6' | '7_12' | '13_17' | '18_PLUS' | string;
 export type BloodSampleStatus = 'NOT_COLLECTED' | 'COLLECTED' | 'UNKNOWN';
 export type ContactMode = 'IN_APP' | 'PHONE';
-export type MediaType = 'PHOTO' | 'VIDEO' | 'AUDIO';
+export type MediaType = 'PHOTO' | 'VIDEO';
 export type ConfirmType = 'POLICE' | 'GUARDIAN' | 'DNA';
 
 export interface CaseAlias {
@@ -91,11 +91,11 @@ export interface CasePublic {
   id: string;
   name: string;
   gender: Gender;
-  ageGroup: AgeGroup;
+  ageGroup: AgeGroup | null;
   ageAtMissing: number | null;
   aliases: string[];
   /** 只到月。 */
-  missingMonth: string;
+  missingMonth: string | null;
   /** 只到市。 */
   regionText: string;
   /** 公开详情可精确到区。 */
@@ -104,7 +104,7 @@ export interface CasePublic {
   features: string | null;
   caseType: CaseType;
   urgencyLevel: UrgencyLevel;
-  missingHours: number;
+  missingHours: number | null;
   status: CaseStatus;
   coverUrl: string | null;
   mediaUrls: string[];
@@ -120,10 +120,16 @@ export interface CasePublic {
  * 契约 v1 没有区分"草稿体"与"提交体"的必填强度(见交付报告差异条),
  * 服务端对留空枚举只按草稿放行;前端 MUST NOT 为此编一个情形值。
  */
-export type CaseDraftReq = Omit<CaseReq, 'caseType'> & { caseType: CaseType | '' };
+export type CaseDraftReq = Pick<CaseReq, 'name'> &
+  Partial<Omit<CaseReq, 'name' | 'submit' | 'caseType'>> & {
+    submit?: boolean;
+    caseType?: CaseType | '' | null;
+  };
 
 /** CaseDetail = CasePublic + 完整字段(仅本人 / 志愿者 / 审核可见)。 */
 export interface CaseDetail extends CasePublic {
+  relationType: string | null;
+  foundTime: string | null;
   address: string | null;
   missingTime: string | null;
   birthday: string | null;
@@ -173,13 +179,12 @@ export interface CaseMineResp extends PageResp<CaseDetail> {
 
 export interface FoundReq {
   confirmType: ConfirmType;
-  foundTime: string;
+  foundTime?: string | null;
   remark?: string;
 }
 
-/** 4005 疑似重复档案时,`data.similarCases[]` 给出可对比的候选。 */
-export interface SimilarCasesResp {
-  similarCases: CasePublic[];
+export interface CaseActionReq {
+  reason?: string;
 }
 
 export const caseApi = {
@@ -197,12 +202,13 @@ export const caseApi = {
   submit: (id: string, req?: { forceSubmit?: boolean }) =>
     api.post<CaseDetail>(`/app/find/case/${encodeURIComponent(id)}/submit`, req),
   found: (id: string, req: FoundReq) =>
-    api.post<CaseDetail>(`/app/find/case/${encodeURIComponent(id)}/found`, req),
-  renew: (id: string) =>
-    api.post<CaseDetail>(`/app/find/case/${encodeURIComponent(id)}/renew`),
-  withdraw: (id: string) =>
-    api.post<CaseDetail>(`/app/find/case/${encodeURIComponent(id)}/withdraw`),
-  erase: (id: string) => api.post<CaseDetail>(`/app/find/case/${encodeURIComponent(id)}/erase`),
+    api.post<null>(`/app/find/case/${encodeURIComponent(id)}/found`, req),
+  renew: (id: string, req?: CaseActionReq) =>
+    api.post<null>(`/app/find/case/${encodeURIComponent(id)}/renew`, req),
+  withdraw: (id: string, req?: CaseActionReq) =>
+    api.post<null>(`/app/find/case/${encodeURIComponent(id)}/withdraw`, req),
+  erase: (id: string, req?: CaseActionReq) =>
+    api.post<null>(`/app/find/case/${encodeURIComponent(id)}/erase`, req),
 };
 
 

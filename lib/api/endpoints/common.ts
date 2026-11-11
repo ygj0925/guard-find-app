@@ -18,8 +18,8 @@ export interface FeedResp<T> {
 
 /** 分页入参(列表)。`page` 从 1 起。 */
 export interface PageQuery {
-  page?: number;
-  size?: number;
+  page: number;
+  size: number;
 }
 
 /** 游标入参(信息流)。 */

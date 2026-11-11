@@ -4,7 +4,7 @@
  */
 import { api } from '../client';
 import type { CursorQuery, FeedResp, Option, RegionNode } from './common';
-import type { AgeGroup, BloodSampleStatus, CasePublic, CaseType, UrgencyLevel } from './case';
+import type { AgeGroup, BloodSampleStatus, CasePublic, CaseType } from './case';
 import type { Gender } from './auth';
 
 /** 四种流互斥,服务端强制 status,不允许靠前端二次过滤。 */
@@ -71,8 +71,6 @@ export interface SearchQuery extends CursorQuery {
   yearFrom?: number;
   yearTo?: number;
   bloodSampleStatus?: BloodSampleStatus;
-  /** 契约未给 urgency 过滤位;广场筛选面板因此只放契约里有的六项。 */
-  urgencyLevel?: UrgencyLevel;
 }
 
 export const plazaApi = {

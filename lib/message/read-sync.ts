@@ -20,8 +20,7 @@ export async function markAllMessagesRead(items: Message[], patchItem: PatchItem
   for (const message of items) {
     if (!message.readStatus) patchItem(message.id, { readStatus: true });
   }
-  useSession.getState().setUnreadCount(0);
-  void syncUnreadCount();
+  await syncUnreadCount();
 }
 
 /** 跳转目标只认服务端下发的 `path`;老消息没有 path 时按档案业务键兜底,其余不猜路由。 */
