@@ -7,7 +7,7 @@ function loadWith(factory: () => unknown): DriverModule {
   // 驱动内部是懒 require,在 isolateModules 之外才执行,必须清掉上个用例缓存的 mock。
   jest.resetModules();
   jest.isolateModules(() => {
-    jest.doMock('@react-native-async-storage/async-storage', factory);
+    jest.doMock('@react-native-async-storage/async-storage', factory, { virtual: true });
     // eslint-disable-next-line @typescript-eslint/no-require-imports -- 每个用例换一份 async-storage mock
     mod = require('../native-kv-driver') as DriverModule;
   });

@@ -22,6 +22,7 @@ import {
   quitLedgerGroup,
   regenerateInviteCode,
   removeGroupMember,
+  transferLedgerGroupOwner,
   type LedgerGroupMember,
 } from '@/lib/api/endpoints/ledger';
 import { clipboard } from '@/lib/capabilities';
@@ -31,33 +32,90 @@ import { useLedgerScope } from '@/store/ledger-scope';
 import { useToast } from '@/providers/ToastProvider';
 
 export default function GroupDetailScreen() {
+  const sessionToken = useSession((state) => state.token);
+  const { id } = useLocalSearchParams<{ id: string }>();
+  return <GroupDetailContent key={`${sessionToken}:${id}`} />;
+}
+
+function GroupDetailContent() {
   const params = useLocalSearchParams<{ id: string }>();
   const groupId = params.id ?? '';
   const router = useRouter();
   const { toast } = useToast();
   const signedIn = useSession((state) => state.phase === 'authenticated');
+  const sessionToken = useSession((state) => state.token);
   const myUserId = useSession((state) => state.user?.id ?? null);
   const setScope = useLedgerScope((state) => state.setScope);
 
-  const membersQuery = useRequest(() => fetchLedgerGroupMembers(groupId), [groupId, signedIn]);
-  const groupsQuery = useRequest(() => fetchLedgerGroups(), [groupId, signedIn]);
+  const membersQuery = useRequest(
+    () => fetchLedgerGroupMembers(groupId),
+    [groupId, sessionToken],
+    { enabled: signedIn && Boolean(groupId) },
+  );
+  const groupsQuery = useRequest(
+    () => fetchLedgerGroups(),
+    [groupId, sessionToken],
+    { enabled: signedIn && Boolean(groupId) },
+  );
   const group = groupsQuery.data?.find((item) => item.id === groupId) ?? null;
   const members = membersQuery.data ?? [];
   const isOwner = group?.myRole === 1;
 
   const [busy, setBusy] = useState(false);
 
+  const transferOwner = (member: LedgerGroupMember) => {
+    if (busy || !isOwner) return;
+    Alert.alert(
+      '移交组长?',
+      `移交给${member.nickname ?? '该成员'}后，你将变为普通成员，旧邀请码会失效。`,
+      [
+        { text: '取消', style: 'cancel' },
+        {
+          text: '确认移交',
+          onPress: () => {
+            if (useSession.getState().token !== sessionToken) return;
+            setBusy(true);
+            void (async () => {
+              try {
+                await transferLedgerGroupOwner(groupId, member.userId);
+                if (useSession.getState().token !== sessionToken) return;
+                toast('组长已移交，邀请码已更新', 'success');
+                await Promise.all([
+                  membersQuery.reload(),
+                  groupsQuery.reload(),
+                ]);
+              } catch (error) {
+                toast(
+                  error instanceof Error ? error.message : '移交失败，请重试',
+                  'error',
+                );
+              } finally {
+                setBusy(false);
+              }
+            })();
+          },
+        },
+      ],
+    );
+  };
+
   const copyInviteCode = useCallback(async () => {
     if (!group?.inviteCode) return;
     const result = await clipboard.copy(group.inviteCode);
-    toast(result.ok ? `邀请码 ${group.inviteCode} 已复制,发给家人吧` : '复制失败,请长按邀请码手动复制', result.ok ? 'success' : 'warn');
+    toast(
+      result.ok
+        ? `邀请码 ${group.inviteCode} 已复制,发给家人吧`
+        : '复制失败,请长按邀请码手动复制',
+      result.ok ? 'success' : 'warn',
+    );
   }, [group, toast]);
 
   const resetInviteCode = useCallback(async () => {
-    if (busy || !group) return;
+    if (busy || !group || useSession.getState().token !== sessionToken) return;
     setBusy(true);
     try {
       await regenerateInviteCode(group.id);
+      if (useSession.getState().token !== sessionToken) return;
       toast('邀请码已重置,旧码立即失效', 'success');
       await groupsQuery.reload();
     } catch {
@@ -65,30 +123,36 @@ export default function GroupDetailScreen() {
     } finally {
       setBusy(false);
     }
-  }, [busy, group, groupsQuery, toast]);
+  }, [busy, group, groupsQuery, toast, sessionToken]);
 
   const removeMember = useCallback(
     (member: LedgerGroupMember) => {
-      Alert.alert('移除成员?', `${member.nickname ?? '该成员'} 将无法继续记账到本组`, [
-        { text: '取消', style: 'cancel' },
-        {
-          text: '移除',
-          style: 'destructive',
-          onPress: () => {
-            void (async () => {
-              try {
-                await removeGroupMember(groupId, member.userId);
-                toast('已移除');
-                await membersQuery.reload();
-              } catch {
-                toast('移除失败,请稍后再试', 'error');
-              }
-            })();
+      Alert.alert(
+        '移除成员?',
+        `${member.nickname ?? '该成员'} 将无法继续记账到本组`,
+        [
+          { text: '取消', style: 'cancel' },
+          {
+            text: '移除',
+            style: 'destructive',
+            onPress: () => {
+              void (async () => {
+                try {
+                  if (useSession.getState().token !== sessionToken) return;
+                  await removeGroupMember(groupId, member.userId);
+                  if (useSession.getState().token !== sessionToken) return;
+                  toast('已移除');
+                  await membersQuery.reload();
+                } catch {
+                  toast('移除失败,请稍后再试', 'error');
+                }
+              })();
+            },
           },
-        },
-      ]);
+        ],
+      );
     },
-    [groupId, membersQuery, toast],
+    [groupId, membersQuery, toast, sessionToken],
   );
 
   const quit = useCallback(() => {
@@ -100,7 +164,9 @@ export default function GroupDetailScreen() {
         onPress: () => {
           void (async () => {
             try {
+              if (useSession.getState().token !== sessionToken) return;
               await quitLedgerGroup(groupId);
+              if (useSession.getState().token !== sessionToken) return;
               await setScope(null, null);
               toast('已退出', 'success');
               router.back();
@@ -111,34 +177,43 @@ export default function GroupDetailScreen() {
         },
       },
     ]);
-  }, [groupId, router, setScope, toast]);
+  }, [groupId, router, setScope, toast, sessionToken]);
 
   const dissolve = useCallback(() => {
-    Alert.alert('解散家庭组?', '组内所有账单会自动回归各成员的个人账本,数据不丢', [
-      { text: '取消', style: 'cancel' },
-      {
-        text: '解散',
-        style: 'destructive',
-        onPress: () => {
-          void (async () => {
-            try {
-              await dissolveLedgerGroup(groupId);
-              await setScope(null, null);
-              toast('已解散,账单已回归个人账本', 'success');
-              router.back();
-            } catch {
-              toast('解散失败,请稍后再试', 'error');
-            }
-          })();
+    Alert.alert(
+      '解散家庭组?',
+      '组内所有账单会自动回归各成员的个人账本,数据不丢',
+      [
+        { text: '取消', style: 'cancel' },
+        {
+          text: '解散',
+          style: 'destructive',
+          onPress: () => {
+            void (async () => {
+              try {
+                if (useSession.getState().token !== sessionToken) return;
+                await dissolveLedgerGroup(groupId);
+                if (useSession.getState().token !== sessionToken) return;
+                await setScope(null, null);
+                toast('已解散,账单已回归个人账本', 'success');
+                router.back();
+              } catch {
+                toast('解散失败,请稍后再试', 'error');
+              }
+            })();
+          },
         },
-      },
-    ]);
-  }, [groupId, router, setScope, toast]);
+      ],
+    );
+  }, [groupId, router, setScope, toast, sessionToken]);
 
   if (!signedIn || !groupId) {
     return (
       <SafeAreaView edges={['left', 'right']} className="flex-1 bg-background">
-        <ErrorState error={{ message: '会话已失效' } as never} onRetry={() => undefined} />
+        <ErrorState
+          error={{ message: '会话已失效' } as never}
+          onRetry={() => undefined}
+        />
       </SafeAreaView>
     );
   }
@@ -162,13 +237,18 @@ export default function GroupDetailScreen() {
           membersQuery.isInitialLoading ? (
             <SectionCard title="加载成员中…">{null}</SectionCard>
           ) : membersQuery.error ? (
-            <ErrorState error={membersQuery.error} onRetry={() => void membersQuery.reload()} />
+            <ErrorState
+              error={membersQuery.error}
+              onRetry={() => void membersQuery.reload()}
+            />
           ) : null
         }
         renderItem={({ item }) => (
           <Card className="mb-2 flex-row items-center p-3">
             <Avatar alt={item.nickname ?? '成员'} className="size-10">
-              {item.avatar ? <AvatarImage source={{ uri: item.avatar }} /> : null}
+              {item.avatar ? (
+                <AvatarImage source={{ uri: item.avatar }} />
+              ) : null}
               <AvatarFallback>
                 <Text>{(item.nickname ?? '成').slice(0, 1)}</Text>
               </AvatarFallback>
@@ -179,7 +259,9 @@ export default function GroupDetailScreen() {
                 {item.userId === myUserId ? '（我）' : ''}
               </Text>
               <Text className="text-muted-foreground mt-0.5 text-xs">
-                {item.role === 1 ? '组长' : `加入于 ${item.createTime?.slice(0, 10) ?? ''}`}
+                {item.role === 1
+                  ? '组长'
+                  : `加入于 ${item.createTime?.slice(0, 10) ?? ''}`}
               </Text>
             </View>
             {item.role === 1 ? (
@@ -188,14 +270,26 @@ export default function GroupDetailScreen() {
                 <Text className="text-pending">组长</Text>
               </Badge>
             ) : isOwner ? (
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel={`移除 ${item.nickname ?? '成员'}`}
-                onPress={() => removeMember(item)}
-                className="p-2"
-              >
-                <Icon as={UserMinus} size={16} className="text-urgent" />
-              </Pressable>
+              <View className="flex-row items-center">
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel={`移交组长给 ${item.nickname ?? '成员'}`}
+                  disabled={busy}
+                  onPress={() => transferOwner(item)}
+                  className="p-2"
+                >
+                  <Text className="text-primary text-xs">移交组长</Text>
+                </Pressable>
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel={`移除 ${item.nickname ?? '成员'}`}
+                  disabled={busy}
+                  onPress={() => removeMember(item)}
+                  className="p-2"
+                >
+                  <Icon as={UserMinus} size={16} className="text-urgent" />
+                </Pressable>
+              </View>
             ) : null}
           </Card>
         )}
@@ -203,7 +297,9 @@ export default function GroupDetailScreen() {
           <View className="mt-2" style={{ gap: 12 }}>
             {isOwner && group?.inviteCode ? (
               <Card className="p-4">
-                <Text className="text-muted-foreground text-xs">邀请码(仅组长可见)</Text>
+                <Text className="text-muted-foreground text-xs">
+                  邀请码(仅组长可见)
+                </Text>
                 <Pressable
                   accessibilityRole="button"
                   accessibilityLabel="复制邀请码"
@@ -211,7 +307,10 @@ export default function GroupDetailScreen() {
                   className="mt-1 flex-row items-center"
                   style={{ gap: 8 }}
                 >
-                  <Text className="text-primary text-2xl font-bold tracking-[0.3em]" selectable>
+                  <Text
+                    className="text-primary text-2xl font-bold tracking-[0.3em]"
+                    selectable
+                  >
                     {group.inviteCode}
                   </Text>
                   <Icon as={Copy} size={16} className="text-muted-foreground" />
@@ -224,17 +323,23 @@ export default function GroupDetailScreen() {
                   className="mt-2 flex-row items-center self-start"
                   style={{ gap: 4 }}
                 >
-                  <Icon as={RefreshCw} size={12} className="text-muted-foreground" />
-                  <Text className="text-muted-foreground text-xs">重置邀请码(旧码立即失效)</Text>
+                  <Icon
+                    as={RefreshCw}
+                    size={12}
+                    className="text-muted-foreground"
+                  />
+                  <Text className="text-muted-foreground text-xs">
+                    重置邀请码(旧码立即失效)
+                  </Text>
                 </Pressable>
               </Card>
             ) : null}
 
-            <Button variant="outline" onPress={quit} disabled={isOwner}>
-              <Text>{isOwner ? '组长不能退出(可解散)' : '退出家庭组'}</Text>
+            <Button variant="outline" onPress={quit} disabled={isOwner || busy}>
+              <Text>{isOwner ? '组长需先移交或解散后退出' : '退出家庭组'}</Text>
             </Button>
             {isOwner ? (
-              <Button variant="outline" onPress={dissolve}>
+              <Button variant="outline" onPress={dissolve} disabled={busy}>
                 <Text className="text-urgent">解散家庭组</Text>
               </Button>
             ) : null}

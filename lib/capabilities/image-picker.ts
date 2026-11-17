@@ -13,6 +13,8 @@ import { UNAVAILABLE_MESSAGE } from './constants';
 export type PickedImageSource = 'LIBRARY' | 'CAMERA';
 
 export interface PickedImage {
+  /** Web 文件对象；上传时使用真实二进制，而不是 RN 的 URI 描述符。 */
+  file?: Blob;
   /** 本地可上传地址(file:// 或 content://)。 */
   uri: string;
   fileName?: string;
@@ -165,6 +167,7 @@ class WebInputImagePicker implements ImagePickerApi {
             ok<PickedImage[]>(
               files.map((file) => ({
                 uri: createObjectUrl(file),
+                file: file as unknown as Blob,
                 fileName: file.name,
                 mimeType: file.type || 'image/jpeg',
                 size: file.size,

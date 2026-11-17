@@ -31,6 +31,8 @@ export interface ApiEnvelope<T> {
 }
 
 export interface RequestOptions {
+  /** 私有票据下载返回二进制；JSON 错误仍按统一业务码处理。 */
+  responseType?: 'blob';
   method?: HttpMethod;
   /** 查询参数;undefined / null / '' 会被丢掉。数组按 `a=1&a=2` 展开。 */
   params?: Record<string, unknown> | undefined;
@@ -171,6 +173,10 @@ export async function request<T>(path: string, options: RequestOptions = {}): Pr
           : undefined,
       signal: controller.signal as unknown as AbortSignal,
     });
+    if (options.responseType === 'blob' && response.ok
+      && !response.headers.get('content-type')?.toLowerCase().includes('json')) {
+      return await response.blob() as T;
+    }
     rawText = await response.text();
   } catch (error) {
     const aborted = controller.signal.aborted ||

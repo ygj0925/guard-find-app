@@ -29,13 +29,23 @@ import { useToast } from '@/providers/ToastProvider';
 import { loginHref } from '@/lib/nav';
 
 export default function LedgerGroupsScreen() {
+  const sessionToken = useSession((state) => state.token);
+  return <LedgerGroupsContent key={sessionToken} />;
+}
+
+function LedgerGroupsContent() {
   const router = useRouter();
   const { toast } = useToast();
   const signedIn = useSession((state) => state.phase === 'authenticated');
+  const sessionToken = useSession((state) => state.token);
   const scopeGroupId = useLedgerScope((state) => state.groupId);
   const setScope = useLedgerScope((state) => state.setScope);
+  const loadScope = useLedgerScope((state) => state.load);
+  React.useEffect(() => { void loadScope(); }, [loadScope, sessionToken]);
 
-  const query = useRequest(() => fetchLedgerGroups(), [signedIn]);
+  const query = useRequest(() => fetchLedgerGroups(), [sessionToken], {
+    enabled: signedIn,
+  });
   const groups = query.data ?? [];
 
   const [createOpen, setCreateOpen] = useState(false);
@@ -47,11 +57,16 @@ export default function LedgerGroupsScreen() {
 
   const selectScope = useCallback(
     async (group: LedgerGroup | null) => {
+      if (useSession.getState().token !== sessionToken) return;
       await setScope(group ? group.id : null, group ? group.name : null);
-      toast(group ? `已切换到「${group.name}」` : '已切换到个人账本', 'success');
+      if (useSession.getState().token !== sessionToken) return;
+      toast(
+        group ? `已切换到「${group.name}」` : '已切换到个人账本',
+        'success',
+      );
       router.back();
     },
-    [router, setScope, toast],
+    [router, setScope, toast, sessionToken],
   );
 
   const create = useCallback(async () => {
@@ -64,18 +79,21 @@ export default function LedgerGroupsScreen() {
     setBusy(true);
     try {
       const group = await createLedgerGroup(name);
+      if (useSession.getState().token !== sessionToken) return;
       toast('家庭组已创建,把邀请码分享给家人吧', 'success');
       setCreateOpen(false);
       setGroupName('');
       await setScope(group.id, group.name);
+      if (useSession.getState().token !== sessionToken) return;
       router.replace('/tools/ledger/groups');
       await query.reload();
     } catch {
+      if (useSession.getState().token !== sessionToken) return;
       toast('创建失败,请稍后再试', 'error');
     } finally {
       setBusy(false);
     }
-  }, [busy, groupName, query, router, setScope, toast]);
+  }, [busy, groupName, query, router, setScope, toast, sessionToken]);
 
   const join = useCallback(async () => {
     const code = inviteCode.trim().toUpperCase();
@@ -87,25 +105,37 @@ export default function LedgerGroupsScreen() {
     setBusy(true);
     try {
       const group = await joinLedgerGroup(code);
+      if (useSession.getState().token !== sessionToken) return;
       toast(`已加入「${group.name}」`, 'success');
       setJoinOpen(false);
       setInviteCode('');
       await query.reload();
     } catch (cause) {
-      toast(cause instanceof Error && cause.message ? cause.message : '加入失败,请稍后再试', 'error');
+      if (useSession.getState().token !== sessionToken) return;
+      toast(
+        cause instanceof Error && cause.message
+          ? cause.message
+          : '加入失败,请稍后再试',
+        'error',
+      );
     } finally {
       setBusy(false);
     }
-  }, [busy, inviteCode, query, toast]);
+  }, [busy, inviteCode, query, toast, sessionToken]);
 
   if (!signedIn) {
     return (
       <SafeAreaView edges={['left', 'right']} className="flex-1 bg-background">
-        <EmptyState illustration="signin"
+        <EmptyState
+          illustration="signin"
           title="登录后使用家庭记账"
           description="和家人共享一个账本,总花销一目了然"
           actionLabel="去登录"
-          onAction={() => router.push(loginHref({ href: '/tools/ledger/groups', from: 'groups' }))}
+          onAction={() =>
+            router.push(
+              loginHref({ href: '/tools/ledger/groups', from: 'groups' }),
+            )
+          }
         />
       </SafeAreaView>
     );
@@ -113,23 +143,37 @@ export default function LedgerGroupsScreen() {
 
   return (
     <SafeAreaView edges={['left', 'right']} className="flex-1 bg-background">
-      <ScrollView className="flex-1 px-4" contentContainerStyle={{ paddingBottom: 104 }}>
+      <ScrollView
+        className="flex-1 px-4"
+        contentContainerStyle={{ paddingBottom: 104 }}
+      >
         <View className="mb-4 mt-2 flex-row items-center justify-between">
           <View>
-            <Text className="text-muted-foreground text-sm">点选切换,新账单记入选中的账本</Text>
+            <Text className="text-muted-foreground text-sm">
+              点选切换,新账单记入选中的账本
+            </Text>
           </View>
         </View>
 
-        <Pressable accessibilityRole="button" accessibilityLabel="个人账本" onPress={() => void selectScope(null)} className="mb-2">
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="个人账本"
+          onPress={() => void selectScope(null)}
+          className="mb-2"
+        >
           <Card className="flex-row items-center p-3">
             <View className="bg-accent h-9 w-9 items-center justify-center rounded-full">
               <Icon as={Users} size={16} className="text-accent-foreground" />
             </View>
             <View className="ml-3 flex-1">
               <Text className="text-sm font-medium">个人账本</Text>
-              <Text className="text-muted-foreground mt-0.5 text-xs">只有自己的账单</Text>
+              <Text className="text-muted-foreground mt-0.5 text-xs">
+                只有自己的账单
+              </Text>
             </View>
-            {scopeGroupId === null ? <Text className="text-primary text-xs font-semibold">当前 ✓</Text> : null}
+            {scopeGroupId === null ? (
+              <Text className="text-primary text-xs font-semibold">当前 ✓</Text>
+            ) : null}
           </Card>
         </Pressable>
 
@@ -148,26 +192,43 @@ export default function LedgerGroupsScreen() {
             >
               <Card className="flex-row items-center p-3">
                 <View className="bg-accent h-9 w-9 items-center justify-center rounded-full">
-                  <Icon as={Users} size={16} className="text-accent-foreground" />
+                  <Icon
+                    as={Users}
+                    size={16}
+                    className="text-accent-foreground"
+                  />
                 </View>
                 <View className="ml-3 flex-1">
                   <Text className="text-sm font-medium">{group.name}</Text>
                   <Text className="text-muted-foreground mt-0.5 text-xs">
-                    {group.memberCount} 名成员 · {group.myRole === 1 ? '我是组长' : '成员'}
+                    {group.memberCount} 名成员 ·{' '}
+                    {group.myRole === 1 ? '我是组长' : '成员'}
                   </Text>
                 </View>
                 <Pressable
                   accessibilityRole="button"
                   accessibilityLabel={`管理 ${group.name}`}
-                  onPress={() => router.push(`/tools/ledger/group-detail?id=${group.id}`)}
+                  onPress={() =>
+                    router.push(`/tools/ledger/group-detail?id=${group.id}`)
+                  }
                   className="p-2"
                 >
-                  <Icon as={Settings} size={16} className="text-muted-foreground" />
+                  <Icon
+                    as={Settings}
+                    size={16}
+                    className="text-muted-foreground"
+                  />
                 </Pressable>
                 {scopeGroupId === group.id ? (
-                  <Text className="text-primary ml-1 text-xs font-semibold">当前 ✓</Text>
+                  <Text className="text-primary ml-1 text-xs font-semibold">
+                    当前 ✓
+                  </Text>
                 ) : (
-                  <Icon as={ChevronRight} size={14} className="text-muted-foreground" />
+                  <Icon
+                    as={ChevronRight}
+                    size={14}
+                    className="text-muted-foreground"
+                  />
                 )}
               </Card>
             </Pressable>
@@ -175,7 +236,11 @@ export default function LedgerGroupsScreen() {
         )}
 
         <View className="mt-3 flex-row" style={{ gap: 12 }}>
-          <Button variant="outline" className="flex-1" onPress={() => setJoinOpen(true)}>
+          <Button
+            variant="outline"
+            className="flex-1"
+            onPress={() => setJoinOpen(true)}
+          >
             <Text>凭邀请码加入</Text>
           </Button>
           <Button className="flex-1" onPress={() => setCreateOpen(true)}>
@@ -186,18 +251,36 @@ export default function LedgerGroupsScreen() {
       </ScrollView>
 
       {/* 新建组 */}
-      <Modal visible={createOpen} transparent animationType="slide" onRequestClose={() => setCreateOpen(false)}>
+      <Modal
+        visible={createOpen}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setCreateOpen(false)}
+      >
         <View className="flex-1 justify-end bg-overlay/40">
           <View className="bg-background rounded-t-2xl px-4 pb-8 pt-4">
             <Text className="mb-3 text-lg font-bold">新建家庭组</Text>
             <Field label="组名" error={errors.name} required>
-              <Input value={groupName} onChangeText={setGroupName} placeholder="比如:我们的家" aria-label="组名" />
+              <Input
+                value={groupName}
+                onChangeText={setGroupName}
+                placeholder="比如:我们的家"
+                aria-label="组名"
+              />
             </Field>
             <View className="mt-2 flex-row" style={{ gap: 12 }}>
-              <Button variant="outline" className="flex-1" onPress={() => setCreateOpen(false)}>
+              <Button
+                variant="outline"
+                className="flex-1"
+                onPress={() => setCreateOpen(false)}
+              >
                 <Text>取消</Text>
               </Button>
-              <Button className="flex-1" onPress={() => void create()} disabled={busy}>
+              <Button
+                className="flex-1"
+                onPress={() => void create()}
+                disabled={busy}
+              >
                 <Text>{busy ? '创建中…' : '创建'}</Text>
               </Button>
             </View>
@@ -206,11 +289,18 @@ export default function LedgerGroupsScreen() {
       </Modal>
 
       {/* 凭码加入 */}
-      <Modal visible={joinOpen} transparent animationType="slide" onRequestClose={() => setJoinOpen(false)}>
+      <Modal
+        visible={joinOpen}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setJoinOpen(false)}
+      >
         <View className="flex-1 justify-end bg-overlay/40">
           <View className="bg-background rounded-t-2xl px-4 pb-8 pt-4">
             <Text className="mb-1 text-lg font-bold">加入家庭组</Text>
-            <Text className="text-muted-foreground mb-3 text-xs">向组长要 6 位邀请码</Text>
+            <Text className="text-muted-foreground mb-3 text-xs">
+              向组长要 6 位邀请码
+            </Text>
             <Field label="邀请码" error={errors.inviteCode} required>
               <TextInput
                 className="border-border text-foreground rounded-lg border px-3 py-2 text-center text-xl font-bold tracking-[0.3em]"
@@ -223,10 +313,18 @@ export default function LedgerGroupsScreen() {
               />
             </Field>
             <View className="mt-2 flex-row" style={{ gap: 12 }}>
-              <Button variant="outline" className="flex-1" onPress={() => setJoinOpen(false)}>
+              <Button
+                variant="outline"
+                className="flex-1"
+                onPress={() => setJoinOpen(false)}
+              >
                 <Text>取消</Text>
               </Button>
-              <Button className="flex-1" onPress={() => void join()} disabled={busy}>
+              <Button
+                className="flex-1"
+                onPress={() => void join()}
+                disabled={busy}
+              >
                 <Text>{busy ? '加入中…' : '加入'}</Text>
               </Button>
             </View>

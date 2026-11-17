@@ -6,7 +6,14 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Alert, FlatList, Pressable, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useFocusEffect } from 'expo-router';
-import { ChevronDown, ChevronLeft, ChevronRight, Plus, Share2, Users } from 'lucide-react-native';
+import {
+  ChevronDown,
+  ChevronLeft,
+  ChevronRight,
+  Plus,
+  Share2,
+  Users,
+} from 'lucide-react-native';
 
 import { Text } from '@/components/ui/text';
 import { Icon } from '@/components/ui/icon';
@@ -18,7 +25,11 @@ import {
   RefreshingControl,
 } from '@/components/business/feedback';
 import { SkeletonList } from '@/components/ui/skeleton';
-import { deleteLedgerRecord, fetchLedgerRecords, type LedgerRecord } from '@/lib/api/endpoints/ledger';
+import {
+  deleteLedgerRecord,
+  fetchLedgerRecords,
+  type LedgerRecord,
+} from '@/lib/api/endpoints/ledger';
 import { buildLedgerCsv, csvFileName } from '@/lib/ledger/csv';
 import {
   adjacentMonths,
@@ -35,9 +46,16 @@ import { token } from '@/constants/Colors';
 import { useToast } from '@/providers/ToastProvider';
 import { shareApi } from '@/lib/capabilities';
 import { loginHref } from '@/lib/nav';
+import { canManageLedgerRecord } from '@/lib/ledger/permissions';
 
 type Row =
-  | { kind: 'header'; key: string; label: string; expense: number; income: number }
+  | {
+      kind: 'header';
+      key: string;
+      label: string;
+      expense: number;
+      income: number;
+    }
   | { kind: 'record'; key: string; record: LedgerRecord };
 
 export default function LedgerScreen() {
@@ -45,16 +63,19 @@ export default function LedgerScreen() {
   const { toast } = useToast();
   const scheme = useColorScheme() ?? 'light';
   const signedIn = useSession((state) => state.phase === 'authenticated');
+  const myUserId = useSession((state) => state.user?.id ?? null);
+  const sessionToken = useSession((state) => state.token);
 
   const [month, setMonth] = useState(() => currentMonth());
   const scopeGroupId = useLedgerScope((state) => state.groupId);
   const scopeName = useLedgerScope((state) => state.scopeName);
   const loadScope = useLedgerScope((state) => state.load);
-  const feed = useLedgerFeed(month, signedIn, scopeGroupId);
+  const scopeLoaded = useLedgerScope((state) => state.loaded);
+  const feed = useLedgerFeed(month, signedIn && scopeLoaded, scopeGroupId);
 
   React.useEffect(() => {
     void loadScope();
-  }, [loadScope]);
+  }, [loadScope, myUserId]);
 
   // 从"记一笔/编辑"返回时自动刷新:首次挂载交给 hook 的初始加载,避免双请求。
   const { loadedMonth, refresh, error: feedError } = feed;
@@ -67,9 +88,13 @@ export default function LedgerScreen() {
   // 当前账本已被组长解散(服务端 4004):自动回落个人账本,避免每次进页都报错
   const setScope = useLedgerScope((state) => state.setScope);
   useEffect(() => {
-    if (scopeGroupId && feedError && String(feedError.bizCode) === '4004') {
+    if (
+      scopeGroupId &&
+      feedError &&
+      ['4004', '403'].includes(String(feedError.bizCode))
+    ) {
       void setScope(null, null);
-      toast('该家庭组已不存在,已切回个人账本', 'warn');
+      toast('该家庭组已不可访问,已切回个人账本', 'warn');
     }
   }, [feedError, scopeGroupId, setScope, toast]);
 
@@ -83,7 +108,9 @@ export default function LedgerScreen() {
           expense: group.expense,
           income: group.income,
         },
-        ...group.records.map((record): Row => ({ kind: 'record', key: `r:${record.id}`, record })),
+        ...group.records.map(
+          (record): Row => ({ kind: 'record', key: `r:${record.id}`, record }),
+        ),
       ]),
     [feed.groups],
   );
@@ -93,24 +120,42 @@ export default function LedgerScreen() {
       router.push(loginHref({ href: '/tools/ledger/add', from: 'ledger-fab' }));
       return;
     }
-    router.push('/tools/ledger/add');
-  }, [signedIn, router]);
+    if (!scopeLoaded) return;
+    router.push({
+      pathname: '/tools/ledger/add',
+      params: { groupId: scopeGroupId ?? '' },
+    });
+  }, [signedIn, scopeLoaded, scopeGroupId, router]);
 
   const exportCsv = useCallback(async () => {
+    if (!signedIn || !scopeLoaded) return;
+    const token = sessionToken;
     try {
       const all: LedgerRecord[] = [];
       let page = 1;
       // 保险丝:50 页(5000 条)封顶,超出提示缩小范围
       for (; page <= 50; page++) {
-        const resp = await fetchLedgerRecords({ month, page, size: 100 });
+        const resp = await fetchLedgerRecords({
+          month,
+          groupId: scopeGroupId ?? undefined,
+          page,
+          size: 100,
+        });
+        if (useSession.getState().token !== token) return;
         all.push(...resp.records);
         if (all.length >= resp.total || resp.records.length === 0) break;
+      }
+      if (page > 50) {
+        toast('本月记录超过5000条，请缩小范围后导出', 'warn');
+        return;
       }
       if (all.length === 0) {
         toast('这个月还没有记录', 'warn');
         return;
       }
-      const csv = buildLedgerCsv(all, (record) => (record.type === 2 ? '收入' : '支出'));
+      const csv = buildLedgerCsv(all, (record) =>
+        record.type === 2 ? '收入' : '支出',
+      );
       const result = await shareApi.share({
         title: csvFileName(month),
         message: csv,
@@ -124,10 +169,14 @@ export default function LedgerScreen() {
     } catch {
       toast('导出失败,请稍后再试', 'error');
     }
-  }, [month, toast]);
+  }, [month, toast, signedIn, scopeLoaded, scopeGroupId, sessionToken]);
 
   const confirmDelete = useCallback(
     (record: LedgerRecord) => {
+      if (!canManageLedgerRecord(record, myUserId)) {
+        toast('只能修改或删除本人记录', 'warn');
+        return;
+      }
       Alert.alert(
         '删除这笔记录?',
         `${categoryLabel(record.type, record.category)} · ${formatAmount(record.amount)} 元`,
@@ -138,8 +187,10 @@ export default function LedgerScreen() {
             style: 'destructive',
             onPress: () => {
               void (async () => {
+                if (useSession.getState().token !== sessionToken) return;
                 try {
                   await deleteLedgerRecord(record.id);
+                  if (useSession.getState().token !== sessionToken) return;
                   toast('已删除');
                   await feed.reload();
                 } catch {
@@ -151,27 +202,34 @@ export default function LedgerScreen() {
         ],
       );
     },
-    [feed, toast],
+    [feed, toast, myUserId, sessionToken],
   );
 
   const openEdit = useCallback(
     (record: LedgerRecord) => {
+      if (!canManageLedgerRecord(record, myUserId)) {
+        toast('该记录由家庭组其他成员记入', 'warn');
+        return;
+      }
       router.push({
         pathname: '/tools/ledger/add',
-        params: { record: JSON.stringify(record) },
+        params: { record: JSON.stringify(record), groupId: scopeGroupId ?? '' },
       });
     },
-    [router],
+    [router, myUserId, scopeGroupId, toast],
   );
 
   if (!signedIn) {
     return (
       <SafeAreaView edges={['left', 'right']} className="flex-1 bg-background">
-        <EmptyState illustration="signin"
+        <EmptyState
+          illustration="signin"
           title="登录后开始记账"
           description="账单跟随账号云端同步,换设备不丢数据"
           actionLabel="去登录"
-          onAction={() => router.push(loginHref({ href: '/tools/ledger', from: 'ledger' }))}
+          onAction={() =>
+            router.push(loginHref({ href: '/tools/ledger', from: 'ledger' }))
+          }
         />
       </SafeAreaView>
     );
@@ -184,7 +242,10 @@ export default function LedgerScreen() {
         keyExtractor={(row) => row.key}
         className="flex-1 px-4"
         contentContainerStyle={{ paddingBottom: 104 }}
-        refreshControl={RefreshingControl(feed.phase === 'loading', () => void feed.refresh())}
+        refreshControl={RefreshingControl(
+          feed.phase === 'loading',
+          () => void feed.refresh(),
+        )}
         ListHeaderComponent={
           <Card className="mb-3 mt-2 p-4">
             <View className="flex-row items-center justify-between">
@@ -196,8 +257,14 @@ export default function LedgerScreen() {
                 style={{ gap: 6 }}
               >
                 <Icon as={Users} size={16} className="text-primary" />
-                <Text className="text-base font-semibold">{scopeName ?? '个人账本'}</Text>
-                <Icon as={ChevronDown} size={14} className="text-muted-foreground" />
+                <Text className="text-base font-semibold">
+                  {scopeName ?? '个人账本'}
+                </Text>
+                <Icon
+                  as={ChevronDown}
+                  size={14}
+                  className="text-muted-foreground"
+                />
               </Pressable>
               <View className="flex-row items-center">
                 <Pressable
@@ -206,9 +273,15 @@ export default function LedgerScreen() {
                   onPress={() => setMonth(adjacentMonths(month).prev)}
                   className="p-2"
                 >
-                  <Icon as={ChevronLeft} size={18} className="text-muted-foreground" />
+                  <Icon
+                    as={ChevronLeft}
+                    size={18}
+                    className="text-muted-foreground"
+                  />
                 </Pressable>
-                <Text className="text-base font-semibold">{monthLabel(month)}</Text>
+                <Text className="text-base font-semibold">
+                  {monthLabel(month)}
+                </Text>
                 <Pressable
                   accessibilityRole="button"
                   accessibilityLabel="下一月"
@@ -218,10 +291,29 @@ export default function LedgerScreen() {
                   }}
                   className="p-2"
                 >
-                  <Icon as={ChevronRight} size={18} className="text-muted-foreground" />
+                  <Icon
+                    as={ChevronRight}
+                    size={18}
+                    className="text-muted-foreground"
+                  />
                 </Pressable>
               </View>
             </View>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="票据与识别记账"
+              onPress={() =>
+                router.push({
+                  pathname: '/tools/ledger/receipts',
+                  params: { groupId: scopeGroupId ?? '' },
+                })
+              }
+              className="mt-3"
+            >
+              <Text className="text-primary text-sm">
+                票据管理 · 文字/图片识别
+              </Text>
+            </Pressable>
             <View className="mt-3 flex-row">
               {/* 模块特色:支出是记账的主指标,字号压过收入/结余形成主次层次 */}
               <View className="flex-[1.4]">
@@ -267,7 +359,8 @@ export default function LedgerScreen() {
           ) : feed.phase === 'error' && feed.error ? (
             <ErrorState error={feed.error} onRetry={() => void feed.reload()} />
           ) : (
-            <EmptyState illustration="money"
+            <EmptyState
+              illustration="money"
               title="这个月还没有记录"
               description="点击右下角「记一笔」,3 秒完成记账"
               actionLabel="记一笔"
@@ -291,7 +384,9 @@ export default function LedgerScreen() {
         renderItem={({ item }) =>
           item.kind === 'header' ? (
             <View className="mb-1 mt-3 flex-row items-center justify-between px-1">
-              <Text className="text-muted-foreground text-xs font-semibold">{item.label}</Text>
+              <Text className="text-muted-foreground text-xs font-semibold">
+                {item.label}
+              </Text>
               <Text className="text-muted-foreground text-xs">
                 {item.expense > 0 ? `支 ${formatAmount(item.expense)}` : ''}
                 {item.income > 0 ? ` 收 ${formatAmount(item.income)}` : ''}
@@ -306,14 +401,25 @@ export default function LedgerScreen() {
               className="mb-1.5"
             >
               <Card className="flex-row items-center p-3">
-                <RecordGlyph type={item.record.type} category={item.record.category} />
+                <RecordGlyph
+                  type={item.record.type}
+                  category={item.record.category}
+                />
                 <View className="ml-3 flex-1">
                   <Text className="text-sm font-medium">
                     {categoryLabel(item.record.type, item.record.category)}
                   </Text>
                   {item.record.remark ? (
-                    <Text className="text-muted-foreground mt-0.5 text-xs" numberOfLines={1}>
+                    <Text
+                      className="text-muted-foreground mt-0.5 text-xs"
+                      numberOfLines={1}
+                    >
                       {item.record.remark}
+                    </Text>
+                  ) : null}
+                  {!canManageLedgerRecord(item.record, myUserId) ? (
+                    <Text className="text-muted-foreground text-xs">
+                      家庭组成员记录 · 只读
                     </Text>
                   ) : null}
                 </View>
@@ -350,18 +456,28 @@ export default function LedgerScreen() {
 }
 
 /** 记录行左侧分类圆标。 */
-function RecordGlyph({ type, category }: { type: LedgerRecord['type']; category: string }) {
+function RecordGlyph({
+  type,
+  category,
+}: {
+  type: LedgerRecord['type'];
+  category: string;
+}) {
   const scheme = useColorScheme() ?? 'light';
   const Glyph = categoryIcon(type, category);
   return (
     <View
       className="h-9 w-9 items-center justify-center rounded-full"
-      style={{ backgroundColor: token(type === 2 ? 'found' : 'accent', scheme) }}
+      style={{
+        backgroundColor: token(type === 2 ? 'found' : 'accent', scheme),
+      }}
     >
       <Icon
         as={Glyph}
         size={16}
-        className={type === 2 ? 'text-found-foreground' : 'text-accent-foreground'}
+        className={
+          type === 2 ? 'text-found-foreground' : 'text-accent-foreground'
+        }
       />
     </View>
   );

@@ -11,7 +11,11 @@ import { Sparkles } from 'lucide-react-native';
 import { Text } from '@/components/ui/text';
 import { Icon } from '@/components/ui/icon';
 import { Card } from '@/components/ui/card';
-import { EmptyState, ErrorState, SectionCard } from '@/components/business/feedback';
+import {
+  EmptyState,
+  ErrorState,
+  SectionCard,
+} from '@/components/business/feedback';
 import {
   fetchLedgerSummary,
   type LedgerPeriod,
@@ -24,6 +28,7 @@ import { useRequest } from '@/hooks/useRequest';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { useLedgerScope } from '@/store/ledger-scope';
 import { token } from '@/constants/Colors';
+import { useSession } from '@/store/session';
 
 const PERIODS: { key: LedgerPeriod; label: string }[] = [
   { key: 'week', label: '周报' },
@@ -32,38 +37,63 @@ const PERIODS: { key: LedgerPeriod; label: string }[] = [
 ];
 
 export default function LedgerReportScreen() {
+  const sessionToken = useSession((state) => state.token);
+  const groupId = useLedgerScope((state) => state.groupId);
+  return <LedgerReportContent key={`${sessionToken}:${groupId}`} />;
+}
+
+function LedgerReportContent() {
   const scheme = useColorScheme() ?? 'light';
   const [period, setPeriod] = useState<LedgerPeriod>('month');
   const anchor = useMemo(() => toDayKey(new Date()), []);
   const scopeGroupId = useLedgerScope((state) => state.groupId);
   const scopeName = useLedgerScope((state) => state.scopeName);
   const loadScope = useLedgerScope((state) => state.load);
+  const scopeLoaded = useLedgerScope((state) => state.loaded);
+  const sessionToken = useSession((state) => state.token);
+  const signedIn = useSession((state) => state.phase === 'authenticated');
   React.useEffect(() => {
     void loadScope();
-  }, [loadScope]);
-  const [insight, setInsight] = useState<AiTextResp | null>(null);
+  }, [loadScope, sessionToken]);
+  const [insightState, setInsight] = useState<{
+    period: LedgerPeriod;
+    data: AiTextResp;
+  } | null>(null);
+  const insight = insightState?.period === period ? insightState.data : null;
   const [insightLoading, setInsightLoading] = useState(false);
 
-  const summary = useRequest<LedgerSummary>(() => fetchLedgerSummary({ period, date: anchor, groupId: scopeGroupId ?? undefined }), [
-    period,
-    anchor,
-  ]);
+  const summary = useRequest<LedgerSummary>(
+    () =>
+      fetchLedgerSummary({
+        period,
+        date: anchor,
+        groupId: scopeGroupId ?? undefined,
+      }),
+    [period, anchor, scopeGroupId, sessionToken],
+    { enabled: signedIn && scopeLoaded },
+  );
 
   // 年报没有对应服务端口径,点评只对周/月开放
   const loadInsight = useCallback(async () => {
-    if (insightLoading || period === 'year') return;
+    if (insightLoading || period === 'year' || scopeGroupId || !signedIn)
+      return;
     setInsightLoading(true);
     try {
-      setInsight(await fetchAiLedgerInsight(period, anchor));
+      const data = await fetchAiLedgerInsight(period, anchor);
+      if (useSession.getState().token === sessionToken)
+        setInsight({ period, data });
     } catch {
       setInsight(null);
     } finally {
       setInsightLoading(false);
     }
-  }, [anchor, insightLoading, period]);
+  }, [anchor, insightLoading, period, scopeGroupId, signedIn, sessionToken]);
 
   const maxTrend = useCallback((data: LedgerSummary) => {
-    return Math.max(1, ...data.trend.map((point) => Math.max(point.expense, point.income)));
+    return Math.max(
+      1,
+      ...data.trend.map((point) => Math.max(point.expense, point.income)),
+    );
   }, []);
 
   const reload = useCallback(async () => {
@@ -72,9 +102,14 @@ export default function LedgerReportScreen() {
 
   return (
     <SafeAreaView edges={['left', 'right']} className="flex-1 bg-background">
-      <ScrollView className="flex-1 px-4" contentContainerStyle={{ paddingBottom: 104 }}>
+      <ScrollView
+        className="flex-1 px-4"
+        contentContainerStyle={{ paddingBottom: 104 }}
+      >
         <View className="mb-4 mt-2">
-          <Text className="text-muted-foreground text-sm">当前账本:{scopeName ?? '个人账本'}</Text>
+          <Text className="text-muted-foreground text-sm">
+            当前账本:{scopeName ?? '个人账本'}
+          </Text>
         </View>
 
         <View className="mb-3 flex-row rounded-full bg-muted p-1">
@@ -103,7 +138,8 @@ export default function LedgerReportScreen() {
           <>
             <Card className="mb-3 p-4">
               <Text className="text-muted-foreground text-xs">
-                {summary.data.startDate} ~ {summary.data.endDate} · {summary.data.recordCount} 笔
+                {summary.data.startDate} ~ {summary.data.endDate} ·{' '}
+                {summary.data.recordCount} 笔
               </Text>
               <View className="mt-3 flex-row">
                 <View className="flex-1">
@@ -120,24 +156,31 @@ export default function LedgerReportScreen() {
                 </View>
                 <View className="flex-1">
                   <Text className="text-muted-foreground text-xs">结余</Text>
-                  <Text className="mt-1 text-xl font-bold">{formatAmount(summary.data.balance)}</Text>
+                  <Text className="mt-1 text-xl font-bold">
+                    {formatAmount(summary.data.balance)}
+                  </Text>
                 </View>
               </View>
             </Card>
 
             <SectionCard title="分类占比" description="按支出金额排序">
               {summary.data.byCategory.length === 0 ? (
-                <Text className="text-muted-foreground text-sm">区间内没有支出记录</Text>
+                <Text className="text-muted-foreground text-sm">
+                  区间内没有支出记录
+                </Text>
               ) : (
                 summary.data.byCategory.map((stat) => (
                   <View key={stat.category} className="mb-3">
                     <View className="mb-1 flex-row items-center justify-between">
                       <Text className="text-sm">
                         {categoryLabel(1, stat.category)}
-                        {stat.income > 0 ? ` · 收 ${formatAmount(stat.income)}` : ''}
+                        {stat.income > 0
+                          ? ` · 收 ${formatAmount(stat.income)}`
+                          : ''}
                       </Text>
                       <Text className="text-muted-foreground text-xs">
-                        {formatAmount(stat.expense)} 元 · {Math.round(stat.ratio * 100)}%
+                        {formatAmount(stat.expense)} 元 ·{' '}
+                        {Math.round(stat.ratio * 100)}%
                       </Text>
                     </View>
                     <View
@@ -161,16 +204,25 @@ export default function LedgerReportScreen() {
               title="消费趋势"
               description={period === 'year' ? '按月汇总' : '按日汇总'}
             >
-              <TrendBars data={summary.data} max={maxTrend(summary.data)} scheme={scheme} />
+              <TrendBars
+                data={summary.data}
+                max={maxTrend(summary.data)}
+                scheme={scheme}
+              />
             </SectionCard>
 
-            {period !== 'year' ? (
+            {period !== 'year' && !scopeGroupId ? (
               <SectionCard
                 title="AI 点评"
-                description={insight?.mockMode ? '测试模式 · 服务端未配置 Key' : undefined}
+                description={
+                  insight?.mockMode ? '测试模式 · 服务端未配置 Key' : undefined
+                }
               >
                 {insight ? (
-                  <Text className="text-foreground text-sm leading-5" selectable>
+                  <Text
+                    className="text-foreground text-sm leading-5"
+                    selectable
+                  >
                     {insight.text}
                   </Text>
                 ) : (
@@ -182,7 +234,11 @@ export default function LedgerReportScreen() {
                     className="bg-accent flex-row items-center self-start rounded-full px-4 py-2"
                     style={{ gap: 6 }}
                   >
-                    <Icon as={Sparkles} size={14} className="text-accent-foreground" />
+                    <Icon
+                      as={Sparkles}
+                      size={14}
+                      className="text-accent-foreground"
+                    />
                     <Text className="text-accent-foreground text-xs font-semibold">
                       {insightLoading ? '分析中…' : '让 AI 点评这个周期'}
                     </Text>
@@ -196,7 +252,11 @@ export default function LedgerReportScreen() {
         ) : summary.error ? (
           <ErrorState error={summary.error} onRetry={() => void reload()} />
         ) : (
-          <EmptyState illustration="money" title="暂无数据" description="先去记一笔,报表立刻就有内容" />
+          <EmptyState
+            illustration="money"
+            title="暂无数据"
+            description="先去记一笔,报表立刻就有内容"
+          />
         )}
       </ScrollView>
     </SafeAreaView>
@@ -213,14 +273,18 @@ function TrendBars({
   max: number;
   scheme: 'light' | 'dark';
 }) {
-  const labelStride = data.trend.length > 16 ? Math.ceil(data.trend.length / 8) : 1;
+  const labelStride =
+    data.trend.length > 16 ? Math.ceil(data.trend.length / 8) : 1;
   return (
     <View className="mt-1 flex-row items-end" style={{ height: 140 }}>
       {data.trend.map((point, index) => {
         const showLabel = index % labelStride === 0;
         return (
           <View key={point.label} className="flex-1 items-center justify-end">
-            <View className="h-full w-full flex-row items-end justify-center" style={{ gap: 2 }}>
+            <View
+              className="h-full w-full flex-row items-end justify-center"
+              style={{ gap: 2 }}
+            >
               <View
                 className="w-1.5 rounded-t-sm"
                 style={{
@@ -237,7 +301,9 @@ function TrendBars({
               />
             </View>
             {showLabel ? (
-              <Text className="text-muted-foreground mt-1 text-[10px]">{point.label}</Text>
+              <Text className="text-muted-foreground mt-1 text-[10px]">
+                {point.label}
+              </Text>
             ) : (
               <Text className="mt-1 text-[10px]"> </Text>
             )}

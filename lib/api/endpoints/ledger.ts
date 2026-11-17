@@ -9,6 +9,7 @@ export type LedgerType = 1 | 2;
 
 export interface LedgerRecord {
   id: string;
+  userId: string;
   type: LedgerType;
   /** 金额(元,正数)。 */
   amount: number;
@@ -20,6 +21,7 @@ export interface LedgerRecord {
 }
 
 export interface LedgerRecordReq {
+  groupId?: string | null;
   type: LedgerType;
   amount: number;
   category: string;
@@ -61,8 +63,8 @@ export interface LedgerSummary {
 export type LedgerPeriod = 'week' | 'month' | 'year';
 
 /** `POST /app/ledger/record`,返回新记录 ID。 */
-export function createLedgerRecord(req: LedgerRecordReq): Promise<number> {
-  return api.post<number>('/app/ledger/record', req);
+export function createLedgerRecord(req: LedgerRecordReq): Promise<string> {
+  return api.post<string>('/app/ledger/record', req);
 }
 
 /** `PUT /app/ledger/record/{id}`。 */
@@ -145,4 +147,8 @@ export function quitLedgerGroup(groupId: string): Promise<void> {
 
 export function dissolveLedgerGroup(groupId: string): Promise<void> {
   return api.delete<void>(`/app/ledger/group/${groupId}`);
+}
+
+export function transferLedgerGroupOwner(groupId: string, nextOwnerId: string): Promise<void> {
+  return api.post<void>(`/app/ledger/group/${groupId}/transfer-owner`, { nextOwnerId });
 }

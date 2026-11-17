@@ -112,7 +112,7 @@ export function useRequest<T>(
       }
       void run();
     }, 0);
-    return () => clearTimeout(timer);
+    return () => { clearTimeout(timer); latestRef.current++; };
     // deps 由调用方声明;run 自身稳定,不该进依赖数组。
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [enabled, ...deps]);

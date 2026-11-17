@@ -55,6 +55,22 @@ describe('API 信封解包(契约 0 节:code 为字符串)', () => {
     await expect(request('/app/plaza/statistics')).resolves.toEqual({ totalCase: 0 });
   });
 
+  it('私有票据二进制下载沿用会话请求头', async () => {
+    const blob = { size: 8, type: 'image/png' };
+    global.fetch = jest.fn().mockResolvedValue({ ok: true, status: 200,
+      headers: { get: () => 'image/png' }, blob: async () => blob }) as never;
+    await expect(request('/app/accounting/receipts/file-id', { responseType: 'blob' })).resolves.toBe(blob);
+    expect(global.fetch).toHaveBeenCalledWith('http://api.test/app/accounting/receipts/file-id', expect.objectContaining({
+      headers: expect.objectContaining({ Authorization: 'token-value' }),
+    }));
+  });
+
+  it('票据下载的 JSON 401 仍触发统一会话失效处理', async () => {
+    global.fetch = jest.fn().mockResolvedValue(jsonResponse({ code: '401', msg: '请重新登录' })) as never;
+    await expect(request('/app/accounting/receipts/file-id', { responseType: 'blob' })).rejects.toMatchObject({ code: 401 });
+    expect(unauthorized).toHaveBeenCalledTimes(1);
+  });
+
   it('图形验证码公开入口不会被路径校验拦截,且不携带登录凭据', async () => {
     global.fetch = jest.fn().mockResolvedValue(
       jsonResponse({ code: '0', data: { uuid: 'captcha-id', img: 'image-data', isEnabled: true } }),

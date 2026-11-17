@@ -5,7 +5,7 @@ type PickerModule = typeof import('../image-picker');
 function loadWith(factory: () => unknown): PickerModule {
   let mod: PickerModule | undefined;
   jest.isolateModules(() => {
-    jest.doMock('expo-image-picker', factory);
+    jest.doMock('expo-image-picker', factory, { virtual: true });
     // eslint-disable-next-line @typescript-eslint/no-require-imports -- 模块加载时就按 mock 选定实现
     mod = require('../image-picker') as PickerModule;
   });

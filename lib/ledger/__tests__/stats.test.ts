@@ -16,7 +16,7 @@ import {
 const NOW = new Date(2026, 9, 28, 12, 0, 0); // 2026-10-28 周三(本地)
 
 function record(id: string, type: 1 | 2, amount: number, recordDate: string): LedgerRecord {
-  return { id, type, amount, category: 'food', recordDate, remark: null };
+  return { id, userId: '1', type, amount, category: 'food', recordDate, remark: null };
 }
 
 describe('parseDayKey / toDayKey', () => {
