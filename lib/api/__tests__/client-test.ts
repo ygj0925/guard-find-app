@@ -231,3 +231,29 @@ describe('超时 / 网络 / 主动取消三类错误可区分', () => {
     expect(error.isNetwork).toBe(true);
   });
 });
+
+
+describe('response body timeout and cancellation', () => {
+  function pendingBody() {
+    global.fetch = jest.fn().mockImplementation((_url, init) => Promise.resolve({
+      ok: true, status: 200,
+      text: () => new Promise((_resolve, reject) => {
+        const fail = () => { const error = new Error('aborted'); error.name = 'AbortError'; reject(error); };
+        if (init.signal.aborted) fail();
+        else init.signal.addEventListener('abort', fail, { once: true });
+      }),
+    })) as never;
+  }
+  it('times out after headers when the body never finishes', async () => {
+    pendingBody();
+    await expect(request('/app/plaza/feed', { timeoutMs: 20 })).rejects.toMatchObject({ bizCode: 'TIMEOUT' });
+  });
+  it('classifies caller cancellation while reading the body', async () => {
+    pendingBody();
+    const controller = new AbortController();
+    const result = request('/app/plaza/feed', { signal: controller.signal });
+    await Promise.resolve();
+    controller.abort();
+    await expect(result).rejects.toMatchObject({ bizCode: 'ABORTED' });
+  });
+});

@@ -140,9 +140,10 @@ export async function request<T>(path: string, options: RequestOptions = {}): Pr
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(new Error('TIMEOUT')), timeoutMs);
   const outerSignal = options.signal;
+  const onOuterAbort = () => controller.abort(new Error('ABORTED'));
   if (outerSignal) {
     if (outerSignal.aborted) controller.abort(new Error('ABORTED'));
-    else outerSignal.addEventListener('abort', () => controller.abort(new Error('ABORTED')), {
+    else outerSignal.addEventListener('abort', onOuterAbort, {
       once: true,
     });
   }
@@ -158,6 +159,7 @@ export async function request<T>(path: string, options: RequestOptions = {}): Pr
   if (isPlainBody) headers['Content-Type'] = 'application/json';
 
   let response: Response;
+  let rawText: string;
   try {
     response = await fetch(url, {
       method,
@@ -169,9 +171,9 @@ export async function request<T>(path: string, options: RequestOptions = {}): Pr
           : undefined,
       signal: controller.signal as unknown as AbortSignal,
     });
+    rawText = await response.text();
   } catch (error) {
-    clearTimeout(timer);
-    const aborted =
+    const aborted = controller.signal.aborted ||
       (error as { name?: string })?.name === 'AbortError' ||
       (error as { message?: string })?.message === 'TIMEOUT';
     if (aborted && outerSignal?.aborted) {
@@ -185,11 +187,12 @@ export async function request<T>(path: string, options: RequestOptions = {}): Pr
     }
     if (aborted) throw ApiError.timeout(timeoutMs);
     throw ApiError.network('网络连接失败,请检查网络后重试', error);
+  } finally {
+    clearTimeout(timer);
+    outerSignal?.removeEventListener('abort', onOuterAbort);
   }
-  clearTimeout(timer);
 
   let envelope: ApiEnvelope<T> | null = null;
-  const rawText = await readText(response);
   if (rawText) {
     try {
       envelope = JSON.parse(rawText) as ApiEnvelope<T>;
@@ -239,14 +242,6 @@ export async function request<T>(path: string, options: RequestOptions = {}): Pr
   }
 
   return envelope.data as T;
-}
-
-async function readText(response: Response): Promise<string> {
-  try {
-    return await response.text();
-  } catch {
-    return '';
-  }
 }
 
 function handleFailure(

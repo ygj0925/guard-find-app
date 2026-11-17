@@ -4,6 +4,9 @@
  */
 import { api } from '../client';
 
+// Allow the server's 60-second model timeout plus network/commit overhead.
+const AI_REQUEST_TIMEOUT_MS = 75_000;
+
 export type AiRole = 'user' | 'assistant';
 
 export interface AiConversation {
@@ -51,7 +54,7 @@ export function fetchAiMessages(conversationId: string): Promise<AiMessage[]> {
 
 /** `POST /app/ai/conversation/{id}/message`,返回助手回复。 */
 export function sendAiMessage(conversationId: string, content: string): Promise<AiReplyResp> {
-  return api.post(`/app/ai/conversation/${conversationId}/message`, { content });
+  return api.post(`/app/ai/conversation/${conversationId}/message`, { content }, { timeoutMs: AI_REQUEST_TIMEOUT_MS });
 }
 
 /** `DELETE /app/ai/conversation/{id}`。 */
@@ -71,17 +74,19 @@ export interface AiTextResp {
 export function fetchAiWeeklyReport(date?: string): Promise<AiTextResp> {
   return api.post<AiTextResp>('/app/ai/weekly-report', undefined, {
     params: date ? { date } : undefined,
+    timeoutMs: AI_REQUEST_TIMEOUT_MS,
   });
 }
 
 /** `POST /app/ai/decompose`,返回 3-5 条子步骤(每行一条)。 */
 export function requestAiDecompose(content: string): Promise<AiTextResp> {
-  return api.post<AiTextResp>('/app/ai/decompose', { content });
+  return api.post<AiTextResp>('/app/ai/decompose', { content }, { timeoutMs: AI_REQUEST_TIMEOUT_MS });
 }
 
 /** `POST /app/ai/ledger-insight`,period=week|month。 */
 export function fetchAiLedgerInsight(period: 'week' | 'month', date?: string): Promise<AiTextResp> {
   return api.post<AiTextResp>('/app/ai/ledger-insight', undefined, {
     params: date ? { period, date } : { period },
+    timeoutMs: AI_REQUEST_TIMEOUT_MS,
   });
 }
